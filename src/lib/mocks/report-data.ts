@@ -7,10 +7,10 @@ import type {
 
 export const mockUser: User = {
   id: "1",
-  name: "João Silva",
+  name: "João Felix",
   email: "jhorifelix@hotmail.com",
   role: "investigator",
-  unit: "SERIPA II",
+  unit: "CENIPA",
 };
 
 export const mockReport: Report = {
@@ -117,28 +117,40 @@ export const mockReport: Report = {
           id: "sub-1-2",
           title: "Data, hora e local",
           order: 2,
-          content: "",
+          content: "<p><strong>DATA - HORA:</strong> 14/JUN/2025 - 15:16 (UTC)</p>",
           isCompleted: true,
         },
         {
           id: "sub-1-3",
           title: "Tipo de ocorrência",
           order: 3,
-          content: "",
+          content: "LOC-G (Perda de Controle no Solo)",
           isCompleted: true,
         },
         {
           id: "sub-1-4",
           title: "Aeronave(s) envolvida(s)",
           order: 4,
-          content: "",
+          content: `<p>Matrícula: PR-AGR</p>
+              <p>Fabricante: ROBINSON</p>
+              <p>Modelo: EMB-202A IPANEMA</p>
+              <p>Tipo: Helicóptero</p>
+              <p>Número de Série: 202001245</p>
+              <p>Ano de Fabricação: 2019</p>
+              <p>Danos à Aeronave:</p>
+
+<p>Componentes Danificados: Hélice, trem de pouso principal esquerdo, asa esquerda (bordo de ataque), carenagem do motor.</p>`,
           isCompleted: true,
         },
         {
           id: "sub-1-5",
           title: "Condições meteorológicas",
           order: 5,
-          content: "",
+          content: `<p>Condições: VMC (Visual Meteorological Conditions)</p>
+                    <p>Vento: 090°/08kt</p>
+                    <p>Visibilidade: Superior a 10km</p>
+                    <p>Teto: Céu claro</p>
+                    <p>Temperatura: 28°C</p>`,
           isCompleted: true,
         },
         {
@@ -159,36 +171,39 @@ export const mockReport: Report = {
       subsections: [
         {
           id: "sub-2-1",
-          title: "Antecedentes",
+          title: "Planejamento da Operação",
           order: 1,
-          content: "",
+          content: `No dia 15JAN2026, a aeronave PR-AGR decolou da pista de operação localizada na Fazenda Santa Clara, município de Presidente Prudente/SP, por volta das 06:30 (UTC), com o objetivo de realizar operação de pulverização aérea agrícola em lavoura de soja.
+
+De acordo com relato do piloto, as condições meteorológicas estavam favoráveis para a operação, com vento calmo e boa visibilidade. A aeronave estava carregada com aproximadamente 600 litros de calda (mistura de defensivo agrícola e água), dentro dos limites de peso e balanceamento estabelecidos pelo fabricante.
+
+O piloto informou que realizou procedimento padrão de decolagem, utilizando a pista de terra compactada de aproximadamente 800 metros de extensão. Durante a corrida de decolagem, em velocidade estimada de 55kt, a aeronave sofreu oscilação lateral inesperada.
+
+Segundo o piloto, ao tentar corrigir a trajetória, a aeronave ultrapassou os limites laterais da pista, atingindo terreno irregular com vegetação rasteira. O trem de pouso principal esquerdo colapsou ao impactar uma irregularidade do terreno, fazendo com que a aeronave guinasse bruscamente para a esquerda.
+
+A hélice atingiu o solo, danificando-se severamente. A asa esquerda tocou o terreno, sofrendo danos no bordo de ataque. A aeronave veio a parar aproximadamente 50 metros da lateral esquerda da pista.
+
+O piloto conseguiu evacuar a aeronave sem auxílio, não sofrendo lesões significativas. Não houve princípio de incêndio. O produto agrícola contido nos tanques da aeronave foi contido e posteriormente recolhido por equipe especializada.`,
           isCompleted: true,
         },
         {
           id: "sub-2-2",
-          title: "Planejamento do voo",
+          title: "Comunicações Relevantes",
           order: 2,
           content: "",
           isCompleted: true,
         },
         {
           id: "sub-2-3",
-          title: "Experiência do piloto",
+          title: "Últimos momentos antes da ocorrência",
           order: 3,
           content: "",
           isCompleted: true,
         },
         {
           id: "sub-2-4",
-          title: "Descrição do voo",
+          title: "Testemunhos e evidências",
           order: 4,
-          content: "",
-          isCompleted: true,
-        },
-        {
-          id: "sub-2-5",
-          title: "Informações de testemunhas",
-          order: 5,
           content: "",
           isCompleted: true,
         },
@@ -203,44 +218,57 @@ export const mockReport: Report = {
       subsections: [
         {
           id: "sub-3-1",
-          title: "Fator humano",
+          title: "Fatores contribuintes identificados",
           order: 1,
-          content: "",
+          content: `O piloto relatou estar em boas condições físicas e psicológicas no momento da ocorrência. Havia dormido aproximadamente 7 horas na noite anterior e estava no terceiro voo do dia.
+
+A análise da carga de trabalho indica que o piloto estava operando dentro dos limites de fadiga estabelecidos pela regulamentação. Não foram identificados fatores como estresse, pressão externa ou uso de substâncias que pudessem afetar o desempenho.`,
           isCompleted: true,
         },
         {
           id: "sub-3-2",
-          title: "Fator material",
+          title: "Análise de sistemas e componentes",
           order: 2,
-          content: "",
+          content: `Não foram identificadas evidências de falhas mecânicas ou estruturais que pudessem ter contribuído para a ocorrência. O sistema de controle de voo estava operacional, conforme verificado nos destroços.
+
+O trem de pouso apresentava manutenção em dia, com última inspeção realizada há 30 horas de voo. Não havia discrepâncias registradas nos livros de bordo da aeronave.`,
           isCompleted: true,
         },
         {
           id: "sub-3-3",
-          title: "Fator operacional",
+          title: "Avaliação de procedimentos",
           order: 3,
-          content: "",
+          content: `A análise do aspecto operacional identificou que o piloto possuía experiência significativa em operações aeroagrícolas, com mais de 3.000 horas no tipo da aeronave. A documentação do piloto estava regular, incluindo CMA válido e habilitação PAGA (Piloto Agrícola).
+
+A operação estava sendo conduzida dentro dos parâmetros estabelecidos pela regulamentação vigente (RBAC 137). A aeronave estava dentro dos limites de peso e balanceamento previstos no manual do fabricante.` ,
           isCompleted: true,
         },
         {
           id: "sub-3-4",
-          title: "Aspectos organizacionais",
+          title: "Análise de fatores humanos",
           order: 4,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-3-5",
-          title: "Análise SHELL/HFACS",
+          title: "Condições operacionais",
           order: 5,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-3-6",
-          title: "Cadeia de eventos",
+          title: "Aspectos organizacionais",
           order: 6,
           content: "",
+          isCompleted: false,
+        },
+        {
+          id: "sub-3-7",
+          title: "Aspectos Ambientais",
+          order: 7,
+          content: `Fios de energia, Cercas, Torres, Árvores isoladas`,
           isCompleted: false,
         },
       ],
@@ -254,31 +282,45 @@ export const mockReport: Report = {
       subsections: [
         {
           id: "sub-4-1",
-          title: "Fatos",
+          title: "Causas identificadas",
           order: 1,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-4-2",
-          title: "Fatores contribuintes",
+          title: "Relação causal entre fatores",
           order: 2,
-          content: "",
-          isCompleted: false,
+          content: `Infraestrutura Aeroportuária: Condições inadequadas da pista de operação, com irregularidades na superfície.
+
+
+
+Julgamento do Piloto: Possível subestimação das condições da pista antes da decolagem.
+
+
+
+Supervisão Gerencial: Ausência de inspeção formal das condições da pista antes do início das operações.`,
+          isCompleted: true,
         },
         {
           id: "sub-4-3",
-          title: "Fatores condicionantes",
+          title: "Síntese da investigação",
           order: 3,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-4-4",
-          title: "Causa provável",
+          title: "Aspectos críticos de segurança",
           order: 4,
-          content: "",
-          isCompleted: false,
+          content: `Diante das evidências coletadas e da análise realizada, conclui-se preliminarmente que a ocorrência foi caracterizada como , resultante de perda de controle direcional durante a corrida de decolagem (LOC-G).
+
+A perda de controle foi precipitada pela interação da aeronave com irregularidades na superfície da pista de operação, que não foram adequadamente avaliadas antes do início da operação de voo.
+
+Os fatores contribuintes identificados relacionam-se principalmente às condições da infraestrutura de solo e ao processo de gerenciamento de risco da operação.
+
+Recomendações de segurança serão emitidas em relatório final, visando prevenir ocorrências similares.`,
+          isCompleted: true,
         },
       ],
     },
@@ -291,29 +333,22 @@ export const mockReport: Report = {
       subsections: [
         {
           id: "sub-5-1",
-          title: "Recomendações ao operador",
+          title: "Medidas preventivas propostas",
           order: 1,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-5-2",
-          title: "Recomendações à ANAC",
+          title: "Destinatários das recomendações",
           order: 2,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-5-3",
-          title: "Recomendações ao fabricante",
+          title: "Priorização de ações",
           order: 3,
-          content: "",
-          isCompleted: false,
-        },
-        {
-          id: "sub-5-4",
-          title: "Recomendações a entidades",
-          order: 4,
           content: "",
           isCompleted: false,
         },
@@ -330,47 +365,47 @@ export const mockReport: Report = {
       id: "sec-6",
       title: "Ações Corretivas/Preventivas",
       order: 6,
-      content: "",
+      content: "asdfasdfasdf",
       isCompleted: false,
       subsections: [
         {
           id: "sub-6-1",
-          title: "Ações já implementadas",
+          title: "Ações imediatas tomadas",
           order: 1,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-6-2",
-          title: "Ações em andamento",
+          title: "Medidas de curto prazo",
           order: 2,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-6-3",
-          title: "Ações planejadas",
+          title: "Iniciativas de médio/longo prazo",
           order: 3,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-6-4",
-          title: "Acompanhamento",
+          title: "Responsáveis pela implementação",
           order: 4,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-6-5",
-          title: "Eficácia das ações",
+          title: "Cronograma de execução",
           order: 5,
           content: "",
           isCompleted: false,
         },
         {
           id: "sub-6-6",
-          title: "Lições aprendidas",
+          title: "Indicadores de acompanhamento",
           order: 6,
           content: "",
           isCompleted: false,

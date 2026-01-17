@@ -1,12 +1,14 @@
 "use client";
 
 import {
-  Plane,
   FileText,
   AudioLines,
   RefreshCw,
   LogOut,
   ChevronDown,
+  Bot,
+  Settings,
+  User2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +42,7 @@ export function Header({ user }: HeaderProps) {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-            <Plane className="w-5 h-5 text-white" />
+            <Bot className="w-5 h-5 text-white" />
           </div>
           <div className="flex flex-col">
             <span className="text-white font-semibold text-sm tracking-wide">
@@ -117,10 +119,11 @@ export function Header({ user }: HeaderProps) {
               <ChevronDown className="w-4 h-4 text-white/60" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <div className="px-2 py-1.5">
+          <DropdownMenuContent align="end" className="w-48">           
+            <div className="flex px-2 py-1.5 gap-2 justify-center">
+            <User2 className="w-4 h-4 mr-2" />
               <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.unit}</p>
+              <p className=" text-xs text-muted-foreground">{user.unit}</p>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
@@ -128,6 +131,7 @@ export function Header({ user }: HeaderProps) {
               Meus Relatórios
             </DropdownMenuItem>
             <DropdownMenuItem>
+            <Settings className="w-4 h-4 mr-2" />
               Configurações
             </DropdownMenuItem>
             <DropdownMenuSeparator />

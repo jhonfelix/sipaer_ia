@@ -6,10 +6,12 @@ import {
   FileText,
   Clock,
   Search,
-  Settings2,
-  CheckCircle2,
+  Settings,
   Circle,
+  CheckCircle2,
+  Shield,
   AlertCircle,
+  TriangleAlert,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
@@ -26,10 +28,10 @@ interface ReportSidebarProps {
 const sectionIcons: Record<number, React.ReactNode> = {
   1: <FileText className="w-4 h-4" />,
   2: <Clock className="w-4 h-4" />,
-  3: <Settings2 className="w-4 h-4" />,
+  3: <Settings className="w-4 h-4" />,
   4: <CheckCircle2 className="w-4 h-4" />,
-  5: <AlertCircle className="w-4 h-4" />,
-  6: <Circle className="w-4 h-4" />,
+  5: <TriangleAlert className="w-4 h-4" />,
+  6: <Shield className="w-4 h-4" />,
 };
 
 function getCompletedCount(section: ReportSection): number {
@@ -82,7 +84,7 @@ export function ReportSidebar({
           <h2 className="font-semibold text-sm">Relatório Técnico</h2>
         </div>
         <p className="text-xs text-muted-foreground mb-3">
-          Conforme normas CENIPA/SERIPA
+          Conforme normas SIPAER
         </p>
 
         {/* Info da Ocorrência */}
