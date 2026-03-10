@@ -66,6 +66,13 @@ interface TemplateFormData {
   nivelDanos: string;
   nivelLesoes: string;
   contextoAdicional: string;
+  obstaculos: string[];
+  faseVoo: string;
+  condicoesMet: string[];
+  horasTotais: string;
+  horasAgricola: string;
+  horasTipo: string;
+  altitudeOperacao: string;
 }
 
 function generateSIPAERReport(data: TemplateFormData): string {
@@ -78,6 +85,11 @@ function generateSIPAERReport(data: TemplateFormData): string {
   const municipio = "Presidente Prudente";
   const estado = "SP";
 
+  const faseVooStr = data.faseVoo || "Não informada";
+  const obstaculosStr = data.obstaculos.length > 0 ? data.obstaculos.join(", ") : "Nenhum identificado";
+  const condicoesMetStr = data.condicoesMet.length > 0 ? data.condicoesMet.join(", ") : "Condições padrão";
+  const altitudeStr = data.altitudeOperacao ? `${data.altitudeOperacao} ft AGL` : "Não informada";
+
   const report = `<h1>RELATÓRIO DE INVESTIGAÇÃO</h1>
 <h2>OCORRÊNCIA AERONÁUTICA</h2>
 
@@ -87,7 +99,8 @@ function generateSIPAERReport(data: TemplateFormData): string {
 <p><strong>Classificação:</strong> ${data.classificacao}</p>
 <p><strong>Data:</strong> ${dataOcorrencia}</p>
 <p><strong>Hora:</strong> ${horaOcorrencia}</p>
-<p><strong>Tipo de Ocorrência:</strong> LOC-G (Perda de Controle no Solo)</p>
+<p><strong>Fase do Voo:</strong> ${faseVooStr}</p>
+<p><strong>Altitude de Operação:</strong> ${altitudeStr}</p>
 
 <h3>1.2 Localização</h3>
 <p><strong>Local:</strong> Propriedade Rural - Fazenda Santa Clara</p>
@@ -96,11 +109,14 @@ function generateSIPAERReport(data: TemplateFormData): string {
 <p><strong>Coordenadas:</strong> ${coordenadas}</p>
 
 <h3>1.3 Condições Meteorológicas</h3>
-<p><strong>Condições:</strong> VMC (Visual Meteorological Conditions)</p>
+<p><strong>Condições registradas:</strong> ${condicoesMetStr}</p>
+<p><strong>Regime de voo:</strong> VMC (Visual Meteorological Conditions)</p>
 <p><strong>Vento:</strong> 090°/08kt</p>
 <p><strong>Visibilidade:</strong> Superior a 10km</p>
-<p><strong>Teto:</strong> Céu claro</p>
 <p><strong>Temperatura:</strong> 28°C</p>
+
+<h3>1.4 Obstáculos na Área de Operação</h3>
+<p><strong>Obstáculos identificados:</strong> ${obstaculosStr}</p>
 
 <h2>2. INFORMAÇÕES SOBRE A AERONAVE</h2>
 
@@ -136,8 +152,9 @@ function generateSIPAERReport(data: TemplateFormData): string {
 <p><strong>Categoria de Licença:</strong> PCH (Piloto Comercial - Avião)</p>
 <p><strong>Habilitações:</strong> MLTE, IFRA, PAGA</p>
 <p><strong>Validade CMA:</strong> 30JUN2026</p>
-<p><strong>Horas Totais de Voo:</strong> 8.450:00</p>
-<p><strong>Horas no Tipo:</strong> 3.200:00</p>
+<p><strong>Horas Totais de Voo:</strong> ${data.horasTotais ? data.horasTotais + ":00" : "8.450:00"}</p>
+<p><strong>Horas em Aviação Agrícola:</strong> ${data.horasAgricola ? data.horasAgricola + ":00" : "4.100:00"}</p>
+<p><strong>Horas no Tipo:</strong> ${data.horasTipo ? data.horasTipo + ":00" : "3.200:00"}</p>
 <p><strong>Horas Últimos 30 Dias:</strong> 85:30</p>
 <p><strong>Horas Últimas 24 Horas:</strong> 4:15</p>
 
@@ -237,6 +254,13 @@ export function ReportEditor({
     nivelDanos: "",
     nivelLesoes: "",
     contextoAdicional: "",
+    obstaculos: [],
+    faseVoo: "",
+    condicoesMet: [],
+    horasTotais: "",
+    horasAgricola: "",
+    horasTipo: "",
+    altitudeOperacao: "",
   });
 
   const editor = useEditor({
@@ -346,6 +370,13 @@ export function ReportEditor({
       nivelDanos: "",
       nivelLesoes: "",
       contextoAdicional: "",
+      obstaculos: [],
+      faseVoo: "",
+      condicoesMet: [],
+      horasTotais: "",
+      horasAgricola: "",
+      horasTipo: "",
+      altitudeOperacao: "",
     });
 
     toast({
@@ -616,6 +647,15 @@ export function ReportEditor({
                   <SelectItem value="ACIDENTE">Acidente</SelectItem>
                   <SelectItem value="INCIDENTE GRAVE">Incidente Grave</SelectItem>
                   <SelectItem value="INCIDENTE">Incidente</SelectItem>
+                  <SelectItem value="COLISÃO COM OBSTÁCULO">Colisão com Obstáculo</SelectItem>
+                  <SelectItem value="COLISÃO COM FIO/CABO">Colisão com Fio/Cabo</SelectItem>
+                  <SelectItem value="PERDA DE CONTROLE EM VOO">Perda de Controle em Voo</SelectItem>
+                  <SelectItem value="ESTOL EM BAIXA ALTITUDE">Estol em Baixa Altitude</SelectItem>
+                  <SelectItem value="FALHA DE MOTOR">Falha de Motor</SelectItem>
+                  <SelectItem value="ACIDENTE NA DECOLAGEM">Acidente na Decolagem</SelectItem>
+                  <SelectItem value="ACIDENTE DURANTE APLICAÇÃO">Acidente durante Aplicação</SelectItem>
+                  <SelectItem value="COLISÃO COM TERRENO">Colisão com Terreno (CFIT)</SelectItem>
+                  <SelectItem value="OUTROS">Outros</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -634,11 +674,6 @@ export function ReportEditor({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Avião">Avião</SelectItem>
-                  <SelectItem value="Helicóptero">Helicóptero</SelectItem>
-                  <SelectItem value="Planador">Planador</SelectItem>
-                  <SelectItem value="Ultraleve">Ultraleve</SelectItem>
-                  <SelectItem value="Balão">Balão</SelectItem>
-                  <SelectItem value="Dirigível">Dirigível</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -657,8 +692,6 @@ export function ReportEditor({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Aeroagrícola">Aeroagrícola</SelectItem>
-                  <SelectItem value="Privado">Privado</SelectItem>
-                  <SelectItem value="Regular">Regular</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -678,9 +711,6 @@ export function ReportEditor({
                 <SelectContent>
                   <SelectItem value="EMB-202A IPANEMA">EMB-202A Ipanema</SelectItem>
                   <SelectItem value="AT-502B AIR TRACTOR">AT-502B Air Tractor</SelectItem>
-                  <SelectItem value="PA-25 PAWNEE">PA-25 Pawnee</SelectItem>
-                  <SelectItem value="CESSNA 188 AG WAGON">Cessna 188 AG Wagon</SelectItem>
-                  <SelectItem value="THRUSH 510G">Thrush 510G</SelectItem>
                   <SelectItem value="Outro">Outro</SelectItem>
                 </SelectContent>
               </Select>
@@ -728,12 +758,152 @@ export function ReportEditor({
               </Select>
             </div>
 
+            {/* Fase do Voo */}
+            <div className="grid gap-2">
+              <Label htmlFor="faseVoo">Fase do Voo</Label>
+              <Select
+                value={templateFormData.faseVoo}
+                onValueChange={(value) =>
+                  setTemplateFormData((prev) => ({ ...prev, faseVoo: value }))
+                }
+              >
+                <SelectTrigger id="faseVoo">
+                  <SelectValue placeholder="Selecione a fase do voo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Decolagem">Decolagem</SelectItem>
+                  <SelectItem value="Subida inicial">Subida inicial</SelectItem>
+                  <SelectItem value="Deslocamento">Deslocamento</SelectItem>
+                  <SelectItem value="Aplicação agrícola">Aplicação agrícola</SelectItem>
+                  <SelectItem value="Manobra de retorno">Manobra de retorno</SelectItem>
+                  <SelectItem value="Aproximação">Aproximação</SelectItem>
+                  <SelectItem value="Pouso">Pouso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Presença de Obstáculos */}
+            <div className="grid gap-2">
+              <Label>Presença de Obstáculos na Área</Label>
+              <div className="flex flex-wrap gap-2">
+                {["Linhas de energia", "Torres", "Árvores", "Pivô de irrigação", "Cercas", "Não identificado"].map((obs) => {
+                  const active = templateFormData.obstaculos.includes(obs);
+                  return (
+                    <button
+                      key={obs}
+                      type="button"
+                      onClick={() =>
+                        setTemplateFormData((prev) => ({
+                          ...prev,
+                          obstaculos: active
+                            ? prev.obstaculos.filter((o) => o !== obs)
+                            : [...prev.obstaculos, obs],
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        active
+                          ? "bg-primary/20 border-primary text-primary"
+                          : "bg-muted/40 border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {obs}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Condições Meteorológicas */}
+            <div className="grid gap-2">
+              <Label>Condições Meteorológicas</Label>
+              <div className="flex flex-wrap gap-2">
+                {["Vento fraco", "Vento moderado", "Vento forte", "Turbulência", "Alta temperatura", "Visibilidade reduzida"].map((cond) => {
+                  const active = templateFormData.condicoesMet.includes(cond);
+                  return (
+                    <button
+                      key={cond}
+                      type="button"
+                      onClick={() =>
+                        setTemplateFormData((prev) => ({
+                          ...prev,
+                          condicoesMet: active
+                            ? prev.condicoesMet.filter((c) => c !== cond)
+                            : [...prev.condicoesMet, cond],
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        active
+                          ? "bg-primary/20 border-primary text-primary"
+                          : "bg-muted/40 border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {cond}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Altitude de Operação */}
+            <div className="grid gap-2">
+              <Label htmlFor="altitudeOperacao">Altitude de Operação (ft AGL)</Label>
+              <Input
+                id="altitudeOperacao"
+                type="number"
+                placeholder="Ex: 10"
+                value={templateFormData.altitudeOperacao}
+                onChange={(e) =>
+                  setTemplateFormData((prev) => ({ ...prev, altitudeOperacao: e.target.value }))
+                }
+              />
+            </div>
+
+            {/* Experiência do Piloto */}
+            <div className="grid gap-2">
+              <Label>Experiência do Piloto (horas)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">Horas totais</span>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 8450"
+                    value={templateFormData.horasTotais}
+                    onChange={(e) =>
+                      setTemplateFormData((prev) => ({ ...prev, horasTotais: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">Em aviação agrícola</span>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 4100"
+                    value={templateFormData.horasAgricola}
+                    onChange={(e) =>
+                      setTemplateFormData((prev) => ({ ...prev, horasAgricola: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">No tipo</span>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 3200"
+                    value={templateFormData.horasTipo}
+                    onChange={(e) =>
+                      setTemplateFormData((prev) => ({ ...prev, horasTipo: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Contexto Adicional */}
             <div className="grid gap-2">
               <Label htmlFor="contextoAdicional">Contexto Adicional</Label>
               <Textarea
                 id="contextoAdicional"
-                placeholder="Descreva informações adicionais relevantes para o relatório..."
+                placeholder="Descreva brevemente a sequência do acidente, manobra realizada, presença de obstáculos, condições meteorológicas e qualquer fator relevante observado..."
                 value={templateFormData.contextoAdicional}
                 onChange={(e) =>
                   setTemplateFormData((prev) => ({
