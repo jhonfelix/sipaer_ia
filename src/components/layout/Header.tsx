@@ -3,6 +3,7 @@
 import {
   FileText,
   AudioLines,
+  Building2,
   RefreshCw,
   LogOut,
   ChevronDown,
@@ -73,12 +74,23 @@ export function Header({ user }: HeaderProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={`hover:text-white hover:bg-white/10 gap-2 ${pathname === "/labdata" ? "text-white bg-white/10" : "text-white/60"}`}
+            className={`hover:text-white hover:bg-white/10 gap-2 ${pathname?.startsWith("/labdata") ? "text-white bg-white/10" : "text-white/60"}`}
             asChild
           >
             <Link href="/labdata">
               <AudioLines className="w-4 h-4" />
               <span className="text-sm">LABDATA</span>
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`hover:text-white hover:bg-white/10 gap-2 ${pathname === "/da" ? "text-white bg-white/10" : "text-white/60"}`}
+            asChild
+          >
+            <Link href="/da">
+              <Building2 className="w-4 h-4" />
+              <span className="text-sm">DA</span>
             </Link>
           </Button>
         </nav>
