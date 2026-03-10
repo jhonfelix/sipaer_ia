@@ -375,7 +375,7 @@ export function ReportEditor({
     setIsGenerating(true);
     setGeneratingStep(0);
 
-    const delays = [900, 1000, 1200, 1100, 1300, 1000, 900, 800, 800];
+    const delays = [900, 1000, 1700, 1700, 1700, 1500, 1900, 1800, 1800];
     let cum = 0;
     delays.forEach((d, i) => {
       cum += d;
