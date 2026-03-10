@@ -10,6 +10,8 @@ import {
   Settings,
   User2
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,6 +30,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const pathname = usePathname();
   const initials = user.name
     .split(" ")
     .map((n) => n[0])
@@ -59,18 +62,24 @@ export function Header({ user }: HeaderProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-white/90 hover:text-white hover:bg-white/10 gap-2"
+            className={`hover:text-white hover:bg-white/10 gap-2 ${pathname === "/reports" ? "text-white bg-white/10" : "text-white/60"}`}
+            asChild
           >
-            <FileText className="w-4 h-4" />
-            <span className="text-sm">Relatório Técnico</span>
+            <Link href="/reports">
+              <FileText className="w-4 h-4" />
+              <span className="text-sm">Relatório Técnico</span>
+            </Link>
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="text-white/60 hover:text-white hover:bg-white/10 gap-2"
+            className={`hover:text-white hover:bg-white/10 gap-2 ${pathname === "/labdata" ? "text-white bg-white/10" : "text-white/60"}`}
+            asChild
           >
-            <AudioLines className="w-4 h-4" />
-            <span className="text-sm">LABDATA</span>
+            <Link href="/labdata">
+              <AudioLines className="w-4 h-4" />
+              <span className="text-sm">LABDATA</span>
+            </Link>
           </Button>
         </nav>
 

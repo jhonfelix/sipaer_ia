@@ -11,6 +11,8 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { Highlight } from "@tiptap/extension-highlight";
+import Dropcursor from "@tiptap/extension-dropcursor";
+import Gapcursor from "@tiptap/extension-gapcursor";
 import {
   Save,
   Upload,
@@ -265,6 +267,11 @@ export function ReportEditor({
       Highlight.configure({
         multicolor: true,
       }),
+      Dropcursor.configure({
+        color: '#3b82f6',
+        width: 2,
+      }),
+      Gapcursor,
     ],
     content: subsection?.content || "",
     editorProps: {
