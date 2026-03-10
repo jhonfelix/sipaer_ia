@@ -25,6 +25,8 @@ import {
   ChevronDown,
   Sparkles,
   MessageSquarePlus,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -240,6 +242,8 @@ export function ReportEditor({
   const [activeTab, setActiveTab] = useState("editor");
   const [markdownContent, setMarkdownContent] = useState("");
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingStep, setGeneratingStep] = useState(0);
   const [isDedaloModalOpen, setIsDedaloModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -343,12 +347,22 @@ export function ReportEditor({
     [handleSave]
   );
 
+  const GEN_STEPS = [
+    { label: "Analisando dados da ocorrência...", detail: "Classificação, fase do voo e obstáculos" },
+    { label: "Consultando base de dados SIPAER...", detail: "Ocorrências similares — aviação agrícola" },
+    { label: "Identificando fatores contribuintes...", detail: "Humano · Material · Operacional · Ambiente" },
+    { label: "Estruturando seções do relatório...", detail: "Conformidade NSCA 3-13 e RBAC 137" },
+    { label: "Gerando histórico do voo...", detail: "Sequência cronológica dos eventos" },
+    { label: "Elaborando análise técnica...", detail: "Aspectos operacional, humano e material" },
+    { label: "Verificando conformidade normativa...", detail: "Normas SIPAER e regulamentos ANAC" },
+    { label: "Revisando terminologia técnica...", detail: "Padronização CENIPA / ICAO Annex 13" },
+    { label: "Finalizando relatório...", detail: "Consolidação e formatação final" },
+  ];
+
   const handleGenerateReport = useCallback(() => {
     if (!editor) return;
 
-    const reportContent = generateSIPAERReport(templateFormData);
-
-    if (!templateFormData.classificacao|| !templateFormData.tipoAeronave) {
+    if (!templateFormData.classificacao || !templateFormData.tipoAeronave) {
       toast({
         title: "Campo Obrigatório",
         description: "Por favor, preencha pelo menos a classificação e o tipo de aeronave",
@@ -356,34 +370,50 @@ export function ReportEditor({
       });
       return;
     }
-    
-    editor.commands.setContent(reportContent);
-    onContentChange(reportContent);
-    setIsTemplateModalOpen(false);
 
-    // Reset form
-    setTemplateFormData({
-      classificacao: "",
-      tipoAeronave: "",
-      operacao: "",
-      modeloAeronave: "",
-      nivelDanos: "",
-      nivelLesoes: "",
-      contextoAdicional: "",
-      obstaculos: [],
-      faseVoo: "",
-      condicoesMet: [],
-      horasTotais: "",
-      horasAgricola: "",
-      horasTipo: "",
-      altitudeOperacao: "",
+    // Start generation simulation
+    setIsGenerating(true);
+    setGeneratingStep(0);
+
+    const delays = [900, 1000, 1200, 1100, 1300, 1000, 900, 800, 800];
+    let cum = 0;
+    delays.forEach((d, i) => {
+      cum += d;
+      setTimeout(() => setGeneratingStep(i + 1), cum);
     });
 
-    toast({
-      title: "Relatório gerado com sucesso",
-      description: "O template do relatório SIPAER foi inserido no editor.",
-      variant: "success",
-    });
+    setTimeout(() => {
+      const reportContent = generateSIPAERReport(templateFormData);
+      editor.commands.setContent(reportContent);
+      onContentChange(reportContent);
+      setIsGenerating(false);
+      setGeneratingStep(0);
+      setIsTemplateModalOpen(false);
+
+      // Reset form
+      setTemplateFormData({
+        classificacao: "",
+        tipoAeronave: "",
+        operacao: "",
+        modeloAeronave: "",
+        nivelDanos: "",
+        nivelLesoes: "",
+        contextoAdicional: "",
+        obstaculos: [],
+        faseVoo: "",
+        condicoesMet: [],
+        horasTotais: "",
+        horasAgricola: "",
+        horasTipo: "",
+        altitudeOperacao: "",
+      });
+
+      toast({
+        title: "Relatório gerado com sucesso",
+        description: "O template do relatório SIPAER foi inserido no editor.",
+        variant: "success",
+      });
+    }, delays.reduce((a, b) => a + b, 0) + 500);
   }, [editor, templateFormData, onContentChange, toast]);
 
   const handleOpenTemplateModal = useCallback(() => {
@@ -621,8 +651,73 @@ export function ReportEditor({
       </Tabs>
 
       {/* Modal de Criação de Template */}
-      <Dialog open={isTemplateModalOpen} onOpenChange={setIsTemplateModalOpen}>
+      <Dialog open={isTemplateModalOpen} onOpenChange={(open) => { if (!isGenerating) setIsTemplateModalOpen(open); }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          {isGenerating ? (
+            /* ── Processing View ── */
+            <div className="py-6 px-2 space-y-6">
+              <div className="text-center space-y-3">
+                <div className="flex justify-center">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center animate-pulse">
+                    <Sparkles className="w-7 h-7 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold text-base">Gerando relatório SIPAER...</p>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    {generatingStep < GEN_STEPS.length ? GEN_STEPS[generatingStep].label : "Finalizando..."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Progresso</span>
+                  <span>{Math.round((generatingStep / GEN_STEPS.length) * 100)}%</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-500"
+                    style={{ width: `${(generatingStep / GEN_STEPS.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Steps list */}
+              <div className="space-y-2">
+                {GEN_STEPS.map((s, i) => (
+                  <div
+                    key={s.label}
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                      i < generatingStep
+                        ? "bg-emerald-500/5 border border-emerald-500/20"
+                        : i === generatingStep
+                        ? "bg-primary/8 border border-primary/25"
+                        : "bg-muted/20 border border-border/50 opacity-40"
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                      i < generatingStep ? "bg-emerald-500/20" : i === generatingStep ? "bg-primary/20 animate-pulse" : "bg-muted"
+                    }`}>
+                      {i < generatingStep
+                        ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        : i === generatingStep
+                        ? <RefreshCw className="w-3 h-3 text-primary animate-spin" />
+                        : <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />}
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${i <= generatingStep ? "text-foreground" : "text-muted-foreground"}`}>
+                        {s.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 font-mono">{s.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+          <>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Sparkles  className="h-5 w-5 text-primary"/> Criar Template de Relatório</DialogTitle>
             <DialogDescription>
@@ -647,15 +742,7 @@ export function ReportEditor({
                   <SelectItem value="ACIDENTE">Acidente</SelectItem>
                   <SelectItem value="INCIDENTE GRAVE">Incidente Grave</SelectItem>
                   <SelectItem value="INCIDENTE">Incidente</SelectItem>
-                  <SelectItem value="COLISÃO COM OBSTÁCULO">Colisão com Obstáculo</SelectItem>
-                  <SelectItem value="COLISÃO COM FIO/CABO">Colisão com Fio/Cabo</SelectItem>
-                  <SelectItem value="PERDA DE CONTROLE EM VOO">Perda de Controle em Voo</SelectItem>
-                  <SelectItem value="ESTOL EM BAIXA ALTITUDE">Estol em Baixa Altitude</SelectItem>
-                  <SelectItem value="FALHA DE MOTOR">Falha de Motor</SelectItem>
-                  <SelectItem value="ACIDENTE NA DECOLAGEM">Acidente na Decolagem</SelectItem>
-                  <SelectItem value="ACIDENTE DURANTE APLICAÇÃO">Acidente durante Aplicação</SelectItem>
-                  <SelectItem value="COLISÃO COM TERRENO">Colisão com Terreno (CFIT)</SelectItem>
-                  <SelectItem value="OUTROS">Outros</SelectItem>
+                 
                 </SelectContent>
               </Select>
             </div>
@@ -927,6 +1014,8 @@ export function ReportEditor({
             <Sparkles className="h-5 w-5"/> Gerar Relatório
             </Button>
           </DialogFooter>
+          </>
+          )}
         </DialogContent>
       </Dialog>
 
