@@ -51,24 +51,24 @@ function UploadZone({ onUpload }: { onUpload: () => void }) {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Análise Pericial de Áudio</h2>
-          <p className="text-white/50 mt-2">Forense de integridade para CVR, FDR, celular e tablet.</p>
+          <h2 className="text-2xl font-bold text-foreground">Análise Pericial de Áudio</h2>
+          <p className="text-muted-foreground mt-2">Forense de integridade para CVR, FDR, celular e tablet.</p>
         </div>
         <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); onUpload(); }} onClick={onUpload}
-          className={`rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all group ${drag ? "border-violet-400/60 bg-violet-500/10" : "border-white/15 hover:border-violet-400/40 hover:bg-white/[0.02]"}`}>
+          className={`rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all group ${drag ? "border-violet-400/60 bg-violet-500/10" : "border-border hover:border-violet-400/40 hover:bg-muted/20"}`}>
           <div className="flex flex-col items-center gap-3">
-            <Upload className={`w-8 h-8 transition-colors ${drag ? "text-violet-400" : "text-white/30 group-hover:text-violet-400"}`} />
-            <p className="text-white/70 font-medium">Arraste o arquivo ou clique para selecionar</p>
-            <p className="text-white/30 text-sm">WAV · MP3 · OGG — até 500 MB</p>
+            <Upload className={`w-8 h-8 transition-colors ${drag ? "text-violet-400" : "text-muted-foreground group-hover:text-violet-400"}`} />
+            <p className="text-foreground/70 font-medium">Arraste o arquivo ou clique para selecionar</p>
+            <p className="text-muted-foreground/60 text-sm">WAV · MP3 · OGG — até 500 MB</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 text-left">
           {[{ icon: Headphones, label: "CVR", sub: "Cockpit Voice Recorder" }, { icon: Activity, label: "FDR", sub: "Flight Data Recorder" }, { icon: Smartphone, label: "Celular / Tablet", sub: "Gravações de campo" }, { icon: Radio, label: "Rádio", sub: "Comunicações ATC" }].map((s) => {
             const I = s.icon;
             return (
-              <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-border/70">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-400/15 flex items-center justify-center shrink-0"><I className="w-4 h-4 text-violet-400" /></div>
-                <div><p className="text-white/80 text-sm font-medium">{s.label}</p><p className="text-white/35 text-xs">{s.sub}</p></div>
+                <div><p className="text-foreground/80 text-sm font-medium">{s.label}</p><p className="text-muted-foreground/70 text-xs">{s.sub}</p></div>
               </div>
             );
           })}
@@ -90,22 +90,22 @@ function ProcessingView({ step }: { step: number }) {
               <Cpu className="w-7 h-7 text-violet-400" />
             </div>
           </div>
-          <h3 className="text-xl font-bold text-white">Processando áudio...</h3>
-          <p className="text-white/40 text-sm">{step < STEPS.length ? STEPS[step].label : "Finalizando"}</p>
+          <h3 className="text-xl font-bold text-foreground">Processando áudio...</h3>
+          <p className="text-muted-foreground text-sm">{step < STEPS.length ? STEPS[step].label : "Finalizando"}</p>
         </div>
         <div className="space-y-1.5">
-          <div className="flex justify-between text-xs text-white/40"><span>Progresso</span><span>{Math.round((step / STEPS.length) * 100)}%</span></div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="flex justify-between text-xs text-muted-foreground"><span>Progresso</span><span>{Math.round((step / STEPS.length) * 100)}%</span></div>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-gradient-to-r from-violet-600 to-violet-400 rounded-full transition-all duration-500" style={{ width: `${(step / STEPS.length) * 100}%` }} />
           </div>
         </div>
         <div className="space-y-2">
           {STEPS.map((s, i) => (
-            <div key={s.id} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${i < step ? "bg-emerald-500/5 border border-emerald-500/20" : i === step ? "bg-violet-500/10 border border-violet-400/30" : "bg-white/[0.02] border border-white/[0.06] opacity-40"}`}>
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${i < step ? "bg-emerald-500/20" : i === step ? "bg-violet-500/20 animate-pulse" : "bg-white/10"}`}>
-                {i < step ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : i === step ? <RefreshCw className="w-3 h-3 text-violet-400 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-white/20" />}
+            <div key={s.id} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${i < step ? "bg-emerald-500/5 border border-emerald-500/20" : i === step ? "bg-violet-500/10 border border-violet-400/30" : "bg-muted/20 border border-border/70 opacity-40"}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${i < step ? "bg-emerald-500/20" : i === step ? "bg-violet-500/20 animate-pulse" : "bg-muted"}`}>
+                {i < step ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : i === step ? <RefreshCw className="w-3 h-3 text-violet-400 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />}
               </div>
-              <div><p className={`text-sm font-medium ${i <= step ? "text-white" : "text-white/40"}`}>{s.label}</p><p className="text-xs text-white/30 font-mono">{s.detail}</p></div>
+              <div><p className={`text-sm font-medium ${i <= step ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p><p className="text-xs text-muted-foreground/60 font-mono">{s.detail}</p></div>
             </div>
           ))}
         </div>
@@ -145,72 +145,72 @@ function AnalysisView({ waveform, spectroData, mfccFrames, anomalies, onReset }:
   return (
     <div className="flex-1 overflow-y-auto scrollbar-thin">
       {/* Info bar */}
-      <div className="sticky top-0 z-10 bg-[#0d1b2e]/95 backdrop-blur-md border-b border-white/10 px-6 py-3 flex items-center gap-3 flex-wrap">
+      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-md border-b border-border px-6 py-3 flex items-center gap-3 flex-wrap">
         <FileAudio className="w-4 h-4 text-violet-400" />
-        <span className="text-white font-mono text-sm">{FILE.name}</span>
+        <span className="text-foreground font-mono text-sm">{FILE.name}</span>
         <span className="px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-400/25 text-violet-300 text-xs font-mono">CVR</span>
-        {[`${FILE.format}`, `${FILE.sampleRate / 1000} kHz`, `${FILE.bitDepth}-bit`, "Stereo", formatTime(FILE.duration), formatBytes(FILE.size)].map((v, i) => <span key={i} className="text-xs text-white/40 font-mono">{v}</span>)}
+        {[`${FILE.format}`, `${FILE.sampleRate / 1000} kHz`, `${FILE.bitDepth}-bit`, "Stereo", formatTime(FILE.duration), formatBytes(FILE.size)].map((v, i) => <span key={i} className="text-xs text-muted-foreground font-mono">{v}</span>)}
         <div className="ml-auto flex items-center gap-2">
           {highA > 0 && <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs"><AlertTriangle className="w-3 h-3" />{highA} crítico</span>}
           {medA > 0 && <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs"><Info className="w-3 h-3" />{medA} médio</span>}
-          <button onClick={onReset} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white text-xs transition-all"><XCircle className="w-3.5 h-3.5" />Novo arquivo</button>
+          <button onClick={onReset} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/50 hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs transition-all"><XCircle className="w-3.5 h-3.5" />Novo arquivo</button>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Waveform */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <div className="flex items-center gap-2"><Waveform className="w-4 h-4 text-violet-400" /><span className="text-white text-sm font-medium">Forma de Onda</span><span className="text-white/30 text-xs font-mono">PCM temporal</span></div>
+        <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2"><Waveform className="w-4 h-4 text-violet-400" /><span className="text-foreground text-sm font-medium">Forma de Onda</span><span className="text-muted-foreground/60 text-xs font-mono">PCM temporal</span></div>
             <div className="flex items-center gap-2">
-              <button onClick={() => { setPlaying(false); setPlayhead(0); }} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all"><Square className="w-3 h-3 text-white/50" /></button>
+              <button onClick={() => { setPlaying(false); setPlayhead(0); }} className="w-7 h-7 rounded-lg bg-muted/50 hover:bg-muted border border-border flex items-center justify-center transition-all"><Square className="w-3 h-3 text-muted-foreground" /></button>
               <button onClick={() => setPlaying(p => !p)} className="w-7 h-7 rounded-lg bg-violet-500/20 hover:bg-violet-500/30 border border-violet-400/30 flex items-center justify-center transition-all">{playing ? <Pause className="w-3.5 h-3.5 text-violet-400" /> : <Play className="w-3.5 h-3.5 text-violet-400" />}</button>
-              <span className="text-white/30 text-xs font-mono w-14 text-right">{formatTime(playhead)}</span>
+              <span className="text-muted-foreground/60 text-xs font-mono w-14 text-right">{formatTime(playhead)}</span>
             </div>
           </div>
           <div className="p-3"><WaveformCanvas waveform={waveform} anomalies={anomalies} duration={FILE.duration} playhead={playhead} /></div>
         </div>
 
         {/* Spectrogram */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-            <div className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-violet-400" /><span className="text-white text-sm font-medium">Espectrograma STFT</span><span className="text-white/30 text-xs font-mono">0–22 kHz</span></div>
-            <div className="flex items-center gap-3 text-xs font-mono text-white/30"><span>N=4096</span><span>Hop=512</span><span>Hann</span></div>
+        <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-violet-400" /><span className="text-foreground text-sm font-medium">Espectrograma STFT</span><span className="text-muted-foreground/60 text-xs font-mono">0–22 kHz</span></div>
+            <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground/60"><span>N=4096</span><span>Hop=512</span><span>Hann</span></div>
           </div>
           <div className="p-3 space-y-1">
             <AudioSpectrogramCanvas data={spectroData} cols={800} rows={200} anomalies={anomalies} duration={FILE.duration} />
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-white/25 text-[10px]">−∞ dB</span>
+              <span className="text-muted-foreground/50 text-[10px]">−∞ dB</span>
               <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(to right,#0a081e,#281254,#651b6e,#9f2a63,#d44842,#f57d15,#febc2b,#fcffa4)" }} />
-              <span className="text-white/25 text-[10px]">0 dB</span>
+              <span className="text-muted-foreground/50 text-[10px]">0 dB</span>
             </div>
           </div>
         </div>
 
         {/* Features + MFCC */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10"><Activity className="w-4 h-4 text-emerald-400" /><span className="text-white text-sm font-medium">Features Acústicas</span></div>
-            <div className="grid grid-cols-2 gap-px bg-white/5">
+          <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border"><Activity className="w-4 h-4 text-emerald-400" /><span className="text-foreground text-sm font-medium">Features Acústicas</span></div>
+            <div className="grid grid-cols-2 gap-px bg-muted/50">
               {features.map((f) => (
-                <div key={f.label} className="p-4 bg-[#070f1c] hover:bg-white/[0.03] transition-colors">
-                  <div className="flex items-baseline gap-1.5"><span className="text-2xl font-bold font-mono" style={{ color: f.color }}>{f.value}</span>{f.unit && <span className="text-white/40 text-xs font-mono">{f.unit}</span>}</div>
-                  <p className="text-white/50 text-xs mt-0.5">{f.label}</p><p className="text-white/25 text-[10px] font-mono">{f.sub}</p>
+                <div key={f.label} className="p-4 bg-background hover:bg-muted/30 transition-colors">
+                  <div className="flex items-baseline gap-1.5"><span className="text-2xl font-bold font-mono" style={{ color: f.color }}>{f.value}</span>{f.unit && <span className="text-muted-foreground text-xs font-mono">{f.unit}</span>}</div>
+                  <p className="text-muted-foreground text-xs mt-0.5">{f.label}</p><p className="text-muted-foreground/50 text-[10px] font-mono">{f.sub}</p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <div className="flex items-center gap-2"><Layers className="w-4 h-4 text-amber-400" /><span className="text-white text-sm font-medium">MFCCs — Heatmap</span><span className="text-white/30 text-xs font-mono">13 coef × frames</span></div>
+          <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <div className="flex items-center gap-2"><Layers className="w-4 h-4 text-amber-400" /><span className="text-foreground text-sm font-medium">MFCCs — Heatmap</span><span className="text-muted-foreground/60 text-xs font-mono">13 coef × frames</span></div>
             </div>
             <div className="p-4 space-y-3">
               <MFCCHeatmap frames={mfccFrames} />
-              <div className="flex items-center gap-2"><span className="text-white/25 text-[10px]">−15</span><div className="flex-1 h-1.5 rounded" style={{ background: "linear-gradient(to right,#0a081e,#651b6e,#d44842,#febc2b,#fcffa4)" }} /><span className="text-white/25 text-[10px]">+15</span></div>
+              <div className="flex items-center gap-2"><span className="text-muted-foreground/50 text-[10px]">−15</span><div className="flex-1 h-1.5 rounded" style={{ background: "linear-gradient(to right,#0a081e,#651b6e,#d44842,#febc2b,#fcffa4)" }} /><span className="text-muted-foreground/50 text-[10px]">+15</span></div>
               <div className="grid grid-cols-3 gap-2">
                 {[{ label: "C0 médio", value: "-10.3" }, { label: "Variância C1", value: "4.82" }, { label: "Delta MFCC", value: "0.031" }].map(s => (
-                  <div key={s.label} className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center">
-                    <p className="text-amber-400 font-mono text-sm font-bold">{s.value}</p><p className="text-white/35 text-[10px]">{s.label}</p>
+                  <div key={s.label} className="p-2 rounded-lg bg-muted/30 border border-border/70 text-center">
+                    <p className="text-amber-400 font-mono text-sm font-bold">{s.value}</p><p className="text-muted-foreground/70 text-[10px]">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -223,7 +223,7 @@ function AnalysisView({ waveform, spectroData, mfccFrames, anomalies, onReset }:
           <div className="flex items-center justify-between px-4 py-4 border-b border-violet-400/15">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-400/30 flex items-center justify-center"><Sparkles className="w-4 h-4 text-violet-400" /></div>
-              <div><p className="text-white font-semibold text-sm">Interpretação Pericial por IA</p><p className="text-white/35 text-xs font-mono">Modelo forense CENIPA v2.1</p></div>
+              <div><p className="text-foreground font-semibold text-sm">Interpretação Pericial por IA</p><p className="text-muted-foreground/70 text-xs font-mono">Modelo forense CENIPA v2.1</p></div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">Confiança: 86%</span>
@@ -231,8 +231,8 @@ function AnalysisView({ waveform, spectroData, mfccFrames, anomalies, onReset }:
             </div>
           </div>
           <div className="p-6 space-y-5">
-            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-              <p className="text-white/80 text-sm leading-relaxed">O arquivo apresenta <span className="text-red-400 font-medium">indícios consistentes de edição pós-gravação</span>. Foram identificadas <strong className="text-white">{anomalies.length} anomalias</strong> — {highA} de severidade alta e {medA} média. A análise de coerência espectral indica ruptura na cadeia de custódia acústica em ao menos dois pontos.</p>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border">
+              <p className="text-foreground/80 text-sm leading-relaxed">O arquivo apresenta <span className="text-red-400 font-medium">indícios consistentes de edição pós-gravação</span>. Foram identificadas <strong className="text-foreground">{anomalies.length} anomalias</strong> — {highA} de severidade alta e {medA} média. A análise de coerência espectral indica ruptura na cadeia de custódia acústica em ao menos dois pontos.</p>
             </div>
             <div className="space-y-3">
               {anomalies.map((a) => {
@@ -242,15 +242,15 @@ function AnalysisView({ waveform, spectroData, mfccFrames, anomalies, onReset }:
                   <div key={a.id} className={`rounded-xl border ${sc.bg} ${sc.border} overflow-hidden`}>
                     <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => setExpanded(isExp ? null : a.id)}>
                       <div className={`w-2 h-2 rounded-full ${sc.dot} shrink-0`} />
-                      <div className="flex-1"><div className="flex items-center gap-2 flex-wrap"><span className={`text-sm font-semibold ${sc.text}`}>{ANOMALY_TYPE_LABEL[a.type]}</span><span className="text-white/40 text-xs font-mono">{formatTime(a.timestamp)} – {formatTime(a.endTimestamp)}</span><span className="ml-auto text-xs text-white/35 font-mono">Confiança: {a.confidence}%</span></div><p className="text-white/50 text-xs mt-0.5">{a.description}</p></div>
-                      {isExp ? <ChevronUp className="w-4 h-4 text-white/30 shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/30 shrink-0" />}
+                      <div className="flex-1"><div className="flex items-center gap-2 flex-wrap"><span className={`text-sm font-semibold ${sc.text}`}>{ANOMALY_TYPE_LABEL[a.type]}</span><span className="text-muted-foreground text-xs font-mono">{formatTime(a.timestamp)} – {formatTime(a.endTimestamp)}</span><span className="ml-auto text-xs text-muted-foreground/70 font-mono">Confiança: {a.confidence}%</span></div><p className="text-muted-foreground text-xs mt-0.5">{a.description}</p></div>
+                      {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground/60 shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground/60 shrink-0" />}
                     </button>
                     {isExp && (
-                      <div className="px-4 pb-4 border-t border-white/10">
-                        <div className="mt-3 p-3 rounded-lg bg-black/20 border border-white/[0.06]"><p className="text-white/30 text-[10px] font-mono uppercase mb-1.5">Análise técnica</p><p className="text-white/65 text-xs leading-relaxed font-mono">{a.technical}</p></div>
+                      <div className="px-4 pb-4 border-t border-border">
+                        <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/70"><p className="text-muted-foreground/60 text-[10px] font-mono uppercase mb-1.5">Análise técnica</p><p className="text-foreground/65 text-xs leading-relaxed font-mono">{a.technical}</p></div>
                         <div className="mt-3 space-y-1">
-                          <div className="flex justify-between text-[10px] text-white/30 font-mono"><span>Índice de confiança</span><span className={sc.text}>{a.confidence}%</span></div>
-                          <div className="h-1 bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${sc.bar}`} style={{ width: `${a.confidence}%` }} /></div>
+                          <div className="flex justify-between text-[10px] text-muted-foreground/60 font-mono"><span>Índice de confiança</span><span className={sc.text}>{a.confidence}%</span></div>
+                          <div className="h-1 bg-muted rounded-full overflow-hidden"><div className={`h-full rounded-full ${sc.bar}`} style={{ width: `${a.confidence}%` }} /></div>
                         </div>
                       </div>
                     )}
@@ -258,16 +258,16 @@ function AnalysisView({ waveform, spectroData, mfccFrames, anomalies, onReset }:
                 );
               })}
             </div>
-            <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-              <div className="flex items-center gap-2"><Mic className="w-4 h-4 text-violet-400" /><p className="text-white/40 text-xs font-mono uppercase">Conclusão pericial</p></div>
-              <p className="text-white/70 text-sm leading-relaxed">Arquivo classificado como <span className="text-red-400 font-semibold">provavelmente editado</span>. Ruptura de integridade em 00:14.1 e 00:28.5. Recomenda-se análise laboratorial humana confirmatória. Achados compatíveis com edição em DAW e reexportação em taxa de bits inferior.</p>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
+              <div className="flex items-center gap-2"><Mic className="w-4 h-4 text-violet-400" /><p className="text-muted-foreground text-xs font-mono uppercase">Conclusão pericial</p></div>
+              <p className="text-foreground/70 text-sm leading-relaxed">Arquivo classificado como <span className="text-red-400 font-semibold">provavelmente editado</span>. Ruptura de integridade em 00:14.1 e 00:28.5. Recomenda-se análise laboratorial humana confirmatória. Achados compatíveis com edição em DAW e reexportação em taxa de bits inferior.</p>
               <div className="grid grid-cols-3 gap-2">
                 {[{ label: "Integridade", value: "Comprometida", color: "text-red-400" }, { label: "Recomendação", value: "Análise humana", color: "text-amber-400" }, { label: "Cadeia custódia", value: "Rompida", color: "text-red-400" }].map(c => (
-                  <div key={c.label} className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] text-center"><p className={`font-semibold text-sm ${c.color}`}>{c.value}</p><p className="text-white/30 text-[10px] mt-0.5">{c.label}</p></div>
+                  <div key={c.label} className="p-3 rounded-lg bg-muted/30 border border-border/70 text-center"><p className={`font-semibold text-sm ${c.color}`}>{c.value}</p><p className="text-muted-foreground/60 text-[10px] mt-0.5">{c.label}</p></div>
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-white/25 text-xs font-mono"><Clock className="w-3 h-3" /><span>Análise gerada em {new Date().toLocaleString("pt-BR")} — SIPAER AI LabData v1.0</span></div>
+            <div className="flex items-center gap-2 text-muted-foreground/50 text-xs font-mono"><Clock className="w-3 h-3" /><span>Análise gerada em {new Date().toLocaleString("pt-BR")} — SIPAER AI LabData v1.0</span></div>
           </div>
         </div>
       </div>
@@ -296,10 +296,10 @@ export default function AudioAnalysisPage() {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#070f1c] overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-white/[0.06]">
-        <Link href="/labdata" className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-xs transition-colors"><ArrowLeft className="w-3.5 h-3.5" />LabData</Link>
-        <span className="text-white/20">/</span>
+    <div className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-border">
+        <Link href="/labdata" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground/70 text-xs transition-colors"><ArrowLeft className="w-3.5 h-3.5" />LabData</Link>
+        <span className="text-muted-foreground/40">/</span>
         <span className="text-violet-400 text-xs font-medium">Análise Pericial de Áudio</span>
       </div>
       {stage === "upload" && <UploadZone onUpload={handleUpload} />}

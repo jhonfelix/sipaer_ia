@@ -157,13 +157,13 @@ function DocPanel({ doc }: { doc: DocOutput }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-amber-400" />
-          <span className="text-white text-sm font-medium">Documento Gerado</span>
+          <span className="text-foreground text-sm font-medium">Documento Gerado</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleCopy} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white text-xs transition-all">
+          <button onClick={handleCopy} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/50 hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs transition-all">
             {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             {copied ? "Copiado" : "Copiar"}
           </button>
@@ -182,17 +182,17 @@ function DocPanel({ doc }: { doc: DocOutput }) {
         {/* Sections */}
         {doc.sections.map((s, i) => (
           <div key={i} className="space-y-2">
-            <p className="text-white font-semibold text-xs uppercase tracking-wide">{s.heading}</p>
-            <p className="text-white/65 text-xs leading-relaxed whitespace-pre-line">{s.content}</p>
+            <p className="text-foreground font-semibold text-xs uppercase tracking-wide">{s.heading}</p>
+            <p className="text-foreground/65 text-xs leading-relaxed whitespace-pre-line">{s.content}</p>
           </div>
         ))}
 
         {/* References */}
-        <div className="pt-3 border-t border-white/10 space-y-2">
-          <p className="text-white/30 text-[10px] font-mono uppercase tracking-wider">Fundamentos legais</p>
+        <div className="pt-3 border-t border-border space-y-2">
+          <p className="text-muted-foreground/60 text-[10px] font-mono uppercase tracking-wider">Fundamentos legais</p>
           <div className="flex flex-wrap gap-1.5">
             {doc.references.map(r => (
-              <span key={r} className="px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-white/40 text-[10px] font-mono">{r}</span>
+              <span key={r} className="px-2 py-0.5 rounded-full bg-muted/40 border border-border text-muted-foreground text-[10px] font-mono">{r}</span>
             ))}
           </div>
         </div>
@@ -207,7 +207,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   if (msg.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-sm bg-amber-500/15 border border-amber-400/20 text-white/80 text-sm leading-relaxed">
+        <div className="max-w-[80%] px-4 py-3 rounded-2xl rounded-tr-sm bg-amber-500/15 border border-amber-400/20 text-foreground/80 text-sm leading-relaxed">
           {msg.content}
         </div>
       </div>
@@ -225,18 +225,18 @@ function MessageBubble({ msg }: { msg: Message }) {
             <div className="flex gap-1">
               {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-amber-400/60 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
             </div>
-            <span className="text-white/30 text-xs">Elaborando documento...</span>
+            <span className="text-muted-foreground/60 text-xs">Elaborando documento...</span>
           </div>
         ) : (
-          <div className="text-white/75 text-sm leading-relaxed prose-sm">
+          <div className="text-foreground/75 text-sm leading-relaxed prose-sm">
             {msg.content.split("\n").map((line, i) => {
-              if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-white">{line.slice(2, -2)}</p>;
+              if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-foreground">{line.slice(2, -2)}</p>;
               const parts = line.split(/(\*\*[^*]+\*\*)/g);
-              return <p key={i} className={line === "" ? "h-2" : ""}>{parts.map((p, j) => p.startsWith("**") ? <strong key={j} className="text-white font-semibold">{p.slice(2, -2)}</strong> : p)}</p>;
+              return <p key={i} className={line === "" ? "h-2" : ""}>{parts.map((p, j) => p.startsWith("**") ? <strong key={j} className="text-foreground font-semibold">{p.slice(2, -2)}</strong> : p)}</p>;
             })}
           </div>
         )}
-        {!msg.loading && <p className="text-white/20 text-[10px] font-mono">{msg.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>}
+        {!msg.loading && <p className="text-muted-foreground/40 text-[10px] font-mono">{msg.timestamp.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>}
       </div>
     </div>
   );
@@ -285,53 +285,53 @@ export default function DAPage() {
   );
 
   return (
-    <div className="flex-1 flex min-h-0 overflow-hidden bg-[#070f1c]">
+    <div className="flex-1 flex min-h-0 overflow-hidden bg-background">
 
       {/* ── Left Sidebar ── */}
-      <div className="w-64 flex flex-col border-r border-white/[0.07] bg-[#060e1a] shrink-0">
+      <div className="w-64 flex flex-col border-r border-border bg-sidebar shrink-0">
         {/* Header */}
-        <div className="px-4 py-4 border-b border-white/[0.07] space-y-3">
+        <div className="px-4 py-4 border-b border-border space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/25 flex items-center justify-center">
               <Building2 className="w-4 h-4 text-amber-400" />
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">DA</p>
-              <p className="text-white/30 text-[10px]">Divisão Administrativa</p>
+              <p className="text-foreground font-semibold text-sm">DA</p>
+              <p className="text-muted-foreground/60 text-[10px]">Divisão Administrativa</p>
             </div>
           </div>
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar ação..." className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.07] text-white/70 placeholder-white/25 text-xs outline-none focus:border-amber-400/30 focus:bg-white/[0.06] transition-all" />
-            {search && <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-white/25 hover:text-white/50" /></button>}
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar ação..." className="w-full pl-8 pr-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground/70 placeholder:text-muted-foreground/50 text-xs outline-none focus:border-amber-400/30 focus:bg-muted/60 transition-all" />
+            {search && <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground" /></button>}
           </div>
         </div>
 
         {/* Categories */}
-        <div className="px-3 py-2 flex flex-wrap gap-1 border-b border-white/[0.07]">
+        <div className="px-3 py-2 flex flex-wrap gap-1 border-b border-border">
           {categories.map(c => (
-            <button key={c} onClick={() => setActiveCategory(c)} className={`px-2 py-0.5 rounded-full text-[11px] transition-all ${activeCategory === c ? "bg-amber-500/20 border border-amber-400/30 text-amber-300" : "bg-white/[0.03] border border-white/[0.06] text-white/40 hover:text-white/60"}`}>{c}</button>
+            <button key={c} onClick={() => setActiveCategory(c)} className={`px-2 py-0.5 rounded-full text-[11px] transition-all ${activeCategory === c ? "bg-amber-500/20 border border-amber-400/30 text-amber-300" : "bg-muted/40 border border-border text-muted-foreground hover:text-foreground/60"}`}>{c}</button>
           ))}
         </div>
 
         {/* Quick actions */}
         <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
           {filtered.length === 0 ? (
-            <p className="text-white/25 text-xs text-center py-6">Nenhuma ação encontrada</p>
+            <p className="text-muted-foreground/50 text-xs text-center py-6">Nenhuma ação encontrada</p>
           ) : (
             filtered.map(a => {
               const Icon = a.icon;
               return (
-                <button key={a.id} onClick={() => sendMessage(a.prompt)} className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/[0.04] transition-colors text-left group">
+                <button key={a.id} onClick={() => sendMessage(a.prompt)} className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted/40 transition-colors text-left group">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-400/15 flex items-center justify-center shrink-0 group-hover:bg-amber-500/20 transition-colors">
                     <Icon className="w-3.5 h-3.5 text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/70 text-xs font-medium group-hover:text-white/90 truncate">{a.label}</p>
-                    <p className="text-white/25 text-[10px]">{a.category}</p>
+                    <p className="text-foreground/70 text-xs font-medium group-hover:text-foreground/90 truncate">{a.label}</p>
+                    <p className="text-muted-foreground/50 text-[10px]">{a.category}</p>
                   </div>
-                  <ChevronRight className="w-3 h-3 text-white/20 group-hover:text-amber-400 shrink-0 transition-colors" />
+                  <ChevronRight className="w-3 h-3 text-muted-foreground/40 group-hover:text-amber-400 shrink-0 transition-colors" />
                 </button>
               );
             })
@@ -339,17 +339,17 @@ export default function DAPage() {
         </div>
 
         {/* Legal refs */}
-        <div className="border-t border-white/[0.07] px-3 py-3 space-y-2">
+        <div className="border-t border-border px-3 py-3 space-y-2">
           <div className="flex items-center gap-1.5 mb-2">
-            <BookOpen className="w-3.5 h-3.5 text-white/30" />
-            <p className="text-white/30 text-[10px] uppercase tracking-wider">Base Normativa</p>
+            <BookOpen className="w-3.5 h-3.5 text-muted-foreground/60" />
+            <p className="text-muted-foreground/60 text-[10px] uppercase tracking-wider">Base Normativa</p>
           </div>
           {LEGAL_REFS.map(r => (
             <div key={r.label} className="flex items-start gap-2">
               <div className="w-1 h-1 rounded-full bg-amber-400/40 shrink-0 mt-1.5" />
               <div>
                 <p className="text-amber-400/80 text-[11px] font-mono font-medium">{r.label}</p>
-                <p className="text-white/25 text-[10px]">{r.sub}</p>
+                <p className="text-muted-foreground/50 text-[10px]">{r.sub}</p>
               </div>
             </div>
           ))}
@@ -359,13 +359,13 @@ export default function DAPage() {
       {/* ── Chat ── */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.07] bg-[#060e1a] shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-sidebar shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="text-white font-medium text-sm">Assistente Administrativo</span>
+            <span className="text-foreground font-medium text-sm">Assistente Administrativo</span>
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           </div>
-          <button onClick={() => { setMessages([WELCOME]); setActiveDoc(null); }} className="flex items-center gap-1.5 text-white/30 hover:text-white/60 text-xs transition-colors">
+          <button onClick={() => { setMessages([WELCOME]); setActiveDoc(null); }} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground/60 text-xs transition-colors">
             <RefreshCw className="w-3.5 h-3.5" />Nova conversa
           </button>
         </div>
@@ -377,7 +377,7 @@ export default function DAPage() {
         </div>
 
         {/* Input */}
-        <div className="px-5 py-4 border-t border-white/[0.07] bg-[#060e1a] shrink-0">
+        <div className="px-5 py-4 border-t border-border bg-sidebar shrink-0">
           <div className="flex gap-3 items-end">
             <div className="flex-1 relative">
               <textarea
@@ -386,9 +386,9 @@ export default function DAPage() {
                 onKeyDown={handleKey}
                 rows={2}
                 placeholder="Descreva o documento ou dúvida administrativa..."
-                className="w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white/80 placeholder-white/25 text-sm outline-none focus:border-amber-400/30 focus:bg-white/[0.06] resize-none transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-muted/40 border border-border text-foreground/80 placeholder:text-muted-foreground/50 text-sm outline-none focus:border-amber-400/30 focus:bg-muted/60 resize-none transition-all"
               />
-              <p className="absolute bottom-2 right-3 text-white/15 text-[10px]">Enter para enviar</p>
+              <p className="absolute bottom-2 right-3 text-muted-foreground/30 text-[10px]">Enter para enviar</p>
             </div>
             <button
               onClick={() => sendMessage(input)}
@@ -399,23 +399,23 @@ export default function DAPage() {
             </button>
           </div>
           <div className="flex items-center gap-1.5 mt-2">
-            <AlertCircle className="w-3 h-3 text-white/20" />
-            <p className="text-white/20 text-[10px]">Sugestões baseadas em IA. Consulte sempre o setor jurídico para decisões formais.</p>
+            <AlertCircle className="w-3 h-3 text-muted-foreground/40" />
+            <p className="text-muted-foreground/40 text-[10px]">Sugestões baseadas em IA. Consulte sempre o setor jurídico para decisões formais.</p>
           </div>
         </div>
       </div>
 
       {/* ── Right Panel: Document Output ── */}
-      <div className={`flex flex-col border-l border-white/[0.07] bg-[#060e1a] transition-all duration-300 ${activeDoc ? "w-80" : "w-0 overflow-hidden"}`}>
+      <div className={`flex flex-col border-l border-border bg-sidebar transition-all duration-300 ${activeDoc ? "w-80" : "w-0 overflow-hidden"}`}>
         {activeDoc && (
           <>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <Plus className="w-4 h-4 text-amber-400 rotate-45" />
-                <span className="text-white/50 text-xs">Prévia do documento</span>
+                <span className="text-muted-foreground text-xs">Prévia do documento</span>
               </div>
-              <button onClick={() => setActiveDoc(null)} className="w-6 h-6 rounded-lg hover:bg-white/[0.06] flex items-center justify-center transition-colors">
-                <X className="w-3.5 h-3.5 text-white/30 hover:text-white/60" />
+              <button onClick={() => setActiveDoc(null)} className="w-6 h-6 rounded-lg hover:bg-muted/60 flex items-center justify-center transition-colors">
+                <X className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-foreground/60" />
               </button>
             </div>
             <DocPanel doc={activeDoc} />
@@ -424,8 +424,8 @@ export default function DAPage() {
         {!activeDoc && (
           <div className="flex-1 flex items-center justify-center p-6 text-center">
             <div className="space-y-2">
-              <FileText className="w-8 h-8 text-white/10 mx-auto" />
-              <p className="text-white/20 text-xs">O documento gerado aparecerá aqui</p>
+              <FileText className="w-8 h-8 text-muted-foreground/20 mx-auto" />
+              <p className="text-muted-foreground/40 text-xs">O documento gerado aparecerá aqui</p>
             </div>
           </div>
         )}
