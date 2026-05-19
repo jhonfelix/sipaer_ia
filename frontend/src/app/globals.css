@@ -934,7 +934,7 @@
   object-fit: contain;
 }
 
-/* Drag-to-resize handle */
+/* Drag-to-resize handle (barra lateral direita) */
 .ib-resize-handle {
   position: absolute;
   right: -5px;
@@ -946,14 +946,36 @@
   border-radius: 4px;
   cursor: ew-resize;
   z-index: 20;
-  opacity: 0.75;
+  opacity: 0;
   box-shadow: 0 1px 5px oklch(0 0 0 / 0.35);
-  transition: opacity 0.1s, height 0.1s;
+  transition: opacity 0.15s, height 0.1s;
 }
-.ib-resize-handle:hover {
+.ib-img-wrap:hover .ib-resize-handle,
+.ib-figure--selected .ib-resize-handle {
+  opacity: 0.75;
+}
+.ib-resize-handle:hover { opacity: 1 !important; height: 52px; }
+
+/* Handle de canto (canto inferior direito) */
+.ib-resize-corner {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  background: var(--background);
+  border: 2.5px solid var(--primary);
+  border-radius: 50%;
+  cursor: se-resize;
+  z-index: 21;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.ib-img-wrap:hover .ib-resize-corner,
+.ib-figure--selected .ib-resize-corner {
   opacity: 1;
-  height: 52px;
 }
+.ib-resize-corner:hover { transform: scale(1.2); }
 
 /* Floating toolbar over image */
 .ib-toolbar {

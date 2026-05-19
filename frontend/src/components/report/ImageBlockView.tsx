@@ -5,10 +5,11 @@ import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import {
   ImageIcon, Upload, Link, AlignLeft, AlignCenter, AlignRight, X, Loader2,
-  MoreHorizontal, Copy, Download, Type, Files, Trash2, RefreshCw,
+  MoreHorizontal, Copy, Download, Type, Files, Trash2, RefreshCw, Crop,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { media } from "@/lib/api";
+import { ImageCropDialog } from "./ImageCropDialog";
 
 const SIZE_PRESETS = [
   { label: "25%", value: "25%" },
@@ -36,6 +37,7 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
   const [uploading,   setUploading]   = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showMenu,    setShowMenu]    = useState(false);
+  const [showCrop,    setShowCrop]    = useState(false);
 
   // ── Fechar menu ao clicar fora ─────────────────────────────────────────
   useEffect(() => {
@@ -137,6 +139,25 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
         .run();
     }
   }, [editor, getPos, node.nodeSize, src, alt, align, width]);
+
+  // ── Crop ───────────────────────────────────────────────────────────────
+  const handleCropOpen = useCallback(() => {
+    setShowMenu(false);
+    setShowCrop(true);
+  }, []);
+
+  const handleCropConfirm = useCallback(async (blob: Blob) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reportId = (editor.storage as any).imageBlock?.reportId as string | undefined;
+    const file = new File([blob], "crop.jpg", { type: "image/jpeg" });
+    const result = await media.upload(file, reportId);
+    if (src?.startsWith("/media/")) {
+      const parts = src.split("/").filter(Boolean);
+      media.remove(parts[1], parts[2]).catch(() => {});
+    }
+    updateAttributes({ src: result.url });
+    setShowCrop(false);
+  }, [editor, src, updateAttributes]);
 
   // ── Drag-to-resize ─────────────────────────────────────────────────────
   const startResize = useCallback((e: React.MouseEvent) => {
@@ -261,11 +282,11 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
         <div ref={imgWrapRef} className="ib-img-wrap" style={wrapStyle} contentEditable={false}>
           <img src={src} alt={alt} className="ib-img" draggable={false} />
 
-          {/* Resize handle */}
-          {selected && (
-            <div className="ib-resize-handle" onMouseDown={startResize}
-              title="Arrastar para redimensionar" />
-          )}
+          {/* Handles de resize — visíveis ao hover, funcionam sem seleção */}
+          <div className="ib-resize-handle" onMouseDown={startResize}
+            title="Arrastar para redimensionar" />
+          <div className="ib-resize-corner" onMouseDown={startResize}
+            title="Arrastar para redimensionar" />
 
           {/* Toolbar flutuante (selecionado) */}
           {selected && (
@@ -315,7 +336,7 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
           {/* Botões de hover (não selecionado) */}
           {!selected && (
             <div className="ib-hover-actions" contentEditable={false} ref={menuRef}>
-              {/* Botão baixar */}
+              {/* Baixar */}
               <button
                 className="ib-hover-btn"
                 title="Baixar"
@@ -324,7 +345,7 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
                 <Download className="w-3.5 h-3.5" />
               </button>
 
-              {/* Botão ⋯ mais opções */}
+              {/* ⋯ Mais opções */}
               <button
                 className="ib-hover-btn"
                 title="Mais opções"
@@ -359,6 +380,11 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
                     <kbd className="ib-menu-kbd">Ctrl+Alt+M</kbd>
                   </button>
 
+                  <button className="ib-menu-item" onClick={handleCropOpen}>
+                    <Crop className="w-3.5 h-3.5" />
+                    <span>Recortar imagem</span>
+                  </button>
+
                   <div className="ib-menu-divider" />
 
                   <button className="ib-menu-item" onClick={handleDuplicate}>
@@ -383,6 +409,14 @@ export function ImageBlockView({ node, updateAttributes, selected, editor, getPo
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <NodeViewContent as={"figcaption" as any} className="ib-caption" style={wrapStyle} />
       </figure>
+
+      {showCrop && src && (
+        <ImageCropDialog
+          src={src}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setShowCrop(false)}
+        />
+      )}
     </NodeViewWrapper>
   );
 }
