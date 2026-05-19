@@ -5,6 +5,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./media:/media:ro
     depends_on:
       - frontend
     networks:
@@ -38,6 +39,8 @@ services:
       - CCABR_API_KEY=${CCABR_API_KEY}
       - CCABR_BASE_URL=${CCABR_BASE_URL}
       - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./media:/app/media
     depends_on:
       mysql:
         condition: service_healthy

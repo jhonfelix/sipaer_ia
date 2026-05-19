@@ -295,6 +295,7 @@ export default function ReportEditPage() {
         className="flex-1 min-w-0 flex flex-col h-full overflow-hidden"
       >
         <ReportEditor
+          reportId={report?.id}
           documentContent={documentContent}
           onContentChange={handleContentChange}
           onSubsectionVisible={handleSubsectionVisible}

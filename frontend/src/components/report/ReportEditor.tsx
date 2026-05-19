@@ -212,6 +212,7 @@ ${data.contextoAdicional ? `<p><strong>Informações Adicionais:</strong> ${data
 }
 
 export interface ReportEditorProps {
+  reportId?: string;
   documentContent: string;
   onContentChange: (content: string) => void;
   onSubsectionVisible?: (subsectionId: string) => void;
@@ -222,6 +223,7 @@ export interface ReportEditorProps {
 }
 
 export function ReportEditor({
+  reportId,
   documentContent,
   onContentChange,
   onSubsectionVisible,
@@ -414,6 +416,13 @@ export function ReportEditor({
     }
   }, [editor, documentContent]);
 
+  // Sync reportId into ImageBlock extension storage so ImageBlockView can read it
+  useEffect(() => {
+    if (editor && reportId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (editor.storage as any).imageBlock.reportId = reportId;
+    }
+  }, [editor, reportId]);
 
   // File drop on editor → insert ImageBlock
   useEffect(() => {
@@ -760,11 +769,12 @@ export function ReportEditor({
             <MessageSquarePlus className="h-5 w-5" />
           </Button>
 
-          {/* Suggestion hint indicator */}
+          {/* Suggestion hint indicator 
           <div className="absolute bottom-4 right-16 flex items-center gap-2 text-[10px] text-muted-foreground/60 pointer-events-none select-none">
             <Lightbulb className="w-3 h-3" />
             Sugestões IA ativas
           </div>
+          */}
         </TabsContent>
 
         {/* Split Tab */}

@@ -27,3 +27,4 @@ class User(Base):
         "Report", foreign_keys="Report.created_by", back_populates="creator", lazy="selectin"
     )
     conversations = relationship("Conversation", back_populates="user", lazy="selectin")
+    media_files = relationship("MediaFile", back_populates="uploader")

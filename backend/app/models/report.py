@@ -22,6 +22,7 @@ class Report(Base):
     )
 
     creator = relationship("User", foreign_keys=[created_by], back_populates="reports_created")
+    media_files = relationship("MediaFile", back_populates="report", cascade="all, delete-orphan")
     sections = relationship(
         "ReportSection", back_populates="report", order_by="ReportSection.order", lazy="selectin",
         cascade="all, delete-orphan"

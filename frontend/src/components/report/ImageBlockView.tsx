@@ -4,9 +4,10 @@ import { useRef, useState, useCallback } from "react";
 import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import {
-  ImageIcon, Upload, Link, AlignLeft, AlignCenter, AlignRight, X,
+  ImageIcon, Upload, Link, AlignLeft, AlignCenter, AlignRight, X, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { media } from "@/lib/api";
 
 const SIZE_PRESETS = [
   { label: "25%", value: "25%" },
@@ -24,16 +25,29 @@ export function ImageBlockView({ node, updateAttributes, selected, editor }: Nod
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const swapInputRef = useRef<HTMLInputElement>(null);
   const imgWrapRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<"upload" | "url">("upload");
   const [urlValue, setUrlValue] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const applyFile = useCallback((file: File) => {
+  const applyFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
-    const url = URL.createObjectURL(file);
-    updateAttributes({ src: url, alt: file.name.replace(/\.[^/.]+$/, "") });
-  }, [updateAttributes]);
+    setUploading(true);
+    setUploadError(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const reportId = (editor.storage as any).imageBlock?.reportId as string | undefined;
+      const result = await media.upload(file, reportId);
+      updateAttributes({ src: result.url, alt: file.name.replace(/\.[^/.]+$/, "") });
+    } catch {
+      setUploadError("Falha no upload. Tente novamente.");
+    } finally {
+      setUploading(false);
+    }
+  }, [editor, updateAttributes]);
 
   const applyUrl = useCallback(() => {
     const trimmed = urlValue.trim();
@@ -41,6 +55,20 @@ export function ImageBlockView({ node, updateAttributes, selected, editor }: Nod
     updateAttributes({ src: trimmed });
     setUrlValue("");
   }, [urlValue, updateAttributes]);
+
+  const handleRemove = useCallback(async () => {
+    if (src?.startsWith("/media/")) {
+      const parts = src.split("/").filter(Boolean); // ["media", "images", "uuid.jpg"]
+      const subfolder = parts[1];
+      const filename = parts[2];
+      try {
+        await media.remove(subfolder, filename);
+      } catch {
+        // arquivo já inexistente — prossegue removendo do editor
+      }
+    }
+    updateAttributes({ src: null });
+  }, [src, updateAttributes]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -116,11 +144,20 @@ export function ImageBlockView({ node, updateAttributes, selected, editor }: Nod
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) applyFile(file);
+                  e.target.value = "";
                 }}
               />
-              <button className="ib-upload-btn" onClick={() => fileInputRef.current?.click()}>
-                Escolher arquivo
-              </button>
+              {uploading ? (
+                <div className="ib-uploading">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Enviando…</span>
+                </div>
+              ) : (
+                <button className="ib-upload-btn" onClick={() => fileInputRef.current?.click()}>
+                  Escolher arquivo
+                </button>
+              )}
+              {uploadError && <p className="ib-error">{uploadError}</p>}
               <p className="ib-hint">ou arraste e solte aqui</p>
             </>
           ) : (
@@ -222,15 +259,23 @@ export function ImageBlockView({ node, updateAttributes, selected, editor }: Nod
               <div className="ib-tb-sep" />
 
               {/* Swap / Remove */}
+              <input
+                ref={swapInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) applyFile(file);
+                  e.target.value = "";
+                }}
+              />
               <button className="ib-tb-btn" title="Trocar imagem"
-                onClick={() => {
-                  const url = window.prompt("Nova URL da imagem:", src);
-                  if (url) updateAttributes({ src: url });
-                }}>
+                onClick={() => swapInputRef.current?.click()}>
                 <Upload className="w-3.5 h-3.5" />
               </button>
               <button className="ib-tb-btn ib-tb-btn--danger" title="Remover imagem"
-                onClick={() => updateAttributes({ src: null })}>
+                onClick={handleRemove}>
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>

@@ -859,6 +859,19 @@
   color: var(--muted-foreground);
   margin: 0;
 }
+.ib-uploading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  padding: 0.25rem 0;
+}
+.ib-error {
+  font-size: 0.75rem;
+  color: var(--destructive);
+  margin: 0.25rem 0 0;
+}
 .ib-url-row {
   display: flex;
   gap: 0.4rem;

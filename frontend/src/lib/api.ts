@@ -272,6 +272,37 @@ export const reports = {
   },
 };
 
+// ── Upload ────────────────────────────────────────────────────────────────────
+
+export interface UploadResult {
+  url: string;
+  filename: string;
+  size: number;
+  type: string;
+  subfolder: "images" | "documents" | "audio";
+}
+
+export const media = {
+  async upload(file: File, reportId?: string): Promise<UploadResult> {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    if (reportId) body.append("report_id", reportId);
+    const res = await fetch(`${BASE}/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(res.status, data.detail ?? "Erro no upload");
+    return data as UploadResult;
+  },
+
+  async remove(subfolder: string, filename: string): Promise<void> {
+    await request<void>(`/upload/${subfolder}/${filename}`, { method: "DELETE" });
+  },
+};
+
 // ── Chat ──────────────────────────────────────────────────────────────────────
 
 export const chat = {

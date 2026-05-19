@@ -10,6 +10,10 @@ export const ImageBlock = Node.create({
   isolating: true,
   selectable: true,
 
+  addStorage() {
+    return { reportId: null as string | null };
+  },
+
   addAttributes() {
     return {
       src: {
@@ -42,15 +46,18 @@ export const ImageBlock = Node.create({
         src: (el as HTMLElement).querySelector("img")?.getAttribute("src") ?? null,
         alt: (el as HTMLElement).querySelector("img")?.getAttribute("alt") ?? "",
         align: (el as HTMLElement).getAttribute("data-align") ?? "center",
+        width: (el as HTMLElement).getAttribute("data-width") ?? null,
       }),
     }];
   },
 
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes, node }) {
+    const { src, alt } = node.attrs as { src: string | null; alt: string };
     return [
       "figure",
       mergeAttributes(HTMLAttributes, { "data-image-block": "" }),
-      0,
+      ["img", { src: src ?? "", alt: alt ?? "" }],
+      ["figcaption", 0],
     ];
   },
 
