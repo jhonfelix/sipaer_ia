@@ -10,6 +10,7 @@ import {
   Send,
   ExternalLink,
   ClipboardPaste,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -25,6 +26,7 @@ interface AIAssistantPanelProps {
   suggestedPrompts: string[];
   onSendMessage: (message: string) => void;
   onQuickAction: (action: AIQuickAction) => void;
+  onClose?: () => void;
   editor?: Editor | null;
 }
 
@@ -41,6 +43,7 @@ export function AIAssistantPanel({
   suggestedPrompts,
   onSendMessage,
   onQuickAction,
+  onClose,
   editor,
 }: AIAssistantPanelProps) {
   const [inputValue, setInputValue] = useState("");
@@ -95,15 +98,24 @@ export function AIAssistantPanel({
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <Bot className="w-5 h-5 text-primary" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-sm">Assistente SIPAER</h2>
             <p className="text-xs text-muted-foreground">
               Especialista em relatórios técnicos
             </p>
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="shrink-0 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              title="Fechar assistente"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-3">
           <div className="flex items-center gap-1.5">

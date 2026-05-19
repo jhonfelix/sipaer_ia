@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2, Bot } from "lucide-react";
 import {
   ReportSidebar,
   ReportEditor,
@@ -182,6 +182,7 @@ export default function ReportEditPage() {
   const [isSaved, setIsSaved] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIMessage[]>(mockAIMessages);
+  const [aiOpen, setAiOpen] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -305,13 +306,30 @@ export default function ReportEditPage() {
           scrollContainerRef={editorScrollRef}
         />
       </div>
-      <AIAssistantPanel
-        messages={aiMessages}
-        quickActions={mockQuickActions}
-        suggestedPrompts={mockSuggestedPrompts}
-        onSendMessage={handleSendMessage}
-        onQuickAction={handleQuickAction}
-      />
+      {aiOpen && (
+        <AIAssistantPanel
+          messages={aiMessages}
+          quickActions={mockQuickActions}
+          suggestedPrompts={mockSuggestedPrompts}
+          onSendMessage={handleSendMessage}
+          onQuickAction={handleQuickAction}
+          onClose={() => setAiOpen(false)}
+        />
+      )}
+
+      {/* Botão flutuante — abre o Assistente SIPAER */}
+      {!aiOpen && (
+        <button
+          onClick={() => setAiOpen(true)}
+          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all hover:scale-105 active:scale-95"
+          title="Assistente SIPAER"
+          aria-label="Abrir Assistente SIPAER"
+        >
+          <Bot className="w-6 h-6" />
+          {/* Indicador de online */}
+          <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background" />
+        </button>
+      )}
     </>
   );
 }
