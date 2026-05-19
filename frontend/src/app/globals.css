@@ -1003,6 +1003,93 @@
   margin: 0 2px;
 }
 
+/* ── Hover actions (⋯ + X) ── */
+.ib-hover-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  z-index: 20;
+}
+.ib-img-wrap:hover .ib-hover-actions {
+  display: flex;
+}
+.ib-hover-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: oklch(0.12 0 0 / 0.65);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ib-hover-btn:hover           { background: oklch(0.25 0 0 / 0.85); }
+.ib-hover-btn--danger:hover   { background: #ef4444; }
+
+/* ── Dropdown menu ── */
+.ib-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 210px;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.14);
+  padding: 6px;
+  z-index: 50;
+}
+.ib-menu-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px 6px;
+  margin: 0;
+}
+.ib-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.ib-menu-item:hover            { background: var(--accent); }
+.ib-menu-item--danger          { color: #ef4444; }
+.ib-menu-item--danger:hover    { background: oklch(0.45 0.2 25 / 0.15); }
+.ib-menu-item span             { flex: 1; }
+.ib-menu-kbd {
+  font-size: 0.68rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: monospace;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.ib-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
 /* Editable caption */
 .ib-caption {
   margin-top: 0.35rem;
