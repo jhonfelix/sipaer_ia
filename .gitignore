@@ -32,6 +32,14 @@ mysql/data/
 qdrant/storage/
 redis/data/
 
+# Arquivos de mídia — ignora conteúdo, preserva estrutura de pastas
+media/images/*
+media/documents/*
+media/audio/*
+!media/images/.gitkeep
+!media/documents/.gitkeep
+!media/audio/.gitkeep
+
 # IDEs
 .vscode/
 .idea/
