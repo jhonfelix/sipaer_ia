@@ -1,0 +1,116 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+    networks:
+      - sipaer
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - sipaer
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8000"   # exposto para dev/Swagger (8000 ocupado pelo Docker Desktop)
+    env_file: .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - QDRANT_URL=${QDRANT_URL}
+      - CCABR_API_KEY=${CCABR_API_KEY}
+      - CCABR_BASE_URL=${CCABR_BASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    networks:
+      - sipaer
+
+  mysql:
+    image: mysql:8.0
+    # Configs via command para evitar problema de permissão world-writable no Windows
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=America/Sao_Paulo
+      --max-connections=200
+      --innodb-buffer-pool-size=268435456
+      --innodb-file-per-table=ON
+      --slow-query-log=1
+      --long-query-time=2
+      --skip-log-bin
+    ports:
+      - "3306:3306"
+    env_file: .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-sipaer_db}
+      - MYSQL_USER=${MYSQL_USER:-sipaer}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sipaer
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+      - ./qdrant/config.yaml:/qdrant/config/production.yaml:ro
+    networks:
+      - sipaer
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - sipaer
+
+volumes:
+  mysql_data:
+  qdrant_data:
+  redis_data:
+
+networks:
+  sipaer:
+    driver: bridge

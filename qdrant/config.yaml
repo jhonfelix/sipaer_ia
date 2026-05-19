@@ -1,0 +1,25 @@
+service:
+  host: 0.0.0.0
+  http_port: 6333
+  grpc_port: 6334
+  # Máximo de requisições simultâneas
+  max_request_size_mb: 32
+  max_workers: 0   # 0 = número de CPUs disponíveis
+
+storage:
+  storage_path: /qdrant/storage
+  # Snapshots ficam dentro do volume
+  snapshots_path: /qdrant/storage/snapshots
+
+  # Configurações padrão para novas coleções
+  # (sobreposto no código via vector_service.ensure_collection)
+  on_disk_payload: true
+
+  performance:
+    max_search_threads: 0   # 0 = auto
+    max_optimization_threads: 1
+
+log_level: INFO
+
+# Desabilitar telemetria
+telemetry_disabled: true
