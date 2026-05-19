@@ -72,6 +72,7 @@ interface RawUser {
   email: string;
   role: string;
   unit: string;
+  posto_graduacao: string | null;
   avatar: string | null;
   created_at: string;
 }
@@ -122,6 +123,7 @@ function mapUser(raw: RawUser): User {
     email: raw.email,
     role: raw.role as User["role"],
     unit: raw.unit,
+    postoGraduacao: raw.posto_graduacao ?? undefined,
     avatar: raw.avatar ?? undefined,
   };
 }
@@ -211,6 +213,14 @@ export const auth = {
 
   logout(): void {
     clearToken();
+  },
+};
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export const users = {
+  async list(): Promise<User[]> {
+    return (await request<RawUser[]>("/auth/users")).map(mapUser);
   },
 };
 

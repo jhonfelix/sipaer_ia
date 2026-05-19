@@ -35,6 +35,38 @@ const sectionIcons: Record<number, React.ReactNode> = {
   6: <Shield className="w-4 h-4" />,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function occurrenceLabel(occ: any): string {
+  const parts: string[] = [];
+  const reg = occ.aircraft?.[0]?.registration ?? occ.aircraft?.registration;
+  if (reg) parts.push(reg);
+  const cls = occ.classification;
+  if (cls) parts.push(cls);
+  const rawDate = occ.dateTime ?? occ.date;
+  if (rawDate) {
+    try {
+      parts.push(new Date(rawDate).toLocaleDateString("pt-BR"));
+    } catch {
+      parts.push(String(rawDate));
+    }
+  }
+  return parts.join(" — ") || "Sem identificação";
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function occurrenceSubLabel(occ: any): string {
+  const parts: string[] = [];
+  const mfr = occ.aircraft?.[0]?.manufacturer ?? occ.aircraft?.manufacturer;
+  const mdl = occ.aircraft?.[0]?.model ?? occ.aircraft?.model;
+  if (mfr || mdl) parts.push([mfr, mdl].filter(Boolean).join(" "));
+  const place =
+    occ.location?.aerodromeName ?? occ.aerodrome;
+  const state =
+    occ.location?.state ?? occ.uf;
+  if (place || state) parts.push([place || "Local", state].filter(Boolean).join("/"));
+  return parts.join(" — ") || "";
+}
+
 function getCompletedCount(section: ReportSection): number {
   if (!section.subsections) return section.isCompleted ? 1 : 0;
   return section.subsections.filter((s) => s.isCompleted).length;
@@ -56,9 +88,9 @@ export function ReportSidebar({
   ]);
 
   const occurrence = report.occurrence;
-  const progressPercentage = Math.round(
-    (report.progress.completed / report.progress.total) * 100
-  );
+  const progressPercentage = report.progress.total > 0
+    ? Math.round((report.progress.completed / report.progress.total) * 100)
+    : 0;
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) =>
@@ -107,11 +139,10 @@ export function ReportSidebar({
         {/* Info da Ocorrência */}
         <div className="space-y-1">
           <p className="text-xs font-medium">
-            {occurrence.aircraft[0]?.registration} - {occurrence.classification}{" "}
-            - {occurrence.dateTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+            {occurrenceLabel(occurrence)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {occurrence.aircraft[0]?.manufacturer} {occurrence.aircraft[0]?.model} - {occurrence.location.aerodromeName || "Local"}/{occurrence.location.state}
+            {occurrenceSubLabel(occurrence)}
           </p>
         </div>
       </div>

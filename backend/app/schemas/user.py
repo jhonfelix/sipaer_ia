@@ -9,6 +9,7 @@ class UserCreate(BaseModel):
     password: str
     role: str = "investigator"
     unit: str
+    posto_graduacao: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -19,5 +20,6 @@ class UserResponse(BaseModel):
     email: str
     role: str
     unit: str
+    posto_graduacao: str | None
     avatar: str | None
     created_at: datetime

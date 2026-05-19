@@ -94,8 +94,10 @@ export interface Occurrence {
   id: string;
   sumaNumber: string;         // A-092/CENIPA/2024
   investigationUnit: string;  // SERIPA II
+  investigator?: string;      // Investigador encarregado
   dateTime: Date;
   classification: OccurrenceClassification;
+  occurrenceType?: OccurrenceType;
   types: OccurrenceType[];
   location: Location;
   aircraft: Aircraft[];
@@ -153,5 +155,6 @@ export interface User {
   email: string;
   role: "investigator" | "reviewer" | "manager" | "admin";
   unit: string;
+  postoGraduacao?: string;
   avatar?: string;
 }

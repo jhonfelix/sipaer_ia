@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -24,7 +24,8 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react";
-import { reports as reportsApi, ApiError } from "@/lib/api";
+import { reports as reportsApi, users as usersApi, ApiError } from "@/lib/api";
+import type { User } from "@/types/report";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -47,6 +48,7 @@ interface OccFormData {
   date: string;
   time: string;
   classification: string;
+  occurrenceType: string;
   aerodrome: string;
   coordLat: string;
   coordLon: string;
@@ -75,7 +77,7 @@ interface OccFormData {
 }
 
 const EMPTY_FORM: OccFormData = {
-  number: "", date: "", time: "", classification: "", aerodrome: "",
+  number: "", date: "", time: "", classification: "", occurrenceType: "", aerodrome: "",
   coordLat: "", coordLon: "", invUnit: "", municipality: "", uf: "",
   acRegistration: "", acManufacturer: "", acModel: "", acOperator: "",
   acOperation: "", acDamage: "",
@@ -545,8 +547,67 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
-function buildSections(type: DocType, scope: Scope, agro: boolean) {
+function isFormEmpty(form: OccFormData): boolean {
+  return !form.date && !form.classification && !form.acRegistration;
+}
+
+function td(label: string, value: string, span = 1) {
+  return `<td class="sipaer-label">${label}</td><td class="sipaer-value"${span > 1 ? ` colspan="${span}"` : ""}>${value || "&nbsp;"}</td>`;
+}
+
+function buildOccurrenceHTML(form: OccFormData, investigator: string): string {
+  const occType = OCCURRENCE_TYPE_OPTIONS.find(o => o.value === form.occurrenceType);
+  const classLabel = CLASSIFICATION_OPTIONS.find(o => o.value === form.classification)?.label ?? form.classification;
+  const damageLabel = DAMAGE_OPTIONS.find(o => o.value === form.acDamage)?.label ?? form.acDamage;
+  const operLabel = OPERATION_OPTIONS.find(o => o.value === form.acOperation)?.label ?? form.acOperation;
+
+  const dateStr = form.date
+    ? new Date(form.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "";
+  const datetimeStr = [dateStr, form.time ? `${form.time} (UTC)` : ""].filter(Boolean).join(" — ");
+  const coords = [form.coordLat, form.coordLon].filter(Boolean).join("  ");
+  const municipioUF = [form.municipality, form.uf].filter(Boolean).join("/");
+
+  const occTable = `<table class="sipaer-table"><tbody>
+<tr><th class="sipaer-header" colspan="4">DADOS DA OCORRÊNCIA</th></tr>
+<tr>${td("DATA - HORA", datetimeStr)}${td("INVESTIGAÇÃO", form.invUnit)}</tr>
+<tr>${td("SUMA Nº", form.number)}${td("CLASSIFICAÇÃO", classLabel)}</tr>
+<tr>${td("TIPO", occType ? `[${occType.value}] ${occType.label.split("—")[1]?.trim() ?? occType.value}` : "", 3)}</tr>
+<tr>${td("AERÓDROMO", form.aerodrome)}${td("MUNICÍPIO/UF", municipioUF)}</tr>
+<tr>${td("COORDENADAS", coords, 3)}</tr>
+<tr>${td("INVESTIGADOR ENCARREGADO", investigator, 3)}</tr>
+</tbody></table>`;
+
+  const acTable = `<table class="sipaer-table"><tbody>
+<tr><th class="sipaer-header" colspan="6">DADOS DA AERONAVE</th></tr>
+<tr>${td("MATRÍCULA", form.acRegistration)}${td("FABRICANTE", form.acManufacturer)}${td("MODELO", form.acModel)}</tr>
+<tr>${td("OPERADOR", form.acOperator, 3)}${td("OPERAÇÃO", operLabel)}</tr>
+<tr>${td("DANOS À AERONAVE", damageLabel, 5)}</tr>
+</tbody></table>`;
+
+  const rows = [
+    { label: "Tripulantes", none: form.crewNone, minor: form.crewMinor, serious: form.crewSerious, fatal: form.crewFatal },
+    { label: "Passageiros", none: form.paxNone, minor: form.paxMinor, serious: form.paxSerious, fatal: form.paxFatal },
+    { label: "Terceiros", none: "", minor: form.thirdMinor, serious: form.thirdSerious, fatal: form.thirdFatal },
+  ];
+
+  const personRows = rows.map(r =>
+    `<tr><td class="sipaer-label">${r.label}</td><td class="sipaer-value">${r.none || "&nbsp;"}</td><td class="sipaer-value">${r.minor || "&nbsp;"}</td><td class="sipaer-value">${r.serious || "&nbsp;"}</td><td class="sipaer-value">${r.fatal || "&nbsp;"}</td></tr>`
+  ).join("");
+
+  const personsTable = `<table class="sipaer-table"><tbody>
+<tr><th class="sipaer-header" colspan="5">LESÕES E DANOS A PESSOAS A BORDO</th></tr>
+<tr><th class="sipaer-col-header">&nbsp;</th><th class="sipaer-col-header">Ileso</th><th class="sipaer-col-header">Leve</th><th class="sipaer-col-header">Grave</th><th class="sipaer-col-header">Fatal</th></tr>
+${personRows}
+</tbody></table>`;
+
+  return occTable + acTable + personsTable;
+}
+
+function buildSections(type: DocType, scope: Scope, agro: boolean, form?: OccFormData, investigator?: string) {
   const pfx = `${type.toLowerCase()}-${uid()}`;
+  const initialHTML = form && !isFormEmpty(form) ? buildOccurrenceHTML(form, investigator ?? "") : "";
+
   return TEMPLATES[type][scope].map((sec, si) => {
     const allSubs = [
       ...sec.subsections,
@@ -562,7 +623,8 @@ function buildSections(type: DocType, scope: Scope, agro: boolean) {
         id: `${pfx}-${sec.id}-${sub.id}`,
         title: sub.title,
         order: sj + 1,
-        content: "",
+        // Injeta o HTML na primeira subseção da primeira seção
+        content: si === 0 && sj === 0 ? initialHTML : "",
         isCompleted: false,
       })),
     };
@@ -621,6 +683,23 @@ const CLASSIFICATION_OPTIONS = [
   { value: "INCIDENTE", label: "Incidente" },
 ];
 
+const OCCURRENCE_TYPE_OPTIONS = [
+  { value: "LOC-G",   label: "LOC-G — Perda de controle no solo" },
+  { value: "LOC-I",   label: "LOC-I — Perda de controle em voo" },
+  { value: "RE",      label: "RE — Excursão de pista" },
+  { value: "CFIT",    label: "CFIT — Voo controlado ao solo/água" },
+  { value: "MAC",     label: "MAC — Colisão em voo" },
+  { value: "GCOL",    label: "GCOL — Colisão no solo" },
+  { value: "F-NI",    label: "F-NI — Fogo/Fumaça (não relacionado a impacto)" },
+  { value: "FUEL",    label: "FUEL — Combustível" },
+  { value: "SCF-NP",  label: "SCF-NP — Falha de sistema não propulsivo" },
+  { value: "SCF-PP",  label: "SCF-PP — Falha de sistema propulsivo" },
+  { value: "BIRD",    label: "BIRD — Colisão com pássaro/fauna" },
+  { value: "TURB",    label: "TURB — Turbulência" },
+  { value: "WSTRW",   label: "WSTRW — Windshear / Cisalhamento de vento" },
+  { value: "UNK",     label: "UNK — Desconhecido" },
+];
+
 const DAMAGE_OPTIONS = [
   { value: "NENHUM", label: "Nenhum" },
   { value: "LEVE", label: "Leve" },
@@ -639,9 +718,9 @@ const OPERATION_OPTIONS = [
 ];
 
 const INV_UNITS = [
-  "SERIPA I (AM)", "SERIPA II (NE)", "SERIPA III (RJ)",
-  "SERIPA IV (SP)", "SERIPA V (RS)", "SERIPA VI (DF)",
-  "SERIPA VII (BA)", "CENIPA",
+  "SERIPA I", "SERIPA II", "SERIPA III",
+  "SERIPA IV", "SERIPA V", "SERIPA VI",
+  "SERIPA VII", "CENIPA",
 ];
 
 const UF_LIST = [
@@ -773,6 +852,11 @@ export default function NewReportPage() {
   const [form, setForm] = useState<OccFormData>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [investigatorList, setInvestigatorList] = useState<User[]>([]);
+
+  useEffect(() => {
+    usersApi.list().then(setInvestigatorList).catch(() => {});
+  }, []);
 
   function setField<K extends keyof OccFormData>(key: K, value: OccFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -783,7 +867,7 @@ export default function NewReportPage() {
     setError("");
     setSubmitting(true);
     try {
-      const sections = buildSections(docType, scope, isAgro);
+      const sections = buildSections(docType, scope, isAgro, useDedalo ? undefined : form, investigator);
       const occurrence: Record<string, unknown> = {
         docType,
         scope,
@@ -797,6 +881,7 @@ export default function NewReportPage() {
               date: form.date || undefined,
               time: form.time || undefined,
               classification: form.classification || undefined,
+              occurrenceType: form.occurrenceType || undefined,
               aerodrome: form.aerodrome || undefined,
               coordinates: (form.coordLat || form.coordLon)
                 ? { lat: form.coordLat, lon: form.coordLon }
@@ -967,14 +1052,19 @@ export default function NewReportPage() {
                   <p className="text-white/35 text-xs">Responsável pela elaboração deste documento.</p>
                 </div>
               </div>
-              <input
-                type="text"
+              <select
                 value={investigator}
                 onChange={(e) => setInvestigator(e.target.value)}
-                placeholder="Nome completo do investigador"
-                className={inputCls}
+                className={selectCls}
                 autoFocus
-              />
+              >
+                <option value="">Selecionar investigador...</option>
+                {investigatorList.map((u) => (
+                  <option key={u.id} value={u.name}>
+                    {u.postoGraduacao ? `${u.postoGraduacao} ${u.name}` : u.name} — {u.unit}
+                  </option>
+                ))}
+              </select>
               {step === 2 && !investigator.trim() && (
                 <p className="text-xs text-amber-400/70 flex items-center gap-1.5">
                   <AlertCircle className="w-3 h-3 shrink-0" />
@@ -1136,6 +1226,20 @@ export default function NewReportPage() {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Tipo da Ocorrência (ICAO)</label>
+                    <select
+                      value={form.occurrenceType}
+                      onChange={(e) => setField("occurrenceType", e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">Selecionar tipo...</option>
+                      {OCCURRENCE_TYPE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -1432,6 +1536,14 @@ export default function NewReportPage() {
                   <span className="text-white/40 text-xs">Data / Classificação</span>
                   <span className="text-white/70 text-sm">
                     {[form.date, CLASSIFICATION_OPTIONS.find(c => c.value === form.classification)?.label].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+              )}
+              {!useDedalo && form.occurrenceType && (
+                <div className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-white/40 text-xs">Tipo da Ocorrência</span>
+                  <span className="text-white/70 text-sm font-mono text-xs">
+                    {form.occurrenceType}
                   </span>
                 </div>
               )}

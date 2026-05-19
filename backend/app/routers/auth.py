@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 
 from app.database import AsyncSession, get_db
 from app.middleware.auth import get_current_user
@@ -39,3 +40,14 @@ async def register(body: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/users", response_model=list[UserResponse])
+async def list_users(
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(User).where(User.is_active == True).order_by(User.name)
+    )
+    return result.scalars().all()
