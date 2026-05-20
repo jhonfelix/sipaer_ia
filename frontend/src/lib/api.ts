@@ -111,7 +111,16 @@ interface RawChatMessage {
   role: string;
   content: string;
   sources: string[];
-  timestamp: string;
+  session_id?: string;
+  created_at: string;
+}
+
+interface RawChatSession {
+  session_id: string;
+  title: string;
+  preview: string;
+  message_count: number;
+  updated_at: string;
 }
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
@@ -174,11 +183,12 @@ function mapReport(raw: RawReport): Report {
 
 function mapChatMessage(raw: RawChatMessage): AIMessage {
   return {
-    id: raw.id,
+    id: String(raw.id),
     role: raw.role as AIMessage["role"],
     content: raw.content,
     sources: raw.sources,
-    timestamp: new Date(raw.timestamp),
+    sessionId: raw.session_id,
+    timestamp: new Date(raw.created_at),
   };
 }
 
@@ -305,11 +315,20 @@ export const media = {
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
 
+export interface ChatSession {
+  sessionId: string;
+  title: string;
+  preview: string;
+  messageCount: number;
+  updatedAt: Date;
+}
+
 export const chat = {
   async send(payload: {
     message: string;
     report_id?: number;
     context?: string;
+    session_id?: string;
   }): Promise<AIMessage> {
     return mapChatMessage(
       await request<RawChatMessage>("/chat", {
@@ -319,8 +338,24 @@ export const chat = {
     );
   },
 
-  async history(opts?: { reportId?: number; limit?: number }): Promise<AIMessage[]> {
+  async sessions(): Promise<ChatSession[]> {
+    const raw = await request<RawChatSession[]>("/chat/sessions");
+    return raw.map((s) => ({
+      sessionId: s.session_id,
+      title: s.title,
+      preview: s.preview,
+      messageCount: s.message_count,
+      updatedAt: new Date(s.updated_at),
+    }));
+  },
+
+  async history(opts?: {
+    sessionId?: string;
+    reportId?: number;
+    limit?: number;
+  }): Promise<AIMessage[]> {
     const params = new URLSearchParams();
+    if (opts?.sessionId != null) params.set("session_id", opts.sessionId);
     if (opts?.reportId != null) params.set("report_id", String(opts.reportId));
     if (opts?.limit != null) params.set("limit", String(opts.limit));
     const qs = params.size ? `?${params}` : "";

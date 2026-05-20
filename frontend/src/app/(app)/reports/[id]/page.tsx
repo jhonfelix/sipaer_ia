@@ -32,6 +32,11 @@ function buildFullDocument(report: Report): string {
     .join("");
 }
 
+function hasRealContent(html: string): boolean {
+  if (!html || html === "<p></p>") return false;
+  return html.replace(/<[^>]*>/g, "").trim().length > 0;
+}
+
 function parseDocumentBack(html: string, prevReport: Report): Report {
   if (typeof window === "undefined") return prevReport;
 
@@ -69,15 +74,34 @@ function parseDocumentBack(html: string, prevReport: Report): Report {
   }
   flush();
 
+  const updatedSections = prevReport.sections.map((section) => {
+    const updatedSubs = section.subsections?.map((sub) => {
+      const newContent = contentMap.has(sub.id) ? contentMap.get(sub.id)! : sub.content;
+      return {
+        ...sub,
+        content: newContent,
+        isCompleted: hasRealContent(newContent),
+      };
+    });
+    const allSubsCompleted =
+      updatedSubs && updatedSubs.length > 0
+        ? updatedSubs.every((s) => s.isCompleted)
+        : section.isCompleted;
+    return { ...section, subsections: updatedSubs, isCompleted: allSubsCompleted };
+  });
+
+  const completedCount = updatedSections.reduce((acc, sec) => {
+    if (sec.subsections?.length) return acc + sec.subsections.filter((s) => s.isCompleted).length;
+    return acc + (sec.isCompleted ? 1 : 0);
+  }, 0);
+  const totalCount = updatedSections.reduce((acc, sec) => {
+    return acc + (sec.subsections?.length || 1);
+  }, 0);
+
   return {
     ...prevReport,
-    sections: prevReport.sections.map((section) => ({
-      ...section,
-      subsections: section.subsections?.map((sub) => ({
-        ...sub,
-        content: contentMap.has(sub.id) ? contentMap.get(sub.id)! : sub.content,
-      })),
-    })),
+    sections: updatedSections,
+    progress: { total: totalCount, completed: completedCount },
   };
 }
 

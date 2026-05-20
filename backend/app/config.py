@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    CCABR_API_KEY: str
+    CCABR_API_KEY: str = "xxx"
     CCABR_BASE_URL: str = "https://ia.ccabr.intraer"
 
     DATABASE_URL: str

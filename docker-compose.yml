@@ -73,7 +73,7 @@ services:
       - MYSQL_USER=${MYSQL_USER:-sipaer}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql/data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
@@ -110,7 +110,6 @@ services:
       - sipaer
 
 volumes:
-  mysql_data:
   qdrant_data:
   redis_data:
 

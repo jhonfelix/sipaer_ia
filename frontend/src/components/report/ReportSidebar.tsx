@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronRight,
   FileText,
@@ -88,8 +88,26 @@ export function ReportSidebar({
   ]);
 
   const occurrence = report.occurrence;
-  const progressPercentage = report.progress.total > 0
-    ? Math.round((report.progress.completed / report.progress.total) * 100)
+
+  const { computedCompleted, computedTotal } = useMemo(() => {
+    let total = 0;
+    let completed = 0;
+    for (const section of report.sections) {
+      if (section.subsections?.length) {
+        for (const sub of section.subsections) {
+          total++;
+          if (sub.isCompleted) completed++;
+        }
+      } else {
+        total++;
+        if (section.isCompleted) completed++;
+      }
+    }
+    return { computedCompleted: completed, computedTotal: total };
+  }, [report.sections]);
+
+  const progressPercentage = computedTotal > 0
+    ? Math.round((computedCompleted / computedTotal) * 100)
     : 0;
 
   const toggleSection = (sectionId: string) => {
@@ -261,23 +279,35 @@ export function ReportSidebar({
           <span className="text-xs text-muted-foreground">
             Progresso do Relatório
           </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold">
-            {report.progress.completed}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            / {report.progress.total} seções
-          </span>
-          <span className="text-sm font-medium text-primary ml-auto">
+          <span
+            className={cn(
+              "text-xs font-semibold",
+              progressPercentage === 100 ? "text-green-500" : "text-primary"
+            )}
+          >
             {progressPercentage}%
           </span>
         </div>
-        <Progress value={progressPercentage} className="h-2 mt-2" />
-        <p className="text-[10px] text-muted-foreground mt-2">
-          {report.progress.total - report.progress.completed} seções restantes
-          para conclusão
-        </p>
+        <Progress
+          value={progressPercentage}
+          className={cn(
+            "h-2",
+            progressPercentage === 100 && "[&>div]:bg-green-500"
+          )}
+        />
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-[10px] text-muted-foreground">
+            {computedCompleted} de {computedTotal} seções preenchidas
+          </p>
+          {computedTotal - computedCompleted > 0 && (
+            <p className="text-[10px] text-muted-foreground">
+              {computedTotal - computedCompleted} restantes
+            </p>
+          )}
+          {progressPercentage === 100 && (
+            <p className="text-[10px] text-green-500 font-medium">Completo ✓</p>
+          )}
+        </div>
       </div>
     </aside>
   );

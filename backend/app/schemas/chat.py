@@ -7,6 +7,7 @@ class ChatRequest(BaseModel):
     message: str
     report_id: int | None = None
     context: str = ""
+    session_id: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -14,7 +15,8 @@ class ChatResponse(BaseModel):
     role: str = "assistant"
     content: str
     sources: list[str] = []
-    timestamp: datetime
+    session_id: str
+    created_at: datetime
 
 
 class ConversationResponse(BaseModel):
@@ -24,4 +26,13 @@ class ConversationResponse(BaseModel):
     role: str
     content: str
     sources: list[str]
+    session_id: str | None
     created_at: datetime
+
+
+class ConversationSessionResponse(BaseModel):
+    session_id: str
+    title: str
+    preview: str
+    message_count: int
+    updated_at: datetime

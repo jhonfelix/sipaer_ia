@@ -139,6 +139,7 @@ export interface AIMessage {
   content: string;
   timestamp: Date;
   sources?: string[];
+  sessionId?: string;
   isLoading?: boolean;
 }
 

@@ -660,10 +660,6 @@ export function ReportEditor({
             <Save className="w-4 h-4" />
             Salvar
           </Button>
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setIsDedaloModalOpen(true)}>
-            <Upload className="w-4 h-4" />
-            Importar Dédalo
-          </Button>
           <Button
             variant="default"
             size="sm"

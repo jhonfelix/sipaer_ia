@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Header, Sidebar } from "@/components/layout";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-const SIDEBAR_ROUTES = ["/dashboard", "/chat"];
+const SIDEBAR_ROUTES = ["/dashboard"];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
