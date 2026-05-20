@@ -53,6 +53,9 @@ Thumbs.db
 # Claude Code (contexto local)
 .claude/
 
+# Documentação interna — contém credenciais
+docs/memory/
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies

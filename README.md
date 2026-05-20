@@ -45,6 +45,7 @@ sipaer-ia/
 ├── mysql/init/01_schema.sql
 ├── qdrant/                     # volume gerenciado pelo Docker, porta 6333
 └── redis/                      # volume gerenciado pelo Docker, porta 6379
+└── media/                      # volume responsavel pelo armazenamento de arquivos e imagem
 ```
 
 ---
@@ -205,6 +206,10 @@ open http://localhost:8000/docs
 ```
 
 ---
+
+## Regras repositorio de documentos
+
+- Deve ser armazenado no pasta Media todos upload de documentos e imagens
 
 ## Regras de segurança
 

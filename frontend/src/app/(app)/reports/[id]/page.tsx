@@ -9,7 +9,6 @@ import {
   AIAssistantPanel,
 } from "@/components/report";
 import {
-  mockAIMessages,
   mockQuickActions,
   mockSuggestedPrompts,
 } from "@/lib/mocks/report-data";
@@ -181,7 +180,7 @@ export default function ReportEditPage() {
   const [activeSubsection, setActiveSubsection] = useState("");
   const [isSaved, setIsSaved] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [aiMessages, setAiMessages] = useState<AIMessage[]>(mockAIMessages);
+  const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [aiOpen, setAiOpen] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
 

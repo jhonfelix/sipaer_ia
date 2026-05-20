@@ -96,8 +96,8 @@ export function ImageCropDialog({ src, onConfirm, onCancel }: ImageCropDialogPro
         <div className="flex items-center justify-center bg-muted rounded-lg overflow-hidden max-h-[60vh]">
           <ReactCrop
             crop={crop}
-            onChange={(_, pct) => setCrop(pct)}
-            onComplete={(c) => setCompletedCrop(c)}
+            onChange={(_: Crop, pct: Crop) => setCrop(pct)}
+            onComplete={(c: PixelCrop) => setCompletedCrop(c)}
             minWidth={20}
             minHeight={20}
           >
