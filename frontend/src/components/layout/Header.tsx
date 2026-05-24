@@ -30,7 +30,7 @@ interface HeaderProps {
   user: User;
 }
 
-const SIDEBAR_ROUTES = ["/dashboard", "/chat"];
+const SIDEBAR_ROUTES = ["/dashboard"];
 
 export function Header({ user }: HeaderProps) {
   const router = useRouter();

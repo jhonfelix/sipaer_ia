@@ -25,14 +25,6 @@ async def chat(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        content, sources = await rag_pipeline.process(body.message, body.context)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Erro ao processar resposta da IA",
-        )
-
     session_id = body.session_id or str(uuid4())
     now = datetime.now(timezone.utc)
 
@@ -44,6 +36,15 @@ async def chat(
         content=body.message,
         sources=[],
     )
+    db.add(user_msg)
+    await db.flush()
+
+    try:
+        content, sources = await rag_pipeline.process(body.message, body.context)
+    except Exception:
+        content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
+        sources = []
+
     ai_msg = Conversation(
         user_id=current_user.id,
         report_id=body.report_id,
@@ -52,9 +53,9 @@ async def chat(
         content=content,
         sources=sources,
     )
-    db.add(user_msg)
     db.add(ai_msg)
     await db.commit()
+    await db.refresh(ai_msg)
 
     return ChatResponse(
         id=str(ai_msg.id),

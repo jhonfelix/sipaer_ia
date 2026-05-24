@@ -33,8 +33,10 @@ class RAGPipeline:
         # Step 2: Embed query
         query_vector = await self.llm.embed(query)
 
-        # Step 3: ANN search in Qdrant (top_k=10)
-        search_results = await self.vector.search(query_vector, limit=10)
+        # Step 3: ANN search in Qdrant
+        search_results = []
+        if query_vector:
+            search_results = await self.vector.search(query_vector, limit=10)
 
         # Step 4: Rerank (Cohere format)
         sources: list[str] = []
