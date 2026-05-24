@@ -21,7 +21,7 @@ class LLMService:
         return self._client
 
     async def chat_completion(
-        self, messages: list[dict], model: str = "gpt-oss-120b"
+        self, messages: list[dict], model: str = "gpt-oss-20b"
     ) -> str:
         response = await self.client.post(
             "/v1/chat/completions",

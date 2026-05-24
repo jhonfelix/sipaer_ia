@@ -21,7 +21,7 @@ class RAGPipeline:
         self.cache = cache
 
     async def process(
-        self, query: str, extra_context: str = "", model: str = "gpt-oss-120b"
+        self, query: str, extra_context: str = "", model: str = "gpt-oss-20b"
     ) -> tuple[str, list[str]]:
         # Step 1: Check Redis cache
         cache_key = self.cache.rag_key(query)

@@ -21,8 +21,8 @@ export interface AIModel {
 
 export const AI_MODELS: AIModel[] = [
   {
-    id: "gpt-oss-120b",
-    name: "GPT OSS 120B",
+    id: "gpt-oss-20b",
+    name: "GPT OSS 20B",
     shortName: "GPT OSS",
     description: "Geração de texto — relatórios, análises e documentos",
     badge: "Recomendado",

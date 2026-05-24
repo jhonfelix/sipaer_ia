@@ -8,7 +8,7 @@ class ChatRequest(BaseModel):
     report_id: int | None = None
     context: str = ""
     session_id: str | None = None
-    model: str = "gpt-oss-120b"
+    model: str = "gpt-oss-20b"
 
 
 class ChatResponse(BaseModel):
