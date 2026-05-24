@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.user import User
+from app.schemas.user import UserUpdate
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -60,6 +61,26 @@ async def create_user(
         unit=unit,
     )
     db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def update_user(user: User, data: UserUpdate, db: AsyncSession) -> User:
+    if data.email and data.email != user.email:
+        taken = await db.execute(select(User).where(User.email == data.email))
+        if taken.scalar_one_or_none():
+            raise ValueError("E-mail já está em uso por outro usuário")
+        user.email = data.email
+
+    if data.posto_graduacao is not None:
+        user.posto_graduacao = data.posto_graduacao
+
+    if data.current_password and data.new_password:
+        if not verify_password(data.current_password, user.hashed_password):
+            raise ValueError("Senha atual incorreta")
+        user.hashed_password = hash_password(data.new_password)
+
     await db.commit()
     await db.refresh(user)
     return user

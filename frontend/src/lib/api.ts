@@ -221,6 +221,20 @@ export const auth = {
     return mapUser(await request<RawUser>("/auth/me"));
   },
 
+  async updateProfile(payload: {
+    email?: string;
+    posto_graduacao?: string;
+    current_password?: string;
+    new_password?: string;
+  }): Promise<User> {
+    return mapUser(
+      await request<RawUser>("/auth/me", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      })
+    );
+  },
+
   logout(): void {
     clearToken();
   },

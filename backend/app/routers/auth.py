@@ -5,8 +5,8 @@ from app.database import AsyncSession, get_db
 from app.middleware.auth import get_current_user
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse
-from app.schemas.user import UserCreate, UserResponse
-from app.services.auth_service import authenticate_user, create_access_token, create_user
+from app.schemas.user import UserCreate, UserResponse, UserUpdate
+from app.services.auth_service import authenticate_user, create_access_token, create_user, update_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -40,6 +40,19 @@ async def register(body: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 async def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    body: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        user = await update_user(current_user, body, db)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return user
 
 
 @router.get("/users", response_model=list[UserResponse])

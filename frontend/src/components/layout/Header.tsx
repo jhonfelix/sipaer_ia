@@ -117,9 +117,9 @@ export function Header({ user }: HeaderProps) {
               <FileText className="w-4 h-4 mr-2" />
               Meus Relatórios
             </DropdownMenuItem>
-            <DropdownMenuItem>
-            <Settings className="w-4 h-4 mr-2" />
-              Configurações
+            <DropdownMenuItem onClick={() => router.push("/profile")}>
+              <Settings className="w-4 h-4 mr-2" />
+              Meu Perfil
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
