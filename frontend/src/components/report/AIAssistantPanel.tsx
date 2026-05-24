@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Bot, Send, X, ChevronDown, ExternalLink,
   ClipboardPaste, Check, Sparkles, Zap,
-  BookOpen, ShieldAlert, Clock, Users, FileSearch, Lightbulb,
+  ScanSearch, SpellCheck, ImageOff, FileWarning, Pencil, ListChecks,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -24,58 +24,58 @@ const MODELS = [
 
 const QUICK_ACTIONS = [
   {
-    id: "analisar",
-    icon: FileSearch,
+    id: "situacao",
+    icon: ScanSearch,
     color: "text-blue-500",
     bg: "bg-blue-500/10",
-    label: "Analisar seção",
+    label: "Analisar situação",
     prompt: (section: string) =>
-      `Analise o texto da seção "${section}" e identifique pontos que podem ser aprimorados em termos de terminologia técnica, estrutura e conformidade com a NSCA 3-13.`,
+      `Analise a situação descrita na seção "${section}": contexto operacional, condições do voo, sequência de eventos e fatores de risco identificados. Seja objetivo e técnico conforme NSCA 3-13.`,
   },
   {
-    id: "shell",
-    icon: Users,
-    color: "text-violet-500",
-    bg: "bg-violet-500/10",
-    label: "Análise SHELL/HFACS",
-    prompt: (section: string) =>
-      `Com base no conteúdo da seção "${section}", elabore uma análise de fatores humanos utilizando os modelos SHELL e HFACS conforme preconizado pelo CENIPA.`,
-  },
-  {
-    id: "normas",
-    icon: BookOpen,
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-    label: "Verificar normas",
-    prompt: (section: string) =>
-      `Verifique se o conteúdo da seção "${section}" está em conformidade com a NSCA 3-13, RBAC 137 e Anexo 13 da ICAO. Indique lacunas e sugira correções.`,
-  },
-  {
-    id: "cronologia",
-    icon: Clock,
+    id: "gramatical",
+    icon: SpellCheck,
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
-    label: "Organizar cronologia",
+    label: "Estrutura gramatical",
     prompt: (section: string) =>
-      `Reorganize o conteúdo da seção "${section}" em ordem cronológica clara, conforme exigido pelo padrão SIPAER de investigação.`,
+      `Revise a estrutura gramatical e a clareza do texto da seção "${section}". Corrija erros, melhore a coesão e garanta linguagem técnica formal adequada para um relatório oficial CENIPA/FAB.`,
   },
   {
-    id: "causas",
-    icon: ShieldAlert,
-    color: "text-red-500",
-    bg: "bg-red-500/10",
-    label: "Fatores contribuintes",
-    prompt: (section: string) =>
-      `Identifique e categorize os possíveis fatores contribuintes e causas do acidente descritos na seção "${section}", seguindo a taxonomia SIPAER.`,
-  },
-  {
-    id: "sugestao",
-    icon: Lightbulb,
+    id: "imagem",
+    icon: ImageOff,
     color: "text-orange-500",
     bg: "bg-orange-500/10",
-    label: "Sugerir melhorias",
+    label: "Imagem sem legenda",
     prompt: (section: string) =>
-      `Sugira melhorias específicas para a seção "${section}" baseando-se em boas práticas de relatórios SIPAER e em casos similares já investigados.`,
+      `Identifique imagens, figuras ou diagramas na seção "${section}" que estejam sem legenda ou com legenda inadequada. Sugira legendas descritivas conforme o padrão SIPAER de documentação técnica.`,
+  },
+  {
+    id: "lacunas",
+    icon: FileWarning,
+    color: "text-red-500",
+    bg: "bg-red-500/10",
+    label: "Lacunas no relatório",
+    prompt: (section: string) =>
+      `Identifique lacunas, informações ausentes ou inconsistências na seção "${section}" que possam comprometer a completude do relatório final SIPAER. Liste o que ainda precisa ser preenchido.`,
+  },
+  {
+    id: "redacao",
+    icon: Pencil,
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    label: "Melhorar redação",
+    prompt: (section: string) =>
+      `Reescreva o texto da seção "${section}" com maior precisão técnica, objetividade e conformidade com os padrões de redação oficial SIPAER. Mantenha os fatos, melhore a forma.`,
+  },
+  {
+    id: "checklist",
+    icon: ListChecks,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    label: "Checklist SIPAER",
+    prompt: (section: string) =>
+      `Aplique o checklist de qualidade SIPAER na seção "${section}": verifique conformidade com NSCA 3-13, presença de todos os campos obrigatórios, terminologia correta e referências normativas necessárias.`,
   },
 ];
 
