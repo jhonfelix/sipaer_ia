@@ -15,8 +15,8 @@ import type { Editor } from "@tiptap/react";
 // ── Modelos disponíveis ───────────────────────────────────────────────────────
 
 const MODELS = [
-  { id: "gpt-oss:20b",  label: "GPT-oss 20b"  },
-  { id: "qwen3:20b",    label: "Qwen3 20b"     },
+  { id: "gpt-oss-20b",        label: "GPT OSS 20B"  },
+  { id: "gemma4-4-26B-A4B-it", label: "Gemma4 26B — Multimodal" },
 ] as const;
 
 // ── Chips de ação rápida ──────────────────────────────────────────────────────
