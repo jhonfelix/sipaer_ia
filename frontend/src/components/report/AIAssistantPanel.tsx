@@ -2,63 +2,80 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Bot, Send, X, Plus, Paperclip, ChevronDown,
-  FileText, ImageIcon, Scale, Camera, ExternalLink,
-  ClipboardPaste, Check, Loader2,
+  Bot, Send, X, ChevronDown, ExternalLink,
+  ClipboardPaste, Check, Sparkles, Zap,
+  BookOpen, ShieldAlert, Clock, Users, FileSearch, Lightbulb,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import type { AIMessage, AIQuickAction } from "@/types/report";
+import { chat as chatApi } from "@/lib/api";
+import type { AIMessage } from "@/types/report";
 import type { Editor } from "@tiptap/react";
 
 // ── Modelos disponíveis ───────────────────────────────────────────────────────
 
 const MODELS = [
-  { id: "gpt-oss-20b",        label: "GPT OSS 20B"  },
+  { id: "gpt-oss-20b",         label: "GPT OSS 20B"            },
   { id: "gemma4-4-26B-A4B-it", label: "Gemma4 26B — Multimodal" },
 ] as const;
 
-// ── Chips de ação rápida ──────────────────────────────────────────────────────
+// ── Ações rápidas focadas em relatório ───────────────────────────────────────
 
-const QUICK_CHIPS = [
+const QUICK_ACTIONS = [
   {
-    id: "oficio",
-    label: "Criar Ofício",
-    icon: FileText,
-    prompt:
-      "Preciso criar um ofício oficial do CENIPA. Me ajude a elaborar o documento formal com cabeçalho, numeração e estrutura adequada para a FAB.",
+    id: "analisar",
+    icon: FileSearch,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    label: "Analisar seção",
+    prompt: (section: string) =>
+      `Analise o texto da seção "${section}" e identifique pontos que podem ser aprimorados em termos de terminologia técnica, estrutura e conformidade com a NSCA 3-13.`,
   },
   {
-    id: "imagem",
-    label: "Gerar Imagem",
-    icon: ImageIcon,
-    prompt:
-      "Preciso gerar uma imagem para uso em relatório aeronáutico SIPAER. Descreva o que você precisa e eu vou criar.",
+    id: "shell",
+    icon: Users,
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    label: "Análise SHELL/HFACS",
+    prompt: (section: string) =>
+      `Com base no conteúdo da seção "${section}", elabore uma análise de fatores humanos utilizando os modelos SHELL e HFACS conforme preconizado pelo CENIPA.`,
   },
   {
-    id: "normativos",
-    label: "Analisar Normativos",
-    icon: Scale,
-    prompt:
-      "Analise os normativos e legislação aeronáutica pertinentes (RBHA, RBAC, ICA, MCA). Qual é a sua dúvida?",
-  },
-];
-
-// ── Opções de anexo ───────────────────────────────────────────────────────────
-
-const ATTACH_OPTS = [
-  {
-    id: "file",
-    icon: Paperclip,
-    label: "Adicionar arquivos ou fotos",
-    accept: "image/*,.pdf,.doc,.docx,.txt",
+    id: "normas",
+    icon: BookOpen,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    label: "Verificar normas",
+    prompt: (section: string) =>
+      `Verifique se o conteúdo da seção "${section}" está em conformidade com a NSCA 3-13, RBAC 137 e Anexo 13 da ICAO. Indique lacunas e sugira correções.`,
   },
   {
-    id: "camera",
-    icon: Camera,
-    label: "Fazer captura de tela",
-    accept: "",
+    id: "cronologia",
+    icon: Clock,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    label: "Organizar cronologia",
+    prompt: (section: string) =>
+      `Reorganize o conteúdo da seção "${section}" em ordem cronológica clara, conforme exigido pelo padrão SIPAER de investigação.`,
+  },
+  {
+    id: "causas",
+    icon: ShieldAlert,
+    color: "text-red-500",
+    bg: "bg-red-500/10",
+    label: "Fatores contribuintes",
+    prompt: (section: string) =>
+      `Identifique e categorize os possíveis fatores contribuintes e causas do acidente descritos na seção "${section}", seguindo a taxonomia SIPAER.`,
+  },
+  {
+    id: "sugestao",
+    icon: Lightbulb,
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+    label: "Sugerir melhorias",
+    prompt: (section: string) =>
+      `Sugira melhorias específicas para a seção "${section}" baseando-se em boas práticas de relatórios SIPAER e em casos similares já investigados.`,
   },
 ];
 
@@ -66,12 +83,11 @@ const ATTACH_OPTS = [
 
 interface AIAssistantPanelProps {
   messages: AIMessage[];
-  quickActions: AIQuickAction[];
-  suggestedPrompts: string[];
-  onSendMessage: (message: string) => void;
-  onQuickAction: (action: AIQuickAction) => void;
+  onSendMessage: (message: string, model: string) => void;
   onClose?: () => void;
   editor?: Editor | null;
+  activeSection?: string;
+  reportId?: number;
 }
 
 // ── Componente ────────────────────────────────────────────────────────────────
@@ -81,36 +97,32 @@ export function AIAssistantPanel({
   onSendMessage,
   onClose,
   editor,
+  activeSection = "seção atual",
+  reportId,
 }: AIAssistantPanelProps) {
   const [input,         setInput]         = useState("");
   const [model,         setModel]         = useState<string>(MODELS[0].id);
   const [showModelMenu, setShowModelMenu] = useState(false);
-  const [showAttach,    setShowAttach]    = useState(false);
 
-  const inputRef   = useRef<HTMLTextAreaElement>(null);
-  const scrollRef  = useRef<HTMLDivElement>(null);
-  const modelRef   = useRef<HTMLDivElement>(null);
-  const attachRef  = useRef<HTMLDivElement>(null);
-  const fileRef    = useRef<HTMLInputElement>(null);
+  const inputRef  = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const modelRef  = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const hasMessages = messages.length > 0;
   const currentModel = MODELS.find((m) => m.id === model) ?? MODELS[0];
 
-  // Auto-scroll para o fim do chat
+  // Auto-scroll
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
   }, [messages]);
 
-  // Fechar dropdowns ao clicar fora
+  // Fechar dropdown ao clicar fora
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (modelRef.current && !modelRef.current.contains(e.target as Node))
         setShowModelMenu(false);
-      if (attachRef.current && !attachRef.current.contains(e.target as Node))
-        setShowAttach(false);
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -125,12 +137,10 @@ export function AIAssistantPanel({
   const handleSubmit = useCallback(() => {
     const text = input.trim();
     if (!text) return;
-    onSendMessage(text);
+    onSendMessage(text, model);
     setInput("");
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-    }
-  }, [input, onSendMessage]);
+    if (inputRef.current) inputRef.current.style.height = "auto";
+  }, [input, model, onSendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -139,12 +149,9 @@ export function AIAssistantPanel({
     }
   };
 
-  const handleChip = (prompt: string) => {
-    setInput(prompt);
-    setTimeout(() => {
-      inputRef.current?.focus();
-      if (inputRef.current) autoResize(inputRef.current);
-    }, 0);
+  const handleQuickAction = (promptFn: (s: string) => string) => {
+    const prompt = promptFn(activeSection);
+    onSendMessage(prompt, model);
   };
 
   const handleInsert = (content: string) => {
@@ -176,7 +183,9 @@ export function AIAssistantPanel({
           <p className="text-sm font-semibold leading-tight truncate">Assistente SIPAER</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] text-green-600">Online</span>
+            <span className="text-[10px] text-green-600">
+              {activeSection !== "seção atual" ? `Seção: ${activeSection}` : "Online"}
+            </span>
           </div>
         </div>
 
@@ -190,12 +199,12 @@ export function AIAssistantPanel({
             <ChevronDown className="w-3 h-3" />
           </button>
           {showModelMenu && (
-            <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border rounded-lg shadow-lg py-1 z-50">
+            <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg py-1 z-50">
               {MODELS.map((m) => (
                 <button
                   key={m.id}
                   onClick={() => { setModel(m.id); setShowModelMenu(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-accent transition-colors text-left"
                 >
                   {m.id === model && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
                   <span className={cn("flex-1", m.id !== model && "pl-5")}>{m.label}</span>
@@ -215,7 +224,7 @@ export function AIAssistantPanel({
         )}
       </div>
 
-      {/* ── Mensagens ──────────────────────────────────────────────────────── */}
+      {/* ── Mensagens / Estado vazio ────────────────────────────────────────── */}
       {hasMessages ? (
         <ScrollArea className="flex-1 min-h-0" ref={scrollRef}>
           <div className="px-4 py-4 space-y-5">
@@ -229,108 +238,91 @@ export function AIAssistantPanel({
           </div>
         </ScrollArea>
       ) : (
-        /* ── Estado vazio ── */
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-4 gap-3 select-none">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <Bot className="w-7 h-7 text-primary" />
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-4 py-4 space-y-5">
+
+            {/* Boas-vindas */}
+            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold leading-tight">Como posso ajudar?</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  Especializado em normas SIPAER · NSCA 3-13 · RBAC 137 · Anexo 13 ICAO · SHELL · HFACS
+                </p>
+              </div>
+            </div>
+
+            {/* Sugestão baseada na seção ativa */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Zap className="w-3 h-3 text-amber-500" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Baseado na seção atual
+                </p>
+              </div>
+              <button
+                onClick={() => handleQuickAction(
+                  (s) => `Pode ajudar a melhorar a análise da seção "${s}"? Identifique pontos fracos e sugira melhorias técnicas conforme NSCA 3-13.`
+                )}
+                className="w-full text-left p-3.5 rounded-xl border border-border bg-background hover:bg-accent/50 transition-colors group"
+              >
+                <p className="text-xs text-muted-foreground mb-1.5 font-medium">Sugestão inteligente</p>
+                <p className="text-sm leading-relaxed">
+                  Pode ajudar a melhorar a análise da{" "}
+                  <span className="font-semibold text-primary">seção "{activeSection}"</span>?
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  Clique para analisar terminologia, estrutura e fatores humanos
+                </p>
+              </button>
+            </div>
+
+            {/* Ações rápidas */}
+            <div>
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Zap className="w-3 h-3 text-primary" />
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Ações Rápidas
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {QUICK_ACTIONS.map((action) => (
+                  <button
+                    key={action.id}
+                    onClick={() => handleQuickAction(action.prompt)}
+                    className="flex flex-col gap-2 p-3 rounded-xl border border-border bg-background hover:bg-accent/50 hover:border-border/80 transition-all text-left"
+                  >
+                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", action.bg)}>
+                      <action.icon className={cn("w-3.5 h-3.5", action.color)} />
+                    </div>
+                    <span className="text-xs font-medium leading-tight">{action.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
           </div>
-          <div className="text-center">
-            <p className="font-semibold text-base">Como posso ajudar?</p>
-            <p className="text-xs text-muted-foreground mt-1 max-w-[280px] leading-relaxed">
-              Assistente especializado em normas aeronáuticas, relatórios SIPAER e processos CENIPA/FAB.
-            </p>
-          </div>
-        </div>
+        </ScrollArea>
       )}
 
       {/* ── Área de input ──────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-3 pb-3 pt-2 space-y-2">
-
-        {/* Chips de ação rápida */}
-        {!hasMessages && (
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {QUICK_CHIPS.map((chip) => (
-              <button
-                key={chip.id}
-                onClick={() => handleChip(chip.prompt)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-accent text-xs font-medium transition-colors"
-              >
-                <chip.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                {chip.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Caixa de texto */}
+      <div className="shrink-0 px-3 pb-3 pt-2">
         <div className="relative flex flex-col rounded-2xl border border-border bg-background focus-within:ring-1 focus-within:ring-ring transition-shadow">
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => { setInput(e.target.value); autoResize(e.target); }}
             onKeyDown={handleKeyDown}
-            placeholder="Digite / para habilidades…"
+            placeholder={`Pergunte sobre a seção "${activeSection}"…`}
             rows={1}
             className="w-full resize-none bg-transparent px-4 pt-3 pb-2 text-sm placeholder:text-muted-foreground focus:outline-none"
             style={{ maxHeight: 160 }}
           />
 
-          {/* Toolbar inferior */}
           <div className="flex items-center gap-1.5 px-3 pb-2.5">
-            {/* Botão + anexo */}
-            <div className="relative" ref={attachRef}>
-              <button
-                onClick={() => setShowAttach((v) => !v)}
-                className="w-8 h-8 flex items-center justify-center rounded-full border border-border hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
-                title="Adicionar"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-
-              {/* Dropdown anexo */}
-              {showAttach && (
-                <div className="absolute left-0 bottom-full mb-2 w-64 bg-popover border border-border rounded-xl shadow-xl py-1.5 z-50">
-                  {ATTACH_OPTS.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        if (opt.id === "file") fileRef.current?.click();
-                        setShowAttach(false);
-                      }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm hover:bg-accent transition-colors text-left"
-                    >
-                      <opt.icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                      {opt.label}
-                    </button>
-                  ))}
-                  <div className="h-px bg-border mx-2 my-1" />
-                  <p className="px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
-                    Pesquisa
-                  </p>
-                  <button className="flex items-center justify-between w-full px-3 py-2.5 text-sm hover:bg-accent transition-colors">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                      </svg>
-                      <span>Busca na web</span>
-                    </div>
-                    <Check className="w-3.5 h-3.5 text-primary" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <input
-              ref={fileRef}
-              type="file"
-              className="hidden"
-              accept="image/*,.pdf,.doc,.docx,.txt"
-              onChange={() => { /* TODO: upload anexo */ }}
-            />
-
             <div className="flex-1" />
-
-            {/* Botão enviar */}
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
@@ -347,8 +339,8 @@ export function AIAssistantPanel({
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">
-          As respostas podem conter erros. Verifique informações críticas.
+        <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+          Verifique informações críticas nas fontes oficiais CENIPA/FAB.
         </p>
       </div>
     </aside>

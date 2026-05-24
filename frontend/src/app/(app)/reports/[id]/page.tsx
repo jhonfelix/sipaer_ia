@@ -8,12 +8,8 @@ import {
   ReportEditor,
   AIAssistantPanel,
 } from "@/components/report";
-import {
-  mockQuickActions,
-  mockSuggestedPrompts,
-} from "@/lib/mocks/report-data";
-import { reports as reportsApi } from "@/lib/api";
-import type { AIMessage, AIQuickAction, Report } from "@/types/report";
+import { reports as reportsApi, chat as chatApi } from "@/lib/api";
+import type { AIMessage, Report } from "@/types/report";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -231,6 +227,15 @@ export default function ReportEditPage() {
     [report, activeSubsection]
   );
 
+  const activeSubsectionTitle = useMemo(() => {
+    if (!report) return "seção atual";
+    for (const section of report.sections) {
+      const sub = section.subsections?.find((s) => s.id === activeSubsection);
+      if (sub) return sub.title;
+    }
+    return report.sections[0]?.title ?? "seção atual";
+  }, [report, activeSubsection]);
+
   const handleContentChange = useCallback((html: string) => {
     setIsSaved(false);
     setDocumentContent(html);
@@ -264,7 +269,7 @@ export default function ReportEditPage() {
     []
   );
 
-  const handleSendMessage = useCallback((message: string) => {
+  const handleSendMessage = useCallback(async (message: string, model = "gpt-oss-20b") => {
     const userMsg: AIMessage = {
       id: `msg-${Date.now()}`,
       role: "user",
@@ -273,33 +278,36 @@ export default function ReportEditPage() {
     };
     setAiMessages((prev) => [...prev, userMsg]);
 
-    const loadingMsg: AIMessage = {
-      id: `msg-${Date.now()}-loading`,
-      role: "assistant",
-      content: "",
-      timestamp: new Date(),
-      isLoading: true,
-    };
-    setAiMessages((prev) => [...prev, loadingMsg]);
+    const loadingId = `msg-${Date.now()}-loading`;
+    setAiMessages((prev) => [
+      ...prev,
+      { id: loadingId, role: "assistant", content: "", timestamp: new Date(), isLoading: true },
+    ]);
 
-    setTimeout(() => {
-      const aiResponse: AIMessage = {
-        id: `msg-${Date.now()}-response`,
-        role: "assistant",
-        content: generateMockResponse(message),
-        timestamp: new Date(),
-        sources: ["NSCA 3-13", "Manual de Investigação CENIPA"],
-      };
+    try {
+      const reply = await chatApi.send({
+        message,
+        model,
+        report_id: report ? Number(report.id) : undefined,
+        context: `Seção ativa: ${activeSubsectionTitle}`,
+      });
       setAiMessages((prev) =>
-        prev.filter((m) => !m.isLoading).concat(aiResponse)
+        prev.filter((m) => m.id !== loadingId).concat({
+          ...reply,
+          sources: reply.sources?.length ? reply.sources : ["NSCA 3-13", "Manual CENIPA"],
+        })
       );
-    }, 1500);
-  }, []);
-
-  const handleQuickAction = useCallback(
-    (action: AIQuickAction) => handleSendMessage(action.prompt),
-    [handleSendMessage]
-  );
+    } catch {
+      setAiMessages((prev) =>
+        prev.filter((m) => m.id !== loadingId).concat({
+          id: `msg-${Date.now()}-err`,
+          role: "assistant",
+          content: "Serviço de IA temporariamente indisponível. Tente novamente em instantes.",
+          timestamp: new Date(),
+        })
+      );
+    }
+  }, [report, activeSubsectionTitle]);
 
   if (loadingState === "loading") return <LoadingState />;
   if (loadingState === "error" || !report)
@@ -325,18 +333,17 @@ export default function ReportEditPage() {
           onSubsectionVisible={handleSubsectionVisible}
           isSaved={isSaved}
           onSave={handleSave}
-          onAIMessage={handleSendMessage}
+          onAIMessage={(msg) => handleSendMessage(msg)}
           scrollContainerRef={editorScrollRef}
         />
       </div>
       {aiOpen && (
         <AIAssistantPanel
           messages={aiMessages}
-          quickActions={mockQuickActions}
-          suggestedPrompts={mockSuggestedPrompts}
           onSendMessage={handleSendMessage}
-          onQuickAction={handleQuickAction}
           onClose={() => setAiOpen(false)}
+          activeSection={activeSubsectionTitle}
+          reportId={report ? Number(report.id) : undefined}
         />
       )}
 
