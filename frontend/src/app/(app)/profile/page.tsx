@@ -43,8 +43,8 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       const payload: Parameters<typeof authApi.updateProfile>[0] = {};
-      if (email !== user.email) payload.email = email;
-      if (posto !== (user.postoGraduacao ?? "")) payload.posto_graduacao = posto;
+      if (email !== user!.email) payload.email = email;
+      if (posto !== (user!.postoGraduacao ?? "")) payload.posto_graduacao = posto;
       if (newPw) { payload.current_password = currentPw; payload.new_password = newPw; }
 
       if (Object.keys(payload).length === 0) {
