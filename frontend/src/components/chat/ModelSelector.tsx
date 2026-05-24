@@ -21,44 +21,24 @@ export interface AIModel {
 
 export const AI_MODELS: AIModel[] = [
   {
-    id: "gpt-oss-20b",
-    name: "GPT OSS 20B",
+    id: "gpt-oss-120b",
+    name: "GPT OSS 120B",
     shortName: "GPT OSS",
-    description: "Melhor para relatórios complexos",
+    description: "Geração de texto — relatórios, análises e documentos",
     badge: "Recomendado",
     dot: "bg-emerald-400",
     iconBg: "bg-emerald-500/15",
     iconText: "text-emerald-300",
   },
   {
-    id: "qwen-3-6-30b",
-    name: "Qwen 3.6 30B",
-    shortName: "Qwen",
-    description: "Excelente para análise técnica",
-    badge: "Análise",
-    dot: "bg-orange-400",
-    iconBg: "bg-orange-500/15",
-    iconText: "text-orange-300",
-  },
-  {
-    id: "llama-3-2",
-    name: "Llama 3.2",
-    shortName: "Llama",
-    description: "Modelo local privado",
-    badge: "Local",
-    dot: "bg-sky-400",
-    iconBg: "bg-sky-500/15",
-    iconText: "text-sky-300",
-  },
-  {
-    id: "sipaer-fine-tuned",
-    name: "SIPAER Fine-Tuned",
-    shortName: "SIPAER",
-    description: "Especializado em investigação aeronáutica",
-    badge: "SIPAER",
-    dot: "bg-amber-400",
-    iconBg: "bg-amber-500/15",
-    iconText: "text-amber-300",
+    id: "gemma4-4-26B-A4B-it",
+    name: "Gemma4 26B",
+    shortName: "Gemma4",
+    description: "Multimodal — texto e imagens combinados",
+    badge: "Multimodal",
+    dot: "bg-violet-400",
+    iconBg: "bg-violet-500/15",
+    iconText: "text-violet-300",
   },
 ];
 
@@ -129,6 +109,11 @@ export function ModelSelector({ value, onChange }: Props) {
               </button>
             );
           })}
+        </div>
+        <div className="mt-2 pt-2 border-t border-white/[0.06] px-2">
+          <p className="text-white/20 text-[9px] leading-relaxed">
+            Embedding e reranking sempre via <span className="text-white/35">text-embedding</span> e <span className="text-white/35">reranker-model</span> (RAG pipeline interno).
+          </p>
         </div>
       </PopoverContent>
     </Popover>

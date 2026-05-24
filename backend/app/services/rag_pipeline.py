@@ -21,7 +21,7 @@ class RAGPipeline:
         self.cache = cache
 
     async def process(
-        self, query: str, extra_context: str = ""
+        self, query: str, extra_context: str = "", model: str = "gpt-oss-120b"
     ) -> tuple[str, list[str]]:
         # Step 1: Check Redis cache
         cache_key = self.cache.rag_key(query)
@@ -64,7 +64,7 @@ class RAGPipeline:
         ]
 
         # Step 6: Generate response
-        content = await self.llm.chat_completion(messages)
+        content = await self.llm.chat_completion(messages, model=model)
 
         # Step 8: Cache response (TTL via cache_service default)
         await self.cache.set(

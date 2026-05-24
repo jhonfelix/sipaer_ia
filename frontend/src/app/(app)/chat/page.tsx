@@ -161,7 +161,7 @@ export default function ChatPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [model, setModel] = useState("gpt-oss-20b");
+  const [model, setModel] = useState("gpt-oss-120b");
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -257,8 +257,8 @@ export default function ChatPage() {
     try {
       const reply = await chatApi.send({
         message: text,
-        context: model,
         session_id: activeSessionId ?? undefined,
+        model,
       });
 
       const newSessionId = reply.sessionId ?? activeSessionId;

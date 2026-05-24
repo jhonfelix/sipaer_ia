@@ -21,7 +21,7 @@ class LLMService:
         return self._client
 
     async def chat_completion(
-        self, messages: list[dict], model: str = "gpt-oss:20b"
+        self, messages: list[dict], model: str = "gpt-oss-120b"
     ) -> str:
         response = await self.client.post(
             "/v1/chat/completions",
@@ -41,7 +41,7 @@ class LLMService:
         return data["data"][0]["embedding"]
 
     async def rerank(
-        self, query: str, documents: list[str], top_n: int = 5, model: str = "bge-reranker-v2-m3"
+        self, query: str, documents: list[str], top_n: int = 5, model: str = "reranker-model"
     ) -> list[dict]:
         """Cohere rerank format — not OpenAI."""
         response = await self.client.post(

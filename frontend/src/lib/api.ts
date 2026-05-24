@@ -329,6 +329,7 @@ export const chat = {
     report_id?: number;
     context?: string;
     session_id?: string;
+    model?: string;
   }): Promise<AIMessage> {
     return mapChatMessage(
       await request<RawChatMessage>("/chat", {
