@@ -1,6 +1,7 @@
 README.md
 README_SIPAER_AI.md
 CLAUDE.md
+prompt.md
 .env.example
 
 # Env vars — nunca commitar
