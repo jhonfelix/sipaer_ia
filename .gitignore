@@ -94,11 +94,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — secrets nunca commitados; exemplo é seguro
+# env files — secrets nunca commitados
 .env
 .env.local
 .env.*.local
-!.env.example
+.env.example
 
 # vercel
 .vercel
