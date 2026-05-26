@@ -95,7 +95,7 @@ export function ConversationSidebar({
         <button
           onClick={onNew}
           title={collapsed ? "Nova conversa" : undefined}
-          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-600/18 hover:bg-blue-600/28 border border-blue-500/22 text-blue-300 font-medium text-sm transition-all ${
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-600/18 hover:bg-blue-600/28 border border-blue-500/22 text-blue-600 dark:text-blue-300 font-medium text-sm transition-all ${
             collapsed ? "justify-center px-0" : ""
           }`}
         >
@@ -123,7 +123,7 @@ export function ConversationSidebar({
                     onClick={() => onCategoryChange(cat.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
                       active
-                        ? "bg-blue-600/14 text-blue-300 border border-blue-500/18"
+                        ? "bg-blue-600/14 text-blue-600 dark:text-blue-300 border border-blue-500/18"
                         : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/30 border border-transparent"
                     }`}
                   >

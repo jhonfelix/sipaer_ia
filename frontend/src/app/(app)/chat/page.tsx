@@ -358,8 +358,8 @@ export default function ChatPage() {
             <Upload className="w-7 h-7 text-blue-400" />
           </div>
           <div className="text-center">
-            <p className="text-blue-300 font-semibold">Solte para anexar</p>
-            <p className="text-blue-400/50 text-sm mt-1">PDF · DOCX · XLSX · CSV · imagens · áudio · vídeo</p>
+            <p className="text-blue-700 dark:text-blue-300 font-semibold">Solte para anexar</p>
+            <p className="text-blue-600/60 dark:text-blue-400/50 text-sm mt-1">PDF · DOCX · XLSX · CSV · imagens · áudio · vídeo</p>
           </div>
         </div>
       )}
@@ -381,7 +381,7 @@ export default function ChatPage() {
         <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/20 to-blue-800/25 border border-blue-400/18 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-blue-400" />
+              <Bot className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             </div>
             <div>
               <h1 className="text-foreground font-semibold text-[13px] leading-none">
@@ -409,7 +409,7 @@ export default function ChatPage() {
               <div className="flex flex-col items-center gap-4 text-center">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-900/30 border border-blue-400/18 flex items-center justify-center shadow-2xl shadow-blue-900/25">
-                    <Sparkles className="w-8 h-8 text-blue-400" />
+                    <Sparkles className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-background border border-blue-500/25 flex items-center justify-center">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse block" />
@@ -466,7 +466,7 @@ export default function ChatPage() {
                         {msg.content}
                       </div>
                       <div className="w-7 h-7 rounded-full bg-blue-600/18 border border-blue-500/22 flex items-center justify-center shrink-0 mb-0.5">
-                        <User2 className="w-3.5 h-3.5 text-blue-400" />
+                        <User2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                       </div>
                     </div>
                   </div>
@@ -474,7 +474,7 @@ export default function ChatPage() {
                   /* AI message */
                   <div key={msg.id} className="flex gap-3 group/msg">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/15 to-blue-800/20 border border-blue-400/15 flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60 px-4 py-3.5">
@@ -511,7 +511,7 @@ export default function ChatPage() {
               {sending && (
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/15 to-blue-800/20 border border-blue-400/15 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                    <Sparkles className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 animate-pulse" />
                   </div>
                   <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
                     <span className="flex items-center gap-1.5">
