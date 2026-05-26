@@ -39,6 +39,18 @@ class VectorService:
         )
         return results.points
 
+    async def delete_by_doc_id(self, doc_id: int) -> None:
+        from qdrant_client.models import FieldCondition, Filter, FilterSelector, MatchValue
+
+        await self.client.delete(
+            collection_name=settings.QDRANT_COLLECTION,
+            points_selector=FilterSelector(
+                filter=Filter(
+                    must=[FieldCondition(key="doc_id", match=MatchValue(value=doc_id))]
+                )
+            ),
+        )
+
     async def close(self) -> None:
         if self._client:
             await self._client.close()

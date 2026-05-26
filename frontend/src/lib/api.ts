@@ -327,6 +327,107 @@ export const media = {
   },
 };
 
+// ── Knowledge ─────────────────────────────────────────────────────────────────
+
+interface RawKnowledgeDocument {
+  id: number;
+  title: string;
+  source: string;
+  doc_type: string;
+  status: string;
+  chunk_count: number;
+  original_name: string | null;
+  size_bytes: number;
+  error_msg: string | null;
+  added_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KnowledgeDocument {
+  id: number;
+  title: string;
+  source: string;
+  docType: string;
+  status: "pending" | "indexing" | "indexed" | "error";
+  chunkCount: number;
+  originalName: string | null;
+  sizeBytes: number;
+  errorMsg: string | null;
+  addedBy: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+function mapKnowledgeDocument(raw: RawKnowledgeDocument): KnowledgeDocument {
+  return {
+    id: raw.id,
+    title: raw.title,
+    source: raw.source,
+    docType: raw.doc_type,
+    status: raw.status as KnowledgeDocument["status"],
+    chunkCount: raw.chunk_count,
+    originalName: raw.original_name,
+    sizeBytes: raw.size_bytes,
+    errorMsg: raw.error_msg,
+    addedBy: raw.added_by,
+    createdAt: new Date(raw.created_at),
+    updatedAt: new Date(raw.updated_at),
+  };
+}
+
+export const knowledge = {
+  async list(): Promise<KnowledgeDocument[]> {
+    return (await request<RawKnowledgeDocument[]>("/knowledge")).map(mapKnowledgeDocument);
+  },
+
+  async addText(payload: {
+    title: string;
+    source: string;
+    docType: string;
+    content: string;
+  }): Promise<KnowledgeDocument> {
+    return mapKnowledgeDocument(
+      await request<RawKnowledgeDocument>("/knowledge/text", {
+        method: "POST",
+        body: JSON.stringify({
+          title: payload.title,
+          source: payload.source,
+          doc_type: payload.docType,
+          content: payload.content,
+        }),
+      })
+    );
+  },
+
+  async addFile(
+    file: File,
+    meta: { title: string; source: string; docType: string }
+  ): Promise<KnowledgeDocument> {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    body.append("title", meta.title);
+    body.append("source", meta.source);
+    body.append("doc_type", meta.docType);
+    const res = await fetch(`${BASE}/knowledge/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? "Erro no upload");
+    }
+    return mapKnowledgeDocument(data as RawKnowledgeDocument);
+  },
+
+  async remove(id: number): Promise<void> {
+    await request<void>(`/knowledge/${id}`, { method: "DELETE" });
+  },
+};
+
 // ── Chat ──────────────────────────────────────────────────────────────────────
 
 export interface ChatSession {

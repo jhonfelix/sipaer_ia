@@ -8,6 +8,7 @@ import {
   AudioLines,
   Building2,
   LayoutDashboard,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -39,7 +40,12 @@ const navItems = [
     label: "Gestão Administrativa",
     icon: Building2,
     href: "/da",
-    //badge: "Licitação",
+  },
+  {
+    id: "knowledge",
+    label: "Base de Conhecimento",
+    icon: BookOpen,
+    href: "/knowledge",
   },
 ];
 

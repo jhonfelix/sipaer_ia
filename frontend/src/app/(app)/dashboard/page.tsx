@@ -7,6 +7,7 @@ import {
   AudioLines,
   Building2,
   MessageSquarePlus,
+  BookOpen,
   Clock,
   CheckCircle2,
   AlertTriangle,
@@ -67,6 +68,13 @@ const modules = [
     description: "Processos licitatórios e contratos institucionais",
     href: "/da",
     color: "#f59e0b",
+  },
+  {
+    icon: BookOpen,
+    label: "Base de Conhecimento",
+    description: "Gerencie documentos e textos indexados no pipeline RAG",
+    href: "/knowledge",
+    color: "#06b6d4",
   },
 ];
 
