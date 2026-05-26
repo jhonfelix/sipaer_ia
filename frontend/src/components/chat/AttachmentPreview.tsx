@@ -23,7 +23,7 @@ function fileStyle(mime: string) {
     return { Icon: Table2, color: "text-emerald-400", bg: "bg-emerald-400/10" };
   if (mime.includes("word") || mime.includes("document"))
     return { Icon: FileText, color: "text-blue-400", bg: "bg-blue-400/10" };
-  return { Icon: FileText, color: "text-white/45", bg: "bg-white/[0.06]" };
+  return { Icon: FileText, color: "text-muted-foreground/60", bg: "bg-muted/30" };
 }
 
 interface Props {
@@ -43,13 +43,13 @@ export function AttachmentPreview({ files, onRemove }: Props) {
         return (
           <div
             key={attached.id}
-            className="relative flex items-center gap-2 pl-2 pr-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] group hover:border-white/[0.14] transition-colors"
+            className="relative flex items-center gap-2 pl-2 pr-3 py-2 rounded-xl bg-muted/30 border border-border group hover:border-border/80 transition-colors"
           >
             {isImage && attached.preview ? (
               <img
                 src={attached.preview}
                 alt={attached.file.name}
-                className="w-9 h-9 rounded-lg object-cover border border-white/[0.08]"
+                className="w-9 h-9 rounded-lg object-cover border border-border"
               />
             ) : (
               <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center`}>
@@ -57,14 +57,14 @@ export function AttachmentPreview({ files, onRemove }: Props) {
               </div>
             )}
             <div className="min-w-0 max-w-[110px]">
-              <p className="text-white/78 text-[11px] font-medium truncate leading-tight">
+              <p className="text-foreground/85 text-[11px] font-medium truncate leading-tight">
                 {attached.file.name}
               </p>
-              <p className="text-white/30 text-[10px] mt-0.5">{formatSize(attached.file.size)}</p>
+              <p className="text-muted-foreground/50 text-[10px] mt-0.5">{formatSize(attached.file.size)}</p>
             </div>
             <button
               onClick={() => onRemove(attached.id)}
-              className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-4.5 h-4.5 w-[18px] h-[18px] rounded-full bg-[#0d1b2e] border border-white/[0.15] flex items-center justify-center text-white/55 hover:text-white hover:bg-[#1a2f4a] transition-all"
+              className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all"
             >
               <X className="w-2.5 h-2.5" />
             </button>

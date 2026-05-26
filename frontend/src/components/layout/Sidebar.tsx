@@ -29,17 +29,17 @@ const navItems = [
   },
   {
     id: "labdata",
-    label: "Análise Pericial",
+    label: "Análise Áudio",
     icon: AudioLines,
     href: "/labdata",
-    badge: "LabData",
+    //badge: "LabData",
   },
   {
     id: "da",
     label: "Gestão Administrativa",
     icon: Building2,
     href: "/da",
-    badge: "Licitação",
+    //badge: "Licitação",
   },
 ];
 
@@ -54,8 +54,8 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`flex flex-col bg-[#0a1628] border-r border-[#1a2f4a] transition-all duration-300 shrink-0 ${
-        collapsed ? "w-[60px]" : "w-56"
+      className={`flex flex-col bg-card border-r border-border transition-all duration-300 shrink-0 ${
+        collapsed ? "w-[60px]" : "w-64"
       }`}
     >
       {/* New chat button */}
@@ -72,7 +72,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <div className="h-px bg-[#1a2f4a] mx-3 mb-1" />
+      <div className="h-px bg-border mx-3 mb-1" />
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
@@ -107,7 +107,7 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="p-2 border-t border-[#1a2f4a]">
+      <div className="p-2 border-t border-border">
         <button
           onClick={() => setCollapsed((v) => !v)}
           title={collapsed ? "Expandir" : "Recolher"}

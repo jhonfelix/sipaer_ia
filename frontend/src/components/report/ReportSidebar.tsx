@@ -141,7 +141,7 @@ export function ReportSidebar({
   };
 
   return (
-    <aside className="w-72 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 h-full overflow-hidden">
+    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 h-full overflow-hidden">
       {/* Cabeçalho do Relatório */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2 mb-2">

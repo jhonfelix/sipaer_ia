@@ -74,7 +74,7 @@ function ActionBtn({
     <button
       onClick={onClick}
       title={title}
-      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-white/40 hover:text-white/75 text-[11px] transition-all"
+      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border hover:border-border/80 text-muted-foreground/60 hover:text-foreground text-[11px] transition-all"
     >
       {children}
     </button>
@@ -375,26 +375,26 @@ export default function ChatPage() {
       />
 
       {/* Main chat */}
-      <div className="flex flex-col flex-1 min-h-0 bg-[#07111f]">
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
 
         {/* Top bar */}
-        <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-white/[0.05]">
+        <div className="shrink-0 flex items-center justify-between px-5 py-3 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/20 to-blue-800/25 border border-blue-400/18 flex items-center justify-center">
               <Bot className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-white/90 font-semibold text-[13px] leading-none">
+              <h1 className="text-foreground font-semibold text-[13px] leading-none">
                 Workspace IA — SIPAER
               </h1>
-              <p className="text-white/28 text-[10px] mt-0.5 leading-none">
+              <p className="text-muted-foreground/50 text-[10px] mt-0.5 leading-none">
                 Inteligência aeronáutica especializada · CENIPA / FAB
               </p>
             </div>
           </div>
           <button
             onClick={newConversation}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.07] text-white/42 hover:text-white/75 text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova conversa
@@ -411,15 +411,15 @@ export default function ChatPage() {
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-900/30 border border-blue-400/18 flex items-center justify-center shadow-2xl shadow-blue-900/25">
                     <Sparkles className="w-8 h-8 text-blue-400" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#07111f] border border-blue-500/25 flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-background border border-blue-500/25 flex items-center justify-center">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse block" />
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-white/88 font-semibold text-base tracking-tight">
+                  <h2 className="text-foreground font-semibold text-base tracking-tight">
                     Workspace de Inteligência Aeronáutica
                   </h2>
-                  <p className="text-white/32 text-sm mt-1">Como posso ajudar hoje?</p>
+                  <p className="text-muted-foreground/50 text-sm mt-1">Como posso ajudar hoje?</p>
                 </div>
               </div>
 
@@ -434,16 +434,16 @@ export default function ChatPage() {
                         setInput(s.prompt);
                         setTimeout(() => textareaRef.current?.focus(), 50);
                       }}
-                      className="flex flex-col gap-3 p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.11] text-left transition-all"
+                      className="flex flex-col gap-3 p-4 rounded-xl bg-muted/20 hover:bg-muted/40 border border-border/50 hover:border-border text-left transition-all"
                     >
                       <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center`}>
                         <Icon className={`w-4 h-4 ${s.color}`} />
                       </div>
                       <div>
-                        <p className="text-white/80 text-[13px] font-semibold leading-tight">
+                        <p className="text-foreground/80 text-[13px] font-semibold leading-tight">
                           {s.title}
                         </p>
-                        <p className="text-white/32 text-[11px] mt-0.5 leading-snug">
+                        <p className="text-muted-foreground/50 text-[11px] mt-0.5 leading-snug">
                           {s.description}
                         </p>
                       </div>
@@ -462,7 +462,7 @@ export default function ChatPage() {
                   /* User message */
                   <div key={msg.id} className="flex justify-end">
                     <div className="flex items-end gap-2.5 max-w-[80%]">
-                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-white/88 text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
                         {msg.content}
                       </div>
                       <div className="w-7 h-7 rounded-full bg-blue-600/18 border border-blue-500/22 flex items-center justify-center shrink-0 mb-0.5">
@@ -477,18 +477,18 @@ export default function ChatPage() {
                       <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="rounded-2xl rounded-tl-sm bg-white/[0.035] border border-white/[0.07] px-4 py-3.5">
+                      <div className="rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60 px-4 py-3.5">
                         <MarkdownRenderer content={msg.content} />
                         {msg.sources && msg.sources.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                            <p className="text-white/28 text-[10px] uppercase tracking-widest font-medium mb-1.5">
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">
                               Fontes
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {msg.sources.map((src, i) => (
                                 <span
                                   key={i}
-                                  className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.07] text-white/42"
+                                  className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60"
                                 >
                                   {src}
                                 </span>
@@ -513,7 +513,7 @@ export default function ChatPage() {
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/15 to-blue-800/20 border border-blue-400/15 flex items-center justify-center shrink-0">
                     <Sparkles className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
                   </div>
-                  <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-white/[0.035] border border-white/[0.07]">
+                  <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
                     <span className="flex items-center gap-1.5">
                       {[0, 1, 2].map((i) => (
                         <span
@@ -533,9 +533,9 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="shrink-0 border-t border-white/[0.05] p-4">
+        <div className="shrink-0 border-t border-border/50 p-4">
           <div className="max-w-3xl mx-auto">
-            <div className="rounded-2xl bg-white/[0.04] border border-white/[0.08] focus-within:border-blue-500/30 focus-within:bg-white/[0.05] transition-all overflow-hidden">
+            <div className="rounded-2xl bg-muted/30 border border-border focus-within:border-blue-500/30 focus-within:bg-muted/40 transition-all overflow-hidden">
 
               {/* Attachment previews */}
               {attached.length > 0 && (
@@ -550,7 +550,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   title="Anexar arquivo (PDF, DOCX, XLSX, CSV, imagem, áudio, vídeo)"
-                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.07] text-white/38 hover:text-white/70 transition-all shrink-0 mb-0.5"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
                 </button>
@@ -562,7 +562,7 @@ export default function ChatPage() {
                   onKeyDown={onKeyDown}
                   placeholder="Descreva o que precisa… (Enter para enviar · Shift+Enter nova linha)"
                   rows={1}
-                  className="flex-1 bg-transparent text-white/88 placeholder-white/20 text-sm leading-relaxed resize-none focus:outline-none py-1"
+                  className="flex-1 bg-transparent text-foreground/90 placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
                   style={{ minHeight: "32px", maxHeight: "200px" }}
                 />
 
@@ -579,7 +579,7 @@ export default function ChatPage() {
               {/* Bottom toolbar */}
               <div className="flex items-center justify-between px-3 pb-2.5">
                 <ModelSelector value={model} onChange={setModel} />
-                <p className="text-white/18 text-[10px]">
+                <p className="text-muted-foreground/40 text-[10px]">
                   A IA pode cometer erros — verifique informações críticas nas fontes oficiais.
                 </p>
               </div>

@@ -17,6 +17,7 @@ class LLMService:
                     "Content-Type": "application/json",
                 },
                 timeout=60.0,
+                verify=False,
             )
         return self._client
 

@@ -3,7 +3,7 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from app.config import settings
 
-VECTOR_SIZE = 1536
+VECTOR_SIZE = 2560  # ← corrigido de 1536 para 2560
 
 
 class VectorService:
@@ -31,13 +31,13 @@ class VectorService:
         )
 
     async def search(self, vector: list[float], limit: int = 10) -> list:
-        results = await self.client.search(
+        results = await self.client.query_points(
             collection_name=settings.QDRANT_COLLECTION,
-            query_vector=vector,
+            query=vector,
             limit=limit,
             with_payload=True,
         )
-        return results
+        return results.points
 
     async def close(self) -> None:
         if self._client:

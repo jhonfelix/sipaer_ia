@@ -155,10 +155,10 @@ function generateMockResponse(userMessage: string): string {
 
 function LoadingState() {
   return (
-    <div className="flex-1 flex items-center justify-center h-full bg-[#07111f]">
+    <div className="flex-1 flex items-center justify-center h-full bg-background">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
-        <p className="text-white/40 text-sm">Carregando relatório…</p>
+        <p className="text-muted-foreground text-sm">Carregando relatório…</p>
       </div>
     </div>
   );
@@ -166,18 +166,18 @@ function LoadingState() {
 
 function ErrorState({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <div className="flex-1 flex items-center justify-center h-full bg-[#07111f]">
+    <div className="flex-1 flex items-center justify-center h-full bg-background">
       <div className="flex flex-col items-center gap-4 max-w-sm text-center">
         <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-400/20 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6 text-red-400" />
         </div>
         <div>
-          <p className="text-white/80 font-medium">Erro ao carregar relatório</p>
-          <p className="text-white/40 text-sm mt-1">{message}</p>
+          <p className="text-foreground font-medium">Erro ao carregar relatório</p>
+          <p className="text-muted-foreground text-sm mt-1">{message}</p>
         </div>
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.08] text-white/60 hover:text-white text-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/30 hover:bg-muted/60 border border-border text-muted-foreground hover:text-foreground text-sm transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para relatórios

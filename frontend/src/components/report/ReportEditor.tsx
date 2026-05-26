@@ -790,7 +790,7 @@ export function ReportEditor({
               </div>
               <ScrollArea className="flex-1 min-h-0">
                 <div
-                  className="p-4 prose prose-invert max-w-none dark:prose-invert"
+                  className="p-4 prose max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
                 />
               </ScrollArea>
@@ -803,7 +803,7 @@ export function ReportEditor({
           <ScrollArea className="h-full">
             <div className="max-w-4xl mx-auto py-6 px-4">
               <div
-                className="prose prose-invert max-w-none dark:prose-invert"
+                className="prose max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
               />
             </div>

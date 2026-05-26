@@ -750,14 +750,14 @@ function StepBar({ current }: { current: number }) {
                     ? "bg-blue-600 text-white"
                     : active
                     ? "bg-blue-600/20 border-2 border-blue-500 text-blue-400"
-                    : "bg-white/[0.05] border border-white/[0.1] text-white/20"
+                    : "bg-muted/30 border border-border/60 text-muted-foreground/30"
                 }`}
               >
                 {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
               </div>
               <span
                 className={`text-[11px] font-medium whitespace-nowrap ${
-                  active ? "text-blue-400" : done ? "text-white/50" : "text-white/20"
+                  active ? "text-blue-400" : done ? "text-muted-foreground/70" : "text-muted-foreground/30"
                 }`}
               >
                 {label}
@@ -766,7 +766,7 @@ function StepBar({ current }: { current: number }) {
             {i < STEPS.length - 1 && (
               <div
                 className={`flex-1 h-px mx-2 mb-5 transition-all ${
-                  done ? "bg-blue-500/50" : "bg-white/[0.07]"
+                  done ? "bg-blue-500/50" : "bg-border/60"
                 }`}
               />
             )}
@@ -784,15 +784,15 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
     0
   );
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+    <div className="rounded-xl border border-border bg-muted/10 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm text-white/60 hover:text-white/80 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>
-          <span className="text-white/80 font-medium">{sections.length}</span> seções ·{" "}
-          <span className="text-white/80 font-medium">{total}</span> subseções
+          <span className="text-foreground/80 font-medium">{sections.length}</span> seções ·{" "}
+          <span className="text-foreground/80 font-medium">{total}</span> subseções
           {agro && (
             <span className="ml-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
               + Aeroagrícola
@@ -802,14 +802,14 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
         {open ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
       </button>
       {open && (
-        <ul className="border-t border-white/[0.05] max-h-64 overflow-y-auto divide-y divide-white/[0.04]">
+        <ul className="border-t border-border/50 max-h-64 overflow-y-auto divide-y divide-border/40">
           {sections.map((sec) => (
             <li key={sec.id} className="px-4 py-2.5">
-              <p className="text-white/70 text-xs font-medium">{sec.title}</p>
+              <p className="text-foreground/80 text-xs font-medium">{sec.title}</p>
               <ul className="mt-1 space-y-0.5">
                 {sec.subsections.map((sub) => (
-                  <li key={sub.id} className="flex items-center gap-1.5 text-white/35 text-xs pl-3">
-                    <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
+                  <li key={sub.id} className="flex items-center gap-1.5 text-muted-foreground/60 text-xs pl-3">
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30 shrink-0" />
                     {sub.title}
                   </li>
                 ))}
@@ -830,12 +830,12 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
 
 // shared field styles
 const inputCls =
-  "w-full px-3.5 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder-white/20 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.07] transition-all";
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
 const selectCls =
-  "w-full px-3.5 py-2.5 rounded-xl bg-[#0d1e30] border border-white/[0.1] text-white text-sm focus:outline-none focus:border-blue-500/50 transition-all";
-const labelCls = "block text-xs text-white/45 font-medium mb-1.5";
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all";
+const labelCls = "block text-xs text-muted-foreground/60 font-medium mb-1.5";
 const sectionHeadCls =
-  "flex items-center gap-2 text-xs font-semibold text-white/50 uppercase tracking-widest mb-4 mt-6 first:mt-0";
+  "flex items-center gap-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-widest mb-4 mt-6 first:mt-0";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
@@ -925,18 +925,18 @@ export default function NewReportPage() {
   const selectedScope = SCOPE_OPTIONS.find((s) => s.id === scope);
 
   return (
-    <div className="flex-1 h-full overflow-auto bg-[#07111f]">
+    <div className="flex-1 h-full overflow-auto bg-background">
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link
           href="/reports"
-          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground text-sm mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para relatórios
         </Link>
 
-        <h1 className="text-2xl font-bold text-white mb-1">Novo Relatório</h1>
-        <p className="text-white/40 text-sm mb-8">
+        <h1 className="text-2xl font-bold text-foreground mb-1">Novo Relatório</h1>
+        <p className="text-muted-foreground/60 text-sm mb-8">
           Preencha as etapas abaixo para configurar a estrutura do documento.
         </p>
 
@@ -945,7 +945,7 @@ export default function NewReportPage() {
         {/* ── Step 0: Tipo de Documento ────────────────────────────────────── */}
         {step === 0 && (
           <div className="space-y-3">
-            <p className="text-white/60 text-sm font-medium mb-4">
+            <p className="text-muted-foreground text-sm font-medium mb-4">
               Qual documento deseja produzir?
             </p>
             {DOC_TYPES.map((dt) => {
@@ -959,7 +959,7 @@ export default function NewReportPage() {
                   className={`w-full flex items-start gap-4 p-4 rounded-2xl border text-left transition-all duration-200 ${
                     selected
                       ? "border-blue-500/50 bg-blue-600/10"
-                      : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]"
+                      : "border-border bg-muted/10 hover:border-border/80 hover:bg-muted/20"
                   }`}
                 >
                   <div
@@ -970,14 +970,14 @@ export default function NewReportPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-semibold text-sm">{dt.label}</span>
-                      <span className="text-white/35 text-xs">— {dt.full}</span>
+                      <span className="text-foreground font-semibold text-sm">{dt.label}</span>
+                      <span className="text-muted-foreground/50 text-xs">— {dt.full}</span>
                     </div>
-                    <p className="text-white/45 text-xs mt-1 leading-relaxed">{dt.desc}</p>
+                    <p className="text-muted-foreground/60 text-xs mt-1 leading-relaxed">{dt.desc}</p>
                   </div>
                   <div
                     className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 transition-all ${
-                      selected ? "border-blue-400 bg-blue-500" : "border-white/20"
+                      selected ? "border-blue-400 bg-blue-500" : "border-muted-foreground/30"
                     }`}
                   />
                 </button>
@@ -989,7 +989,7 @@ export default function NewReportPage() {
         {/* ── Step 1: Escopo ───────────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-3">
-            <p className="text-white/60 text-sm font-medium mb-4">
+            <p className="text-muted-foreground text-sm font-medium mb-4">
               Qual o escopo do documento?
             </p>
             {SCOPE_OPTIONS.map((opt) => {
@@ -1002,17 +1002,17 @@ export default function NewReportPage() {
                   className={`w-full flex items-start gap-4 p-5 rounded-2xl border text-left transition-all duration-200 ${
                     selected
                       ? "border-blue-500/50 bg-blue-600/10"
-                      : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.04]"
+                      : "border-border bg-muted/10 hover:border-border/80 hover:bg-muted/20"
                   }`}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white font-semibold">{opt.label}</span>
+                      <span className="text-foreground font-semibold">{opt.label}</span>
                     </div>
-                    <p className="text-white/45 text-sm leading-relaxed mb-3">{opt.desc}</p>
+                    <p className="text-muted-foreground/60 text-sm leading-relaxed mb-3">{opt.desc}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {opt.tags.map((tag) => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded-md bg-white/[0.06] text-white/40 border border-white/[0.08]">
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground/60 border border-border/60">
                           {tag}
                         </span>
                       ))}
@@ -1025,7 +1025,7 @@ export default function NewReportPage() {
                   </div>
                   <div
                     className={`w-4 h-4 rounded-full border-2 shrink-0 mt-1 transition-all ${
-                      selected ? "border-blue-400 bg-blue-500" : "border-white/20"
+                      selected ? "border-blue-400 bg-blue-500" : "border-muted-foreground/30"
                     }`}
                   />
                 </button>
@@ -1037,19 +1037,19 @@ export default function NewReportPage() {
         {/* ── Step 2: Configuração ─────────────────────────────────────────── */}
         {step === 2 && (
           <div className="space-y-4">
-            <p className="text-white/60 text-sm font-medium mb-4">
+            <p className="text-muted-foreground text-sm font-medium mb-4">
               Configure as opções do documento.
             </p>
 
             {/* Investigador responsável */}
-            <div className="p-5 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
+            <div className="p-5 rounded-2xl border border-border bg-muted/10 space-y-3">
               <div className="flex items-center gap-2.5 mb-1">
                 <div className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
                   <User2 className="w-4 h-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-white/80 font-medium text-sm">Investigador Responsável</p>
-                  <p className="text-white/35 text-xs">Responsável pela elaboração deste documento.</p>
+                  <p className="text-foreground/80 font-medium text-sm">Investigador Responsável</p>
+                  <p className="text-muted-foreground/50 text-xs">Responsável pela elaboração deste documento.</p>
                 </div>
               </div>
               <select
@@ -1076,7 +1076,7 @@ export default function NewReportPage() {
             {/* Aeroagrícola toggle */}
             <div
               className={`p-5 rounded-2xl border transition-all ${
-                isAgro ? "border-emerald-500/30 bg-emerald-500/[0.06]" : "border-white/[0.08] bg-white/[0.02]"
+                isAgro ? "border-emerald-500/30 bg-emerald-500/[0.06]" : "border-border bg-muted/10"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -1085,8 +1085,8 @@ export default function NewReportPage() {
                     <Tractor className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-white/80 font-medium text-sm">Aeronave Aeroagrícola</p>
-                    <p className="text-white/35 text-xs mt-0.5 leading-relaxed">
+                    <p className="text-foreground/80 font-medium text-sm">Aeronave Aeroagrícola</p>
+                    <p className="text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
                       Adiciona seções específicas para operações agrícolas: sistema de
                       aplicação, calda fitossanitária, RBAC 137, área de tratamento,
                       FISPQ e conformidade normativa.
@@ -1096,7 +1096,7 @@ export default function NewReportPage() {
                 <button
                   type="button"
                   onClick={() => setIsAgro((v) => !v)}
-                  className={`relative w-11 h-6 rounded-full transition-all shrink-0 ${isAgro ? "bg-emerald-500" : "bg-white/10"}`}
+                  className={`relative w-11 h-6 rounded-full transition-all shrink-0 ${isAgro ? "bg-emerald-500" : "bg-muted/50"}`}
                 >
                   <span
                     className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
@@ -1118,7 +1118,7 @@ export default function NewReportPage() {
             {/* Dédalo toggle */}
             <div
               className={`p-5 rounded-2xl border transition-all ${
-                useDedalo ? "border-blue-500/30 bg-blue-500/[0.06]" : "border-white/[0.08] bg-white/[0.02]"
+                useDedalo ? "border-blue-500/30 bg-blue-500/[0.06]" : "border-border bg-muted/10"
               }`}
             >
               <div className="flex items-start justify-between gap-4">
@@ -1127,10 +1127,10 @@ export default function NewReportPage() {
                     <Database className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-white/80 font-medium text-sm">
+                    <p className="text-foreground/80 font-medium text-sm">
                       Importar dados do sistema Dédalo
                     </p>
-                    <p className="text-white/35 text-xs mt-0.5 leading-relaxed">
+                    <p className="text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
                       Pré-preenche os dados da ocorrência automaticamente a partir do número
                       de registro no Dédalo (CENIPA).
                     </p>
@@ -1139,7 +1139,7 @@ export default function NewReportPage() {
                 <button
                   type="button"
                   onClick={() => setUseDedalo((v) => !v)}
-                  className={`relative w-11 h-6 rounded-full transition-all shrink-0 ${useDedalo ? "bg-blue-500" : "bg-white/10"}`}
+                  className={`relative w-11 h-6 rounded-full transition-all shrink-0 ${useDedalo ? "bg-blue-500" : "bg-muted/50"}`}
                 >
                   <span
                     className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
@@ -1163,14 +1163,14 @@ export default function NewReportPage() {
                     <Database className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-white/80 font-medium text-sm">Sistema Dédalo — CENIPA</p>
-                    <p className="text-white/35 text-xs">Informe o número da ocorrência para importação automática dos dados.</p>
+                    <p className="text-foreground/80 font-medium text-sm">Sistema Dédalo — CENIPA</p>
+                    <p className="text-muted-foreground/50 text-xs">Informe o número da ocorrência para importação automática dos dados.</p>
                   </div>
                 </div>
                 <div>
                   <label className={labelCls}>Número da Ocorrência no Dédalo</label>
                   <div className="relative">
-                    <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
                     <input
                       type="text"
                       value={form.number}
@@ -1189,7 +1189,7 @@ export default function NewReportPage() {
             ) : (
               /* ── Manual: formulário completo ── */
               <div>
-                <p className="text-white/60 text-sm font-medium mb-6">
+                <p className="text-muted-foreground text-sm font-medium mb-6">
                   Preencha os dados da ocorrência manualmente.
                 </p>
 
@@ -1203,7 +1203,7 @@ export default function NewReportPage() {
                     <div>
                       <label className={labelCls}>Número da Ocorrência</label>
                       <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25" />
+                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
                         <input
                           type="text"
                           value={form.number}
@@ -1246,12 +1246,12 @@ export default function NewReportPage() {
                     <div>
                       <label className={labelCls}>Data <span className="text-red-400">*</span></label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25 pointer-events-none" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 pointer-events-none" />
                         <input
                           type="date"
                           value={form.date}
                           onChange={(e) => setField("date", e.target.value)}
-                          className={`${inputCls} pl-9 [color-scheme:dark]`}
+                          className={`${inputCls} pl-9 dark:[color-scheme:dark]`}
                         />
                       </div>
                     </div>
@@ -1261,7 +1261,7 @@ export default function NewReportPage() {
                         type="time"
                         value={form.time}
                         onChange={(e) => setField("time", e.target.value)}
-                        className={`${inputCls} [color-scheme:dark]`}
+                        className={`${inputCls} dark:[color-scheme:dark]`}
                       />
                     </div>
                   </div>
@@ -1429,32 +1429,32 @@ export default function NewReportPage() {
                   <Users className="w-3.5 h-3.5" />
                   Pessoas a Bordo / Lesões / Danos
                 </div>
-                <div className="rounded-xl border border-white/[0.08] overflow-hidden">
+                <div className="rounded-xl border border-border overflow-hidden">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-white/[0.07] bg-white/[0.02]">
-                        <th className="text-left px-4 py-2.5 text-white/35 font-medium">Situação</th>
-                        <th className="text-center px-3 py-2.5 text-white/35 font-medium">Tripulação</th>
-                        <th className="text-center px-3 py-2.5 text-white/35 font-medium">Passageiros</th>
-                        <th className="text-center px-3 py-2.5 text-white/35 font-medium">Terceiros</th>
+                      <tr className="border-b border-border bg-muted/10">
+                        <th className="text-left px-4 py-2.5 text-muted-foreground/60 font-medium">Situação</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Tripulação</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Passageiros</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Terceiros</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04]">
+                    <tbody className="divide-y divide-border/40">
                       {[
                         { label: "Ilesos", crewKey: "crewNone", paxKey: "paxNone", thirdKey: null },
                         { label: "Feridos Leves", crewKey: "crewMinor", paxKey: "paxMinor", thirdKey: "thirdMinor" },
                         { label: "Feridos Graves", crewKey: "crewSerious", paxKey: "paxSerious", thirdKey: "thirdSerious" },
                         { label: "Fatais", crewKey: "crewFatal", paxKey: "paxFatal", thirdKey: "thirdFatal" },
                       ].map((row) => (
-                        <tr key={row.label} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-4 py-2.5 text-white/50">{row.label}</td>
+                        <tr key={row.label} className="hover:bg-muted/10 transition-colors">
+                          <td className="px-4 py-2.5 text-muted-foreground/70">{row.label}</td>
                           <td className="px-3 py-2">
                             <input
                               type="number"
                               min="0"
                               value={form[row.crewKey as keyof OccFormData]}
                               onChange={(e) => setField(row.crewKey as keyof OccFormData, e.target.value)}
-                              className="w-full text-center px-2 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white text-xs focus:outline-none focus:border-blue-500/40 transition-all"
+                              className="w-full text-center px-2 py-1.5 rounded-lg bg-muted/20 border border-border text-foreground text-xs focus:outline-none focus:border-blue-500/40 transition-all"
                               placeholder="0"
                             />
                           </td>
@@ -1464,7 +1464,7 @@ export default function NewReportPage() {
                               min="0"
                               value={form[row.paxKey as keyof OccFormData]}
                               onChange={(e) => setField(row.paxKey as keyof OccFormData, e.target.value)}
-                              className="w-full text-center px-2 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white text-xs focus:outline-none focus:border-blue-500/40 transition-all"
+                              className="w-full text-center px-2 py-1.5 rounded-lg bg-muted/20 border border-border text-foreground text-xs focus:outline-none focus:border-blue-500/40 transition-all"
                               placeholder="0"
                             />
                           </td>
@@ -1475,11 +1475,11 @@ export default function NewReportPage() {
                                 min="0"
                                 value={form[row.thirdKey as keyof OccFormData]}
                                 onChange={(e) => setField(row.thirdKey as keyof OccFormData, e.target.value)}
-                                className="w-full text-center px-2 py-1.5 rounded-lg bg-white/[0.05] border border-white/[0.08] text-white text-xs focus:outline-none focus:border-blue-500/40 transition-all"
+                                className="w-full text-center px-2 py-1.5 rounded-lg bg-muted/20 border border-border text-foreground text-xs focus:outline-none focus:border-blue-500/40 transition-all"
                                 placeholder="0"
                               />
                             ) : (
-                              <span className="block text-center text-white/20">—</span>
+                              <span className="block text-center text-muted-foreground/30">—</span>
                             )}
                           </td>
                         </tr>
@@ -1495,35 +1495,35 @@ export default function NewReportPage() {
         {/* ── Step 4: Confirmar ────────────────────────────────────────────── */}
         {step === 4 && selectedDoc && selectedScope && docType && scope && (
           <div className="space-y-4">
-            <p className="text-white/60 text-sm font-medium mb-4">
+            <p className="text-muted-foreground text-sm font-medium mb-4">
               Revise as configurações antes de criar o relatório.
             </p>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] divide-y divide-white/[0.05]">
+            <div className="rounded-2xl border border-border bg-muted/10 divide-y divide-border/40">
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-white/40 text-xs">Tipo de documento</span>
+                <span className="text-muted-foreground/60 text-xs">Tipo de documento</span>
                 <div className="flex items-center gap-2">
                   <selectedDoc.icon className="w-4 h-4" style={{ color: selectedDoc.color }} />
-                  <span className="text-white/80 text-sm font-medium">{selectedDoc.label}</span>
+                  <span className="text-foreground/80 text-sm font-medium">{selectedDoc.label}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-white/40 text-xs">Escopo</span>
-                <span className="text-white/80 text-sm font-medium">{selectedScope.label}</span>
+                <span className="text-muted-foreground/60 text-xs">Escopo</span>
+                <span className="text-foreground/80 text-sm font-medium">{selectedScope.label}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-white/40 text-xs">Investigador responsável</span>
-                <span className="text-white/80 text-sm">{investigator}</span>
+                <span className="text-muted-foreground/60 text-xs">Investigador responsável</span>
+                <span className="text-foreground/80 text-sm">{investigator}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-white/40 text-xs">Aviação Aeroagrícola</span>
-                <span className={`text-sm font-medium ${isAgro ? "text-emerald-400" : "text-white/30"}`}>
+                <span className="text-muted-foreground/60 text-xs">Aviação Aeroagrícola</span>
+                <span className={`text-sm font-medium ${isAgro ? "text-emerald-400" : "text-muted-foreground/40"}`}>
                   {isAgro ? "Sim — seções específicas incluídas" : "Não"}
                 </span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-white/40 text-xs">Dados da ocorrência</span>
-                <span className="text-white/80 text-sm">
+                <span className="text-muted-foreground/60 text-xs">Dados da ocorrência</span>
+                <span className="text-foreground/80 text-sm">
                   {useDedalo
                     ? `Dédalo${form.number ? ` — ${form.number}` : " (sem número)"}`
                     : form.number
@@ -1533,24 +1533,24 @@ export default function NewReportPage() {
               </div>
               {!useDedalo && (form.date || form.classification) && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-white/40 text-xs">Data / Classificação</span>
-                  <span className="text-white/70 text-sm">
+                  <span className="text-muted-foreground/60 text-xs">Data / Classificação</span>
+                  <span className="text-foreground/75 text-sm">
                     {[form.date, CLASSIFICATION_OPTIONS.find(c => c.value === form.classification)?.label].filter(Boolean).join(" · ")}
                   </span>
                 </div>
               )}
               {!useDedalo && form.occurrenceType && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-white/40 text-xs">Tipo da Ocorrência</span>
-                  <span className="text-white/70 text-sm font-mono text-xs">
+                  <span className="text-muted-foreground/60 text-xs">Tipo da Ocorrência</span>
+                  <span className="text-foreground/75 text-sm font-mono text-xs">
                     {form.occurrenceType}
                   </span>
                 </div>
               )}
               {!useDedalo && form.acRegistration && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-white/40 text-xs">Aeronave</span>
-                  <span className="text-white/70 text-sm font-mono">
+                  <span className="text-muted-foreground/60 text-xs">Aeronave</span>
+                  <span className="text-foreground/75 text-sm font-mono">
                     {[form.acRegistration, form.acModel].filter(Boolean).join(" · ")}
                   </span>
                 </div>
@@ -1569,12 +1569,12 @@ export default function NewReportPage() {
         )}
 
         {/* ── Navigation ───────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/[0.07]">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/60">
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/[0.1] text-white/50 hover:text-white hover:border-white/20 disabled:opacity-0 disabled:pointer-events-none text-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 disabled:opacity-0 disabled:pointer-events-none text-sm transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar

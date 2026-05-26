@@ -104,10 +104,10 @@ export default function DashboardPage() {
         {/* ── Welcome ───────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-foreground">
               {getGreeting()}, {firstName}
             </h1>
-            <p className="text-white/40 text-sm mt-0.5">
+            <p className="text-muted-foreground/60 text-sm mt-0.5">
               {new Date().toLocaleDateString("pt-BR", {
                 weekday: "long",
                 year: "numeric",
@@ -171,12 +171,12 @@ export default function DashboardPage() {
                 <div>
                   <div className={`text-3xl font-bold ${s.color}`}>
                     {loadingReports ? (
-                      <span className="text-xl text-white/20">—</span>
+                      <span className="text-xl text-muted-foreground/40">—</span>
                     ) : (
                       s.value
                     )}
                   </div>
-                  <div className="text-white/40 text-xs mt-0.5 leading-snug">
+                  <div className="text-muted-foreground/60 text-xs mt-0.5 leading-snug">
                     {s.label}
                   </div>
                 </div>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
           {/* Modules — 3 cols */}
           <div className="lg:col-span-3 space-y-3">
-            <h2 className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+            <h2 className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest">
               Módulos
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                   <Link
                     key={m.href}
                     href={m.href}
-                    className="group flex items-start gap-3 p-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.15] transition-all duration-200 hover:-translate-y-0.5"
+                    className="group flex items-start gap-3 p-4 rounded-2xl border border-border bg-muted/10 hover:bg-muted/30 hover:border-border/80 transition-all duration-200 hover:-translate-y-0.5"
                   >
                     <div
                       className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
@@ -212,12 +212,12 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-white/90 font-medium text-sm leading-snug">
+                        <p className="text-foreground font-medium text-sm leading-snug">
                           {m.label}
                         </p>
-                        <ArrowRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/50 transition-colors shrink-0" />
+                        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
                       </div>
-                      <p className="text-white/35 text-xs mt-1 leading-relaxed">
+                      <p className="text-muted-foreground/60 text-xs mt-1 leading-relaxed">
                         {m.description}
                       </p>
                     </div>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
           {/* Recent Reports — 2 cols */}
           <div className="lg:col-span-2 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-white/40 uppercase tracking-widest">
+              <h2 className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest">
                 Relatórios Recentes
               </h2>
               <Link
@@ -241,15 +241,15 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden min-h-[200px] flex flex-col">
+            <div className="rounded-2xl border border-border bg-muted/10 overflow-hidden min-h-[200px] flex flex-col">
               {loadingReports ? (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : recentReports.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6">
-                  <FileText className="w-8 h-8 text-white/15" />
-                  <p className="text-white/25 text-sm text-center">
+                  <FileText className="w-8 h-8 text-muted-foreground/30" />
+                  <p className="text-muted-foreground/40 text-sm text-center">
                     Nenhum relatório criado
                   </p>
                   <Link
@@ -260,27 +260,27 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                <ul className="divide-y divide-white/[0.04]">
+                <ul className="divide-y divide-border/40">
                   {recentReports.map((r) => (
                     <li key={r.id}>
                       <Link
                         href={`/reports/${r.id}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors"
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors"
                       >
                         <div
                           className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            statusDot[r.status] ?? "bg-white/30"
+                            statusDot[r.status] ?? "bg-muted-foreground/40"
                           }`}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-white/75 text-xs font-medium truncate">
+                          <p className="text-foreground/80 text-xs font-medium truncate">
                             Relatório #{r.id}
                           </p>
-                          <p className="text-white/25 text-xs">
+                          <p className="text-muted-foreground/50 text-xs">
                             {r.updatedAt.toLocaleDateString("pt-BR")}
                           </p>
                         </div>
-                        <span className="text-[10px] text-white/30 shrink-0">
+                        <span className="text-[10px] text-muted-foreground/50 shrink-0">
                           {statusLabel[r.status] ?? r.status}
                         </span>
                       </Link>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── AI Banner ─────────────────────────────────────────── */}
-        <div className="relative rounded-2xl overflow-hidden border border-blue-500/20 bg-gradient-to-r from-blue-950/60 via-[#0d1b2e] to-violet-950/30 p-6">
+        <div className="relative rounded-2xl overflow-hidden border border-blue-500/20 bg-gradient-to-r from-blue-500/10 via-background to-violet-500/10 p-6">
           <div className="absolute top-0 left-1/3 w-48 h-12 bg-blue-600/10 blur-[40px]" />
           <div className="relative flex items-center justify-between gap-6">
             <div className="flex items-center gap-4">
@@ -301,10 +301,10 @@ export default function DashboardPage() {
                 <Sparkles className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <h3 className="text-white font-semibold text-sm">
+                <h3 className="text-foreground font-semibold text-sm">
                   Assistente IA disponível
                 </h3>
-                <p className="text-white/35 text-xs mt-0.5">
+                <p className="text-muted-foreground/50 text-xs mt-0.5">
                   Faça perguntas, analise ocorrências ou solicite rascunhos de
                   relatórios com apoio da IA.
                 </p>
