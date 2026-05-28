@@ -202,6 +202,7 @@ export default function ReportEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [aiOpen, setAiOpen] = useState(false);
+  const [aiModel, setAiModel] = useState("gpt-oss-120b");
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -333,7 +334,7 @@ export default function ReportEditPage() {
           onSubsectionVisible={handleSubsectionVisible}
           isSaved={isSaved}
           onSave={handleSave}
-          onAIMessage={(msg) => handleSendMessage(msg)}
+          onAIMessage={(msg) => handleSendMessage(msg, aiModel)}
           scrollContainerRef={editorScrollRef}
         />
       </div>
@@ -341,6 +342,8 @@ export default function ReportEditPage() {
         <AIAssistantPanel
           messages={aiMessages}
           onSendMessage={handleSendMessage}
+          model={aiModel}
+          onModelChange={setAiModel}
           onClose={() => setAiOpen(false)}
           activeSection={activeSubsectionTitle}
           reportId={report ? Number(report.id) : undefined}

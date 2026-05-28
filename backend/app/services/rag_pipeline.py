@@ -115,7 +115,7 @@ class RAGPipeline:
         self, query: str, extra_context: str = "", model: str = "gpt-oss-120b"
     ) -> tuple[str, list[str]]:
         # Step 1: Check Redis cache
-        cache_key = self.cache.rag_key(query)
+        cache_key = self.cache.rag_key(query, model)
         cached = await self.cache.get(cache_key)
         if cached:
             data = json.loads(cached)

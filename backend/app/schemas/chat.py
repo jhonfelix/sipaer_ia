@@ -1,6 +1,9 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
+
+ALLOWED_MODELS = Literal["gpt-oss-120b", "gemma-4-26B-A4B-it"]
 
 
 class ChatRequest(BaseModel):
@@ -8,7 +11,7 @@ class ChatRequest(BaseModel):
     report_id: int | None = None
     context: str = ""
     session_id: str | None = None
-    model: str = "gpt-oss-120b"
+    model: ALLOWED_MODELS = "gpt-oss-120b"
 
 
 class ChatResponse(BaseModel):

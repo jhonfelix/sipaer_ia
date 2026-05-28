@@ -24,8 +24,8 @@ class CacheService:
     async def delete(self, key: str) -> None:
         await self.client.delete(key)
 
-    def rag_key(self, query: str) -> str:
-        digest = hashlib.md5(query.encode()).hexdigest()
+    def rag_key(self, query: str, model: str = "") -> str:
+        digest = hashlib.md5(f"{model}:{query}".encode()).hexdigest()
         return f"rag:{digest}"
 
     async def close(self) -> None:

@@ -10,15 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { chat as chatApi } from "@/lib/api";
+import { AI_MODELS } from "@/components/chat";
 import type { AIMessage } from "@/types/report";
 import type { Editor } from "@tiptap/react";
-
-// ── Modelos disponíveis ───────────────────────────────────────────────────────
-
-const MODELS = [
-  { id: "gpt-oss-120b",         label: "GPT OSS 120B"            },
-  { id: "gemma-4-26B-A4B-it", label: "Gemma 4 26B — Multimodal" },
-] as const;
 
 // ── Ações rápidas focadas em relatório ───────────────────────────────────────
 
@@ -84,6 +78,8 @@ const QUICK_ACTIONS = [
 interface AIAssistantPanelProps {
   messages: AIMessage[];
   onSendMessage: (message: string, model: string) => void;
+  model: string;
+  onModelChange: (id: string) => void;
   onClose?: () => void;
   editor?: Editor | null;
   activeSection?: string;
@@ -95,13 +91,14 @@ interface AIAssistantPanelProps {
 export function AIAssistantPanel({
   messages,
   onSendMessage,
+  model,
+  onModelChange,
   onClose,
   editor,
   activeSection = "seção atual",
   reportId,
 }: AIAssistantPanelProps) {
   const [input,         setInput]         = useState("");
-  const [model,         setModel]         = useState<string>(MODELS[0].id);
   const [showModelMenu, setShowModelMenu] = useState(false);
 
   const inputRef  = useRef<HTMLTextAreaElement>(null);
@@ -110,7 +107,7 @@ export function AIAssistantPanel({
 
   const { toast } = useToast();
   const hasMessages = messages.length > 0;
-  const currentModel = MODELS.find((m) => m.id === model) ?? MODELS[0];
+  const currentModel = AI_MODELS.find((m) => m.id === model) ?? AI_MODELS[0];
 
   // Auto-scroll
   useEffect(() => {
@@ -195,19 +192,19 @@ export function AIAssistantPanel({
             onClick={() => setShowModelMenu((v) => !v)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground bg-muted hover:bg-accent px-2.5 py-1.5 rounded-full transition-colors"
           >
-            {currentModel.label}
+            {currentModel.name}
             <ChevronDown className="w-3 h-3" />
           </button>
           {showModelMenu && (
             <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-lg shadow-lg py-1 z-50">
-              {MODELS.map((m) => (
+              {AI_MODELS.map((m) => (
                 <button
                   key={m.id}
-                  onClick={() => { setModel(m.id); setShowModelMenu(false); }}
+                  onClick={() => { onModelChange(m.id); setShowModelMenu(false); }}
                   className="flex items-center gap-2 w-full px-3 py-2 text-xs hover:bg-accent transition-colors text-left"
                 >
                   {m.id === model && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-                  <span className={cn("flex-1", m.id !== model && "pl-5")}>{m.label}</span>
+                  <span className={cn("flex-1", m.id !== model && "pl-5")}>{m.name}</span>
                 </button>
               ))}
             </div>
