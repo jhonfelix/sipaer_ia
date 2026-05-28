@@ -17,7 +17,7 @@ import type { Editor } from "@tiptap/react";
 
 const MODELS = [
   { id: "gpt-oss-120b",         label: "GPT OSS 120B"            },
-  { id: "gemma-4-26B-A4B-it", label: "Gemma4 26B — Multimodal" },
+  { id: "gemma-4-26B-A4B-it", label: "Gemma 4 26B — Multimodal" },
 ] as const;
 
 // ── Ações rápidas focadas em relatório ───────────────────────────────────────

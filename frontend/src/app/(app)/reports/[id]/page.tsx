@@ -269,7 +269,7 @@ export default function ReportEditPage() {
     []
   );
 
-  const handleSendMessage = useCallback(async (message: string, model = "gpt-oss-20b") => {
+  const handleSendMessage = useCallback(async (message: string, model = "gpt-oss-120b") => {
     const userMsg: AIMessage = {
       id: `msg-${Date.now()}`,
       role: "user",
