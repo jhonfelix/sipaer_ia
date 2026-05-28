@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
 
 from app.database import AsyncSession, get_db
 from app.middleware.auth import get_current_user
@@ -42,6 +46,7 @@ async def chat(
     try:
         content, sources = await rag_pipeline.process(body.message, body.context, body.model)
     except Exception:
+        logger.exception("RAG pipeline falhou")
         content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
         sources = []
 
