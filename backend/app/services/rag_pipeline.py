@@ -245,9 +245,13 @@ class RAGPipeline:
             reranked = await self.llm.rerank(query, docs, top_n=5)
             top_indices = [r["index"] for r in reranked]
             top_docs = [docs[i] for i in top_indices]
-            sources = [
-                search_results[i].payload.get("source", "") for i in top_indices
-            ]
+            seen_sources: set[str] = set()
+            sources: list[str] = []
+            for i in top_indices:
+                s = search_results[i].payload.get("source", "")
+                if s and s not in seen_sources:
+                    seen_sources.add(s)
+                    sources.append(s)
             context_text = "\n\n---\n\n".join(top_docs)
             if extra_context:
                 context_text = extra_context + "\n\n---\n\n" + context_text

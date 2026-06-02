@@ -30,7 +30,7 @@ const navItems = [
   },
   {
     id: "labdata",
-    label: "Análise Áudio",
+    label: "Análise Áudio & Espectro",
     icon: AudioLines,
     href: "/labdata",
     //badge: "LabData",
@@ -55,7 +55,7 @@ export function Sidebar() {
 
   function isActive(item: (typeof navItems)[0]) {
     if (item.exact) return pathname === item.href;
-    return pathname?.startsWith(item.href);
+    return pathname === item.href || pathname?.startsWith(item.href + "/");
   }
 
   return (

@@ -44,7 +44,7 @@ async def chat(
     await db.flush()
 
     try:
-        content, sources = await rag_pipeline.process(body.message, body.context, body.model)
+        content, sources = await rag_pipeline.process(body.message, body.context, body.model, body.chat_type)
     except Exception:
         logger.exception("RAG pipeline falhou")
         content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."

@@ -485,27 +485,13 @@ export const chat = {
     session_id?: string;
     model?: string;
     chat_type?: "general" | "report" | "da";
-    files?: File[];
   }): Promise<AIMessage> {
-    const token = getToken();
-    const form = new FormData();
-    form.append("message", payload.message);
-    if (payload.report_id != null) form.append("report_id", String(payload.report_id));
-    if (payload.context) form.append("context", payload.context);
-    if (payload.session_id) form.append("session_id", payload.session_id);
-    if (payload.model) form.append("model", payload.model);
-    if (payload.chat_type) form.append("chat_type", payload.chat_type);
-    for (const f of payload.files ?? []) form.append("files", f);
-
-    const res = await fetch(`${BASE}/chat`, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: form,
-    });
-    if (res.status === 401) { clearToken(); throw new ApiError(401, "Não autorizado"); }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new ApiError(res.status, data.detail ?? "Erro inesperado");
-    return mapChatMessage(data as RawChatMessage);
+    return mapChatMessage(
+      await request<RawChatMessage>("/chat", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    );
   },
 
   async sessions(): Promise<ChatSession[]> {

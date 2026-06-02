@@ -291,6 +291,7 @@ export default function ReportEditPage() {
         model,
         report_id: report ? Number(report.id) : undefined,
         context: `Seção ativa: ${activeSubsectionTitle}`,
+        chat_type: "report",
       });
       setAiMessages((prev) =>
         prev.filter((m) => m.id !== loadingId).concat({

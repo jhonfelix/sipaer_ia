@@ -259,6 +259,7 @@ export default function ChatPage() {
         message: text,
         session_id: activeSessionId ?? undefined,
         model,
+        chat_type: "general",
       });
 
       const newSessionId = reply.sessionId ?? activeSessionId;
@@ -485,7 +486,7 @@ export default function ChatPage() {
                               Fontes
                             </p>
                             <div className="flex flex-wrap gap-1.5">
-                              {msg.sources.map((src, i) => (
+                              {[...new Set(msg.sources)].map((src, i) => (
                                 <span
                                   key={i}
                                   className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60"
