@@ -12,7 +12,7 @@ from app.services.cache_service import cache_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await vector_service.ensure_collection()
+    await vector_service.ensure_all_collections()
     yield
     await llm_service.close()
     await vector_service.close()

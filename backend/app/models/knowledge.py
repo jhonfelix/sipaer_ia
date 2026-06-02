@@ -12,7 +12,7 @@ class KnowledgeDocument(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     source: Mapped[str] = mapped_column(String(500), nullable=False)
-    doc_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    collection: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="pending")
     chunk_count: Mapped[int] = mapped_column(Integer, default=0)
     original_name: Mapped[str | None] = mapped_column(String(500), nullable=True)

@@ -329,11 +329,28 @@ export const media = {
 
 // ── Knowledge ─────────────────────────────────────────────────────────────────
 
+export const COLLECTION_OPTIONS = [
+  { value: "relatorios_finais",  label: "Relatórios Finais" },
+  { value: "normas_legislacoes", label: "Normas e Legislações" },
+  { value: "regulamentos",       label: "Regulamentos" },
+  { value: "procedimentos",      label: "Procedimentos" },
+  { value: "licitacoes",         label: "Licitações" },
+  { value: "analise_audio",      label: "Análise de Áudio" },
+  { value: "analise_spectral",   label: "Análise Espectral" },
+  { value: "outros",             label: "Outros" },
+] as const;
+
+export type CollectionSlug = typeof COLLECTION_OPTIONS[number]["value"];
+
+export const COLLECTION_LABELS: Record<string, string> = Object.fromEntries(
+  COLLECTION_OPTIONS.map((o) => [o.value, o.label])
+);
+
 interface RawKnowledgeDocument {
   id: number;
   title: string;
   source: string;
-  doc_type: string;
+  collection: string;
   status: string;
   chunk_count: number;
   original_name: string | null;
@@ -348,7 +365,7 @@ export interface KnowledgeDocument {
   id: number;
   title: string;
   source: string;
-  docType: string;
+  collection: string;
   status: "pending" | "indexing" | "indexed" | "error";
   chunkCount: number;
   originalName: string | null;
@@ -364,7 +381,7 @@ function mapKnowledgeDocument(raw: RawKnowledgeDocument): KnowledgeDocument {
     id: raw.id,
     title: raw.title,
     source: raw.source,
-    docType: raw.doc_type,
+    collection: raw.collection,
     status: raw.status as KnowledgeDocument["status"],
     chunkCount: raw.chunk_count,
     originalName: raw.original_name,
@@ -384,7 +401,7 @@ export const knowledge = {
   async addText(payload: {
     title: string;
     source: string;
-    docType: string;
+    collection: string;
     content: string;
   }): Promise<KnowledgeDocument> {
     return mapKnowledgeDocument(
@@ -393,7 +410,7 @@ export const knowledge = {
         body: JSON.stringify({
           title: payload.title,
           source: payload.source,
-          doc_type: payload.docType,
+          collection: payload.collection,
           content: payload.content,
         }),
       })
@@ -402,14 +419,14 @@ export const knowledge = {
 
   async addFile(
     file: File,
-    meta: { title: string; source: string; docType: string }
+    meta: { title: string; source: string; collection: string }
   ): Promise<KnowledgeDocument> {
     const token = getToken();
     const body = new FormData();
     body.append("file", file);
     body.append("title", meta.title);
     body.append("source", meta.source);
-    body.append("doc_type", meta.docType);
+    body.append("collection", meta.collection);
     const res = await fetch(`${BASE}/knowledge/upload`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -421,6 +438,28 @@ export const knowledge = {
       throw new ApiError(res.status, data.detail ?? "Erro no upload");
     }
     return mapKnowledgeDocument(data as RawKnowledgeDocument);
+  },
+
+  async addFileBatch(
+    files: File[],
+    meta: { collection: string; source?: string }
+  ): Promise<KnowledgeDocument[]> {
+    const token = getToken();
+    const body = new FormData();
+    for (const f of files) body.append("files", f);
+    body.append("collection", meta.collection);
+    if (meta.source) body.append("source", meta.source);
+    const res = await fetch(`${BASE}/knowledge/upload/batch`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? "Erro no upload em lote");
+    }
+    return (data as RawKnowledgeDocument[]).map(mapKnowledgeDocument);
   },
 
   async remove(id: number): Promise<void> {
@@ -445,13 +484,28 @@ export const chat = {
     context?: string;
     session_id?: string;
     model?: string;
+    chat_type?: "general" | "report" | "da";
+    files?: File[];
   }): Promise<AIMessage> {
-    return mapChatMessage(
-      await request<RawChatMessage>("/chat", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      })
-    );
+    const token = getToken();
+    const form = new FormData();
+    form.append("message", payload.message);
+    if (payload.report_id != null) form.append("report_id", String(payload.report_id));
+    if (payload.context) form.append("context", payload.context);
+    if (payload.session_id) form.append("session_id", payload.session_id);
+    if (payload.model) form.append("model", payload.model);
+    if (payload.chat_type) form.append("chat_type", payload.chat_type);
+    for (const f of payload.files ?? []) form.append("files", f);
+
+    const res = await fetch(`${BASE}/chat`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (res.status === 401) { clearToken(); throw new ApiError(401, "Não autorizado"); }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new ApiError(res.status, data.detail ?? "Erro inesperado");
+    return mapChatMessage(data as RawChatMessage);
   },
 
   async sessions(): Promise<ChatSession[]> {

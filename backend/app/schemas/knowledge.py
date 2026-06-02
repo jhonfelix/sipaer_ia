@@ -2,20 +2,22 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-DOC_TYPES = {"regulation", "manual", "procedure", "report", "other"}
+from app.config import KNOWLEDGE_COLLECTIONS
+
+VALID_COLLECTIONS = set(KNOWLEDGE_COLLECTIONS.keys())
 
 
 class KnowledgeTextCreate(BaseModel):
     title: str
     source: str
-    doc_type: str
+    collection: str
     content: str
 
-    @field_validator("doc_type")
+    @field_validator("collection")
     @classmethod
-    def validate_doc_type(cls, v: str) -> str:
-        if v not in DOC_TYPES:
-            raise ValueError(f"doc_type must be one of: {', '.join(sorted(DOC_TYPES))}")
+    def validate_collection(cls, v: str) -> str:
+        if v not in VALID_COLLECTIONS:
+            raise ValueError(f"collection must be one of: {', '.join(sorted(VALID_COLLECTIONS))}")
         return v
 
     @field_validator("content")
@@ -39,7 +41,7 @@ class KnowledgeDocumentResponse(BaseModel):
     id: int
     title: str
     source: str
-    doc_type: str
+    collection: str
     status: str
     chunk_count: int
     original_name: str | None

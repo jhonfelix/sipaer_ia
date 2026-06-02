@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Up
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import KNOWLEDGE_COLLECTIONS, settings
 from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.knowledge import KnowledgeDocument
@@ -23,6 +24,8 @@ UPLOAD_TYPES = {
 }
 
 ALLOWED_ROLES = {"admin", "manager"}
+VALID_COLLECTIONS = set(KNOWLEDGE_COLLECTIONS.keys())
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
 def require_manager(current_user: User = Depends(get_current_user)) -> User:
@@ -32,6 +35,27 @@ def require_manager(current_user: User = Depends(get_current_user)) -> User:
             detail="Permissão insuficiente. Apenas administradores e gestores podem gerenciar documentos.",
         )
     return current_user
+
+
+def _validate_collection(collection: str) -> str:
+    if collection not in VALID_COLLECTIONS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Coleção inválida. Use uma das: {', '.join(sorted(VALID_COLLECTIONS))}",
+        )
+    return collection
+
+
+async def _extract_text(file: UploadFile, content: bytes) -> str:
+    try:
+        if file.content_type == "application/pdf":
+            return extract_text_from_pdf(content)
+        elif file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            return extract_text_from_docx(content)
+        else:
+            return content.decode("utf-8", errors="ignore")
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Erro ao extrair texto de '{file.filename}': {exc}")
 
 
 @router.get("", response_model=list[KnowledgeDocumentResponse])
@@ -55,7 +79,7 @@ async def add_text(
     doc = KnowledgeDocument(
         title=body.title,
         source=body.source,
-        doc_type=body.doc_type,
+        collection=body.collection,
         status="pending",
         size_bytes=len(body.content.encode()),
         added_by=current_user.id,
@@ -64,7 +88,9 @@ async def add_text(
     await db.commit()
     await db.refresh(doc)
 
-    background_tasks.add_task(ingest_document, doc.id, body.title, body.source, body.content)
+    background_tasks.add_task(
+        ingest_document, doc.id, body.title, body.source, body.content, body.collection
+    )
     return doc
 
 
@@ -74,10 +100,12 @@ async def add_upload(
     background_tasks: BackgroundTasks,
     title: str = Form(...),
     source: str = Form(...),
-    doc_type: str = Form(...),
+    collection: str = Form(...),
     current_user: User = Depends(require_manager),
     db: AsyncSession = Depends(get_db),
 ):
+    _validate_collection(collection)
+
     if file.content_type not in UPLOAD_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -85,21 +113,13 @@ async def add_upload(
         )
 
     content = await file.read()
-    if len(content) > 50 * 1024 * 1024:
+    if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="Arquivo excede o limite de 50 MB.",
         )
 
-    try:
-        if file.content_type == "application/pdf":
-            text = extract_text_from_pdf(content)
-        elif file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            text = extract_text_from_docx(content)
-        else:
-            text = content.decode("utf-8", errors="ignore")
-    except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Erro ao extrair texto do arquivo: {exc}")
+    text = await _extract_text(file, content)
 
     if not text.strip():
         raise HTTPException(
@@ -110,7 +130,7 @@ async def add_upload(
     doc = KnowledgeDocument(
         title=title,
         source=source,
-        doc_type=doc_type,
+        collection=collection,
         status="pending",
         original_name=file.filename,
         size_bytes=len(content),
@@ -120,8 +140,75 @@ async def add_upload(
     await db.commit()
     await db.refresh(doc)
 
-    background_tasks.add_task(ingest_document, doc.id, title, source, text)
+    background_tasks.add_task(ingest_document, doc.id, title, source, text, collection)
     return doc
+
+
+@router.post("/upload/batch", response_model=list[KnowledgeDocumentResponse], status_code=201)
+async def add_upload_batch(
+    files: list[UploadFile],
+    background_tasks: BackgroundTasks,
+    collection: str = Form(...),
+    source: str = Form(""),
+    current_user: User = Depends(require_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    _validate_collection(collection)
+
+    if not files:
+        raise HTTPException(status_code=422, detail="Nenhum arquivo enviado.")
+    if len(files) > 50:
+        raise HTTPException(status_code=422, detail="Máximo de 50 arquivos por lote.")
+
+    created: list[KnowledgeDocument] = []
+
+    for file in files:
+        if file.content_type not in UPLOAD_TYPES:
+            continue  # pula silenciosamente tipos inválidos no lote
+
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            continue  # pula arquivos muito grandes no lote
+
+        try:
+            text = await _extract_text(file, content)
+        except HTTPException:
+            continue
+
+        if not text.strip():
+            continue
+
+        filename_title = (file.filename or "").rsplit(".", 1)[0] or file.filename or "Documento"
+        doc_source = source.strip() or filename_title
+
+        doc = KnowledgeDocument(
+            title=filename_title,
+            source=doc_source,
+            collection=collection,
+            status="pending",
+            original_name=file.filename,
+            size_bytes=len(content),
+            added_by=current_user.id,
+        )
+        db.add(doc)
+        await db.flush()  # gera o ID sem fechar a transação
+
+        background_tasks.add_task(
+            ingest_document, doc.id, filename_title, doc_source, text, collection
+        )
+        created.append(doc)
+
+    if not created:
+        raise HTTPException(
+            status_code=422,
+            detail="Nenhum arquivo válido encontrado no lote. Verifique os tipos (PDF, DOCX, TXT) e tamanhos (máx. 50 MB).",
+        )
+
+    await db.commit()
+    for doc in created:
+        await db.refresh(doc)
+
+    return created
 
 
 @router.delete("/{doc_id}", status_code=204)
@@ -137,8 +224,9 @@ async def delete_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
+    qdrant_collection = KNOWLEDGE_COLLECTIONS.get(doc.collection, "sipaer_outros")
     try:
-        await vector_service.delete_by_doc_id(doc_id)
+        await vector_service.delete_by_doc_id(doc_id, qdrant_collection)
     except Exception:
         pass
 

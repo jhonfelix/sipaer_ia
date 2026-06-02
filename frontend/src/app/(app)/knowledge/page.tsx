@@ -5,9 +5,9 @@ import {
   AlertCircle,
   BookOpen,
   CheckCircle2,
-  Clock,
   FileText,
   FileUp,
+  Layers,
   Loader2,
   Plus,
   RefreshCw,
@@ -17,22 +17,14 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { knowledge as knowledgeApi } from "@/lib/api";
+import {
+  COLLECTION_LABELS,
+  COLLECTION_OPTIONS,
+  knowledge as knowledgeApi,
+} from "@/lib/api";
 import type { KnowledgeDocument } from "@/lib/api";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const DOC_TYPE_OPTIONS = [
-  { value: "regulation", label: "Regulamento / Norma" },
-  { value: "manual", label: "Manual Técnico" },
-  { value: "procedure", label: "Procedimento Operacional" },
-  { value: "report", label: "Relatório de Ocorrência" },
-  { value: "other", label: "Outro" },
-];
-
-const DOC_TYPE_LABELS: Record<string, string> = Object.fromEntries(
-  DOC_TYPE_OPTIONS.map((o) => [o.value, o.label])
-);
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 type DocStatus = "pending" | "indexing" | "indexed" | "error";
 
@@ -72,6 +64,17 @@ const STATUS_CONFIG: Record<
   },
 };
 
+const COLLECTION_COLORS: Record<string, string> = {
+  relatorios_finais:  "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
+  normas_legislacoes: "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
+  regulamentos:       "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20",
+  procedimentos:      "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  licitacoes:         "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+  analise_audio:      "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+  analise_spectral:   "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+  outros:             "text-muted-foreground bg-muted/40 border-border/60",
+};
+
 function formatBytes(bytes: number): string {
   if (!bytes) return "—";
   if (bytes < 1024) return `${bytes} B`;
@@ -79,52 +82,80 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1_048_576).toFixed(1)} MB`;
 }
 
-// ── Add modal ─────────────────────────────────────────────────────────────────
+const inputCls =
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
+
+const selectCls =
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all";
+
+// ── Add Document Modal ────────────────────────────────────────────────────────
 
 function AddDocumentModal({
   onClose,
   onAdded,
 }: {
   onClose: () => void;
-  onAdded: (doc: KnowledgeDocument) => void;
+  onAdded: (docs: KnowledgeDocument[]) => void;
 }) {
-  const [tab, setTab] = useState<"text" | "file">("text");
+  const [tab, setTab] = useState<"text" | "file" | "batch">("file");
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
-  const [docType, setDocType] = useState("regulation");
+  const [collection, setCollection] = useState<string>(COLLECTION_OPTIONS[0].value);
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const canSubmit =
-    title.trim() && source.trim() && (tab === "text" ? content.trim() : file !== null);
+  const batchRef = useRef<HTMLInputElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const estimatedChunks = wordCount ? Math.ceil(wordCount / 400) : 0;
+
+  const canSubmit =
+    tab === "text"
+      ? title.trim() && source.trim() && content.trim()
+      : tab === "file"
+      ? title.trim() && source.trim() && file !== null
+      : batchFiles.length > 0;
+
+  function addBatchFiles(incoming: FileList | File[]) {
+    const arr = Array.from(incoming).filter((f) =>
+      ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"].includes(f.type)
+    );
+    setBatchFiles((prev) => {
+      const names = new Set(prev.map((f) => f.name + f.size));
+      return [...prev, ...arr.filter((f) => !names.has(f.name + f.size))];
+    });
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    addBatchFiles(e.dataTransfer.files);
+  }
 
   async function handleSubmit() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     setError("");
     try {
-      let doc: KnowledgeDocument;
       if (tab === "text") {
-        doc = await knowledgeApi.addText({ title, source, docType, content });
+        const doc = await knowledgeApi.addText({ title, source, collection, content });
+        onAdded([doc]);
+      } else if (tab === "file") {
+        const doc = await knowledgeApi.addFile(file!, { title, source, collection });
+        onAdded([doc]);
       } else {
-        doc = await knowledgeApi.addFile(file!, { title, source, docType });
+        const docs = await knowledgeApi.addFileBatch(batchFiles, { collection, source: source || undefined });
+        onAdded(docs);
       }
-      onAdded(doc);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erro ao processar documento.");
     } finally {
       setSubmitting(false);
     }
   }
-
-  const inputCls =
-    "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -134,7 +165,7 @@ function AddDocumentModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
           <div>
-            <h2 className="font-semibold text-foreground">Adicionar Documento</h2>
+            <h2 className="font-semibold text-foreground">Adicionar à Base de Conhecimento</h2>
             <p className="text-muted-foreground/50 text-xs mt-0.5">
               O conteúdo será vetorizado e indexado no pipeline RAG
             </p>
@@ -147,14 +178,15 @@ function AddDocumentModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {/* Tabs */}
+        <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          {/* Mode tabs */}
           <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/60">
             {(
               [
-                { id: "text" as const, label: "Texto Manual", Icon: Type },
-                { id: "file" as const, label: "Upload de Arquivo", Icon: FileUp },
-              ]
+                { id: "file" as const, label: "Arquivo", Icon: FileUp },
+                { id: "batch" as const, label: "Lote", Icon: Upload },
+                { id: "text" as const, label: "Texto", Icon: Type },
+              ] as const
             ).map(({ id, label, Icon }) => (
               <button
                 key={id}
@@ -171,20 +203,38 @@ function AddDocumentModal({
             ))}
           </div>
 
-          {/* Common fields */}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
-                Título *
-              </label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: NSCA 3-13 — Investigação de Acidentes Aeronáuticos"
-                className={inputCls}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          {/* Collection selector — always visible */}
+          <div>
+            <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+              Coleção *
+            </label>
+            <select
+              value={collection}
+              onChange={(e) => setCollection(e.target.value)}
+              className={selectCls}
+            >
+              {COLLECTION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Single file / Text: common fields */}
+          {tab !== "batch" && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                  Título *
+                </label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Ex: NSCA 3-13 — Investigação de Acidentes Aeronáuticos"
+                  className={inputCls}
+                />
+              </div>
               <div>
                 <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
                   Fonte *
@@ -196,27 +246,26 @@ function AddDocumentModal({
                   className={inputCls}
                 />
               </div>
-              <div>
-                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
-                  Tipo *
-                </label>
-                <select
-                  value={docType}
-                  onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all"
-                >
-                  {DOC_TYPE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
-          </div>
+          )}
+
+          {/* Batch: optional source prefix */}
+          {tab === "batch" && (
+            <div>
+              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                Fonte (opcional — aplicada a todos os arquivos)
+              </label>
+              <input
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                placeholder="Ex: CENIPA 2024 — deixe em branco para usar o nome do arquivo"
+                className={inputCls}
+              />
+            </div>
+          )}
 
           {/* Tab content */}
-          {tab === "text" ? (
+          {tab === "text" && (
             <div>
               <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
                 Conteúdo *
@@ -234,7 +283,9 @@ function AddDocumentModal({
                 </p>
               )}
             </div>
-          ) : (
+          )}
+
+          {tab === "file" && (
             <div>
               <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
                 Arquivo *
@@ -282,6 +333,71 @@ function AddDocumentModal({
             </div>
           )}
 
+          {tab === "batch" && (
+            <div className="space-y-3">
+              <label className="block text-xs text-muted-foreground/60 font-medium">
+                Arquivos * ({batchFiles.length} selecionado{batchFiles.length !== 1 ? "s" : ""})
+              </label>
+
+              {/* Drop zone */}
+              <div
+                ref={dropRef}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                onClick={() => batchRef.current?.click()}
+                className="w-full flex flex-col items-center gap-3 py-6 px-4 rounded-xl border-2 border-dashed border-border hover:border-blue-500/40 hover:bg-blue-500/[0.03] transition-all group cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-xl bg-muted/40 border border-border group-hover:border-blue-500/30 flex items-center justify-center transition-colors">
+                  <Layers className="w-4 h-4 text-muted-foreground/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                </div>
+                <div className="text-center">
+                  <p className="text-muted-foreground/70 text-sm font-medium">
+                    Arraste arquivos ou clique para selecionar
+                  </p>
+                  <p className="text-muted-foreground/40 text-xs mt-0.5">
+                    PDF · DOCX · TXT · máx. 50 MB por arquivo · até 50 arquivos
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={batchRef}
+                type="file"
+                multiple
+                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) addBatchFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+
+              {/* File list */}
+              {batchFiles.length > 0 && (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {batchFiles.map((f, i) => (
+                    <div
+                      key={`${f.name}-${f.size}-${i}`}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted/30 border border-border/60"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                      <span className="flex-1 text-xs text-foreground/80 truncate">{f.name}</span>
+                      <span className="text-xs text-muted-foreground/50 shrink-0">{formatBytes(f.size)}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBatchFiles((prev) => prev.filter((_, j) => j !== i));
+                        }}
+                        className="p-0.5 rounded text-muted-foreground/40 hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 text-xs">
@@ -292,25 +408,36 @@ function AddDocumentModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border/60">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 text-sm font-medium transition-all"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit || submitting}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-all shadow-lg shadow-blue-600/20"
-          >
-            {submitting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <BookOpen className="w-3.5 h-3.5" />
-            )}
-            {submitting ? "Processando..." : "Indexar documento"}
-          </button>
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/60">
+          <p className="text-muted-foreground/40 text-xs">
+            {tab === "batch" && batchFiles.length > 0
+              ? `${batchFiles.length} arquivo${batchFiles.length !== 1 ? "s" : ""} · todos na coleção "${COLLECTION_LABELS[collection]}"`
+              : `Coleção: ${COLLECTION_LABELS[collection]}`}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 text-sm font-medium transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || submitting}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-all shadow-lg shadow-blue-600/20"
+            >
+              {submitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <BookOpen className="w-3.5 h-3.5" />
+              )}
+              {submitting
+                ? "Processando..."
+                : tab === "batch"
+                ? `Indexar ${batchFiles.length || ""} arquivo${batchFiles.length !== 1 ? "s" : ""}`
+                : "Indexar documento"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -325,6 +452,8 @@ export default function KnowledgePage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [filterCollection, setFilterCollection] = useState<string>("all");
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const canManage = user?.role === "admin" || user?.role === "manager";
@@ -344,11 +473,8 @@ export default function KnowledgePage() {
     load();
   }, [load]);
 
-  // Auto-refresh while any doc is pending or indexing
   useEffect(() => {
-    const hasActive = docs.some(
-      (d) => d.status === "pending" || d.status === "indexing"
-    );
+    const hasActive = docs.some((d) => d.status === "pending" || d.status === "indexing");
     if (hasActive && !pollRef.current) {
       pollRef.current = setInterval(load, 3000);
     } else if (!hasActive && pollRef.current) {
@@ -375,10 +501,13 @@ export default function KnowledgePage() {
     }
   }
 
-  function onDocAdded(doc: KnowledgeDocument) {
-    setDocs((prev) => [doc, ...prev]);
+  function onDocsAdded(newDocs: KnowledgeDocument[]) {
+    setDocs((prev) => [...newDocs, ...prev]);
     setShowModal(false);
   }
+
+  const visibleDocs =
+    filterCollection === "all" ? docs : docs.filter((d) => d.collection === filterCollection);
 
   const stats = {
     total: docs.length,
@@ -386,6 +515,12 @@ export default function KnowledgePage() {
     processing: docs.filter((d) => d.status === "pending" || d.status === "indexing").length,
     chunks: docs.reduce((acc, d) => acc + d.chunkCount, 0),
   };
+
+  // Per-collection counts
+  const collectionCounts = COLLECTION_OPTIONS.reduce<Record<string, number>>((acc, o) => {
+    acc[o.value] = docs.filter((d) => d.collection === o.value).length;
+    return acc;
+  }, {});
 
   return (
     <div className="flex-1 h-full overflow-auto">
@@ -396,7 +531,7 @@ export default function KnowledgePage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Base de Conhecimento</h1>
             <p className="text-muted-foreground/60 text-sm mt-0.5">
-              Documentos e textos indexados no pipeline RAG
+              Documentos indexados no pipeline RAG · {COLLECTION_OPTIONS.length} coleções
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -451,10 +586,7 @@ export default function KnowledgePage() {
               bg: "bg-violet-500/[0.08]",
             },
           ].map((s) => (
-            <div
-              key={s.label}
-              className={`p-5 rounded-2xl border ${s.border} ${s.bg} space-y-3`}
-            >
+            <div key={s.label} className={`p-5 rounded-2xl border ${s.border} ${s.bg} space-y-3`}>
               <div className={`text-3xl font-bold ${s.color}`}>
                 {loading ? (
                   <span className="text-xl text-muted-foreground/40">—</span>
@@ -467,11 +599,43 @@ export default function KnowledgePage() {
           ))}
         </div>
 
+        {/* Collection pills */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterCollection("all")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+              filterCollection === "all"
+                ? "bg-foreground text-background border-foreground"
+                : "border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80"
+            }`}
+          >
+            Todas ({docs.length})
+          </button>
+          {COLLECTION_OPTIONS.map((o) => {
+            const count = collectionCounts[o.value] ?? 0;
+            const active = filterCollection === o.value;
+            return (
+              <button
+                key={o.value}
+                onClick={() => setFilterCollection(active ? "all" : o.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                  active
+                    ? `${COLLECTION_COLORS[o.value]} font-semibold`
+                    : "border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80"
+                }`}
+              >
+                {o.label}
+                <span className={`${active ? "opacity-80" : "opacity-50"}`}>({count})</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Document list */}
         <div className="rounded-2xl border border-border overflow-hidden">
           {/* Table header */}
-          <div className="hidden lg:grid grid-cols-[1fr_160px_140px_70px_140px_44px] gap-4 px-5 py-3 bg-muted/30 border-b border-border/60">
-            {["Documento", "Fonte", "Tipo", "Trechos", "Status", ""].map((h) => (
+          <div className="hidden lg:grid grid-cols-[1fr_160px_160px_70px_140px_44px] gap-4 px-5 py-3 bg-muted/30 border-b border-border/60">
+            {["Documento", "Fonte", "Coleção", "Trechos", "Status", ""].map((h) => (
               <span
                 key={h}
                 className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest"
@@ -485,14 +649,16 @@ export default function KnowledgePage() {
             <div className="flex items-center justify-center py-20">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : docs.length === 0 ? (
+          ) : visibleDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20">
               <div className="w-14 h-14 rounded-2xl bg-muted/40 border border-border flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-muted-foreground/30" />
               </div>
               <div className="text-center">
                 <p className="text-muted-foreground/60 text-sm font-medium">
-                  Nenhum documento indexado
+                  {filterCollection === "all"
+                    ? "Nenhum documento indexado"
+                    : `Nenhum documento em "${COLLECTION_LABELS[filterCollection]}"`}
                 </p>
                 <p className="text-muted-foreground/40 text-xs mt-1">
                   {canManage
@@ -503,20 +669,18 @@ export default function KnowledgePage() {
             </div>
           ) : (
             <div className="divide-y divide-border/40">
-              {docs.map((doc) => {
-                const s =
-                  STATUS_CONFIG[doc.status as DocStatus] ?? STATUS_CONFIG.error;
+              {visibleDocs.map((doc) => {
+                const s = STATUS_CONFIG[doc.status as DocStatus] ?? STATUS_CONFIG.error;
+                const colColor = COLLECTION_COLORS[doc.collection] ?? COLLECTION_COLORS.outros;
 
                 return (
                   <div
                     key={doc.id}
-                    className="flex lg:grid lg:grid-cols-[1fr_160px_140px_70px_140px_44px] flex-col gap-2 lg:gap-4 px-5 py-4 items-start lg:items-center hover:bg-muted/20 transition-colors"
+                    className="flex lg:grid lg:grid-cols-[1fr_160px_160px_70px_140px_44px] flex-col gap-2 lg:gap-4 px-5 py-4 items-start lg:items-center hover:bg-muted/20 transition-colors"
                   >
                     {/* Title */}
                     <div className="min-w-0 w-full">
-                      <p className="text-foreground/90 text-sm font-medium truncate">
-                        {doc.title}
-                      </p>
+                      <p className="text-foreground/90 text-sm font-medium truncate">{doc.title}</p>
                       {doc.originalName && (
                         <p className="text-muted-foreground/50 text-xs truncate mt-0.5 flex items-center gap-1">
                           <FileText className="w-3 h-3 shrink-0" />
@@ -533,9 +697,11 @@ export default function KnowledgePage() {
                     {/* Source */}
                     <p className="text-muted-foreground/70 text-sm truncate">{doc.source}</p>
 
-                    {/* Type */}
-                    <span className="text-xs px-2 py-1 rounded-lg bg-muted/40 border border-border/60 text-muted-foreground/70 truncate">
-                      {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
+                    {/* Collection badge */}
+                    <span
+                      className={`text-xs px-2 py-1 rounded-lg border truncate ${colColor}`}
+                    >
+                      {COLLECTION_LABELS[doc.collection] ?? doc.collection}
                     </span>
 
                     {/* Chunks */}
@@ -581,14 +747,14 @@ export default function KnowledgePage() {
         <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-muted/20 border border-border/60">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
           <p className="text-muted-foreground/60 text-xs leading-relaxed">
-            Documentos indexados são automaticamente recuperados e usados como contexto pelo assistente IA
-            ao responder perguntas relacionadas. Quanto mais documentos relevantes, mais precisas as respostas.
+            Documentos indexados são automaticamente recuperados e usados como contexto pelo assistente IA.
+            Organize por coleção para facilitar buscas direcionadas. O lote permite indexar até 50 arquivos de uma vez.
           </p>
         </div>
       </div>
 
       {showModal && (
-        <AddDocumentModal onClose={() => setShowModal(false)} onAdded={onDocAdded} />
+        <AddDocumentModal onClose={() => setShowModal(false)} onAdded={onDocsAdded} />
       )}
     </div>
   );

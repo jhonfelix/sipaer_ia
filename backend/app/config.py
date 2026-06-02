@@ -1,5 +1,28 @@
 from pydantic_settings import BaseSettings
 
+# slug → Qdrant collection name
+KNOWLEDGE_COLLECTIONS: dict[str, str] = {
+    "relatorios_finais":  "sipaer_relatorios_finais",
+    "normas_legislacoes": "sipaer_normas_legislacoes",
+    "regulamentos":       "sipaer_regulamentos",
+    "procedimentos":      "sipaer_procedimentos",
+    "licitacoes":         "sipaer_licitacoes",
+    "analise_audio":      "sipaer_analise_audio",
+    "analise_spectral":   "sipaer_analise_spectral",
+    "outros":             "sipaer_outros",
+}
+
+KNOWLEDGE_COLLECTION_LABELS: dict[str, str] = {
+    "relatorios_finais":  "Relatórios Finais",
+    "normas_legislacoes": "Normas e Legislações",
+    "regulamentos":       "Regulamentos",
+    "procedimentos":      "Procedimentos",
+    "licitacoes":         "Licitações",
+    "analise_audio":      "Análise de Áudio",
+    "analise_spectral":   "Análise Espectral",
+    "outros":             "Outros",
+}
+
 
 class Settings(BaseSettings):
     CCABR_API_KEY: str = "xxx"
@@ -8,7 +31,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     QDRANT_URL: str = "http://qdrant:6333"
-    QDRANT_COLLECTION: str = "sipaer_docs"
 
     REDIS_URL: str = "redis://redis:6379/0"
     REDIS_CACHE_TTL: int = 3600
