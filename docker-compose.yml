@@ -39,6 +39,12 @@ services:
       - CCABR_API_KEY=${CCABR_API_KEY}
       - CCABR_BASE_URL=${CCABR_BASE_URL}
       - SECRET_KEY=${SECRET_KEY}
+    dns:
+      - 10.52.216.201
+    dns_search:
+      - intraer
+    extra_hosts:
+      - "ia.ccabr.intraer:10.228.65.68"
     volumes:
       - ./media:/app/media
     depends_on:
