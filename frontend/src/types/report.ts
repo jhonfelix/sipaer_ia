@@ -141,6 +141,7 @@ export interface AIMessage {
   sources?: string[];
   sessionId?: string;
   isLoading?: boolean;
+  attachments?: string[];
 }
 
 export interface AIQuickAction {

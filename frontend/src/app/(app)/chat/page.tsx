@@ -159,6 +159,7 @@ export default function ChatPage() {
 
   const [attached, setAttached] = useState<AttachedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [model, setModel] = useState("gpt-oss-120b");
@@ -239,13 +240,34 @@ export default function ChatPage() {
   // Send
   async function handleSend() {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || extracting) return;
+
+    // Extract text from attached files before sending
+    let context = "";
+    const attachmentNames = attached.map((a) => a.file.name);
+    if (attached.length > 0) {
+      setExtracting(true);
+      try {
+        const extractions = await Promise.all(attached.map((a) => chatApi.extract(a.file)));
+        context = extractions
+          .map(
+            (e) =>
+              `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 50.000 caracteres" : ""}]\n${e.text}`
+          )
+          .join("\n\n---\n\n");
+      } catch {
+        // continua sem contexto de arquivo se a extração falhar
+      } finally {
+        setExtracting(false);
+      }
+    }
 
     const userMsg: AIMessage = {
       id: `u-${uid()}`,
       role: "user",
       content: text,
       timestamp: new Date(),
+      attachments: attachmentNames.length > 0 ? attachmentNames : undefined,
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -260,6 +282,7 @@ export default function ChatPage() {
         session_id: activeSessionId ?? undefined,
         model,
         chat_type: "general",
+        context,
       });
 
       const newSessionId = reply.sessionId ?? activeSessionId;
@@ -464,6 +487,19 @@ export default function ChatPage() {
                   <div key={msg.id} className="flex justify-end">
                     <div className="flex items-end gap-2.5 max-w-[80%]">
                       <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2 pb-2 border-b border-blue-400/20">
+                            {msg.attachments.map((name) => (
+                              <span
+                                key={name}
+                                className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-400/20 text-blue-300/80"
+                              >
+                                <Paperclip className="w-2.5 h-2.5 shrink-0" />
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {msg.content}
                       </div>
                       <div className="w-7 h-7 rounded-full bg-blue-600/18 border border-blue-500/22 flex items-center justify-center shrink-0 mb-0.5">
@@ -506,6 +542,18 @@ export default function ChatPage() {
                     </div>
                   </div>
                 )
+              )}
+
+              {/* Extracting indicator */}
+              {extracting && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/15 to-blue-800/20 border border-blue-400/15 flex items-center justify-center shrink-0">
+                    <Paperclip className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 animate-pulse" />
+                  </div>
+                  <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
+                    <span className="text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
+                  </div>
+                </div>
               )}
 
               {/* Typing indicator */}
@@ -570,7 +618,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={handleSend}
-                  disabled={!input.trim() || sending}
+                  disabled={!input.trim() || sending || extracting}
                   className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-all shadow-lg shadow-blue-600/20 shrink-0 mb-0.5"
                 >
                   <Send className="w-3.5 h-3.5" />

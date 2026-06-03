@@ -517,4 +517,21 @@ export const chat = {
     const qs = params.size ? `?${params}` : "";
     return (await request<RawChatMessage[]>(`/chat/history${qs}`)).map(mapChatMessage);
   },
+
+  async extract(file: File): Promise<{ text: string; filename: string; truncated: boolean }> {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch(`${BASE}/chat/extract`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? "Erro na extração do arquivo");
+    }
+    return data as { text: string; filename: string; truncated: boolean };
+  },
 };
