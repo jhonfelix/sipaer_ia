@@ -55,6 +55,7 @@ class ReportResponse(BaseModel):
     occurrence: dict
     created_by: int
     last_edited_by: int
+    generation_status: str | None = None
     created_at: datetime
     updated_at: datetime
     sections: list[SectionResponse] = []

@@ -101,6 +101,7 @@ interface RawReport {
   occurrence: Record<string, unknown>;
   created_by: number;
   last_edited_by: number;
+  generation_status: string | null;
   created_at: string;
   updated_at: string;
   sections: RawSection[];
@@ -173,6 +174,7 @@ function mapReport(raw: RawReport): Report {
     occurrence: raw.occurrence as unknown as Report["occurrence"],
     status: raw.status as Report["status"],
     version: raw.version,
+    generationStatus: (raw.generation_status ?? null) as Report["generationStatus"],
     sections: raw.sections.map(mapSection),
     createdAt: new Date(raw.created_at),
     updatedAt: new Date(raw.updated_at),

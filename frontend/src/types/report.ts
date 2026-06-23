@@ -122,6 +122,7 @@ export interface Report {
   occurrence: Occurrence;
   status: ReportStatus;
   version: number;
+  generationStatus?: "pending" | "generating" | "done" | "failed" | null;
   sections: ReportSection[];
   createdAt: Date;
   updatedAt: Date;

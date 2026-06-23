@@ -37,6 +37,7 @@ async def create_report(data: ReportCreate, user_id: int, db: AsyncSession) -> R
         occurrence=data.occurrence,
         created_by=user_id,
         last_edited_by=user_id,
+        generation_status="pending",
     )
     db.add(report)
     await db.flush()

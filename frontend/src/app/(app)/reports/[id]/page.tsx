@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Loader2, Bot } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2, Bot, Sparkles } from "lucide-react";
 import {
   ReportSidebar,
   ReportEditor,
@@ -203,6 +203,8 @@ export default function ReportEditPage() {
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiModel, setAiModel] = useState("gpt-oss-120b");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationFailed, setGenerationFailed] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -216,12 +218,38 @@ export default function ReportEditPage() {
         const firstSub = r.sections[0]?.subsections?.[0]?.id ?? "";
         setActiveSubsection(firstSub);
         setLoadingState("ready");
+        if (r.generationStatus === "pending" || r.generationStatus === "generating") {
+          setIsGenerating(true);
+        }
       })
       .catch((err: Error) => {
         setErrorMessage(err.message ?? "Relatório não encontrado");
         setLoadingState("error");
       });
   }, [id]);
+
+  // Polling: verifica geração a cada 4s até concluir ou falhar
+  useEffect(() => {
+    if (!isGenerating || !id) return;
+    const interval = setInterval(async () => {
+      try {
+        const updated = await reportsApi.get(id);
+        if (updated.generationStatus === "done") {
+          clearInterval(interval);
+          setIsGenerating(false);
+          setReport(updated);
+          setDocumentContent(buildFullDocument(updated));
+        } else if (updated.generationStatus === "failed") {
+          clearInterval(interval);
+          setIsGenerating(false);
+          setGenerationFailed(true);
+        }
+      } catch {
+        // erro de rede — continua tentando
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isGenerating, id]);
 
   const activeSection = useMemo(
     () => (report ? getSectionForSubsection(report, activeSubsection) : ""),
@@ -360,9 +388,29 @@ export default function ReportEditPage() {
           aria-label="Abrir Assistente SIPAER"
         >
           <Bot className="w-6 h-6" />
-          {/* Indicador de online */}
           <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background" />
         </button>
+      )}
+
+      {/* Banner de geração automática */}
+      {isGenerating && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-6 py-3 bg-blue-700/95 backdrop-blur-sm text-white text-sm font-medium shadow-lg">
+          <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
+          <span>Gerando conteúdo com IA — pesquisando relatórios similares na base de conhecimento…</span>
+          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+        </div>
+      )}
+      {generationFailed && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-6 py-3 bg-red-700/95 backdrop-blur-sm text-white text-sm font-medium shadow-lg">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>A geração automática falhou — edite as seções manualmente ou tente novamente.</span>
+          <button
+            onClick={() => setGenerationFailed(false)}
+            className="ml-2 underline text-white/80 hover:text-white transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
       )}
     </>
   );
