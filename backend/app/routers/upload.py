@@ -37,7 +37,7 @@ ALLOWED_TYPES: dict[str, str] = {
     "audio/flac": "audio",
 }
 
-MAX_SIZE_MB = 50
+MAX_SIZE_MB = 300
 
 
 @router.post("")

@@ -25,7 +25,7 @@ UPLOAD_TYPES = {
 
 ALLOWED_ROLES = {"admin", "manager"}
 VALID_COLLECTIONS = set(KNOWLEDGE_COLLECTIONS.keys())
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+MAX_FILE_SIZE = 300 * 1024 * 1024  # 300 MB
 
 
 def require_manager(current_user: User = Depends(get_current_user)) -> User:
@@ -116,7 +116,7 @@ async def add_upload(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Arquivo excede o limite de 50 MB.",
+            detail="Arquivo excede o limite de 300 MB.",
         )
 
     text = await _extract_text(file, content)

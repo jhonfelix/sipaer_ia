@@ -121,6 +121,7 @@ interface RawChatSession {
   preview: string;
   message_count: number;
   updated_at: string;
+  category: string;
 }
 
 // ── Mappers ───────────────────────────────────────────────────────────────────
@@ -475,6 +476,7 @@ export interface ChatSession {
   preview: string;
   messageCount: number;
   updatedAt: Date;
+  category: string;
 }
 
 export const chat = {
@@ -484,7 +486,7 @@ export const chat = {
     context?: string;
     session_id?: string;
     model?: string;
-    chat_type?: "general" | "report" | "da";
+    chat_type?: "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
   }): Promise<AIMessage> {
     return mapChatMessage(
       await request<RawChatMessage>("/chat", {
@@ -502,6 +504,7 @@ export const chat = {
       preview: s.preview,
       messageCount: s.message_count,
       updatedAt: new Date(s.updated_at),
+      category: s.category ?? "general",
     }));
   },
 

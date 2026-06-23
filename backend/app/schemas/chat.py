@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 ALLOWED_MODELS = Literal["gpt-oss-120b", "gemma-4-26B-A4B-it"]
-ALLOWED_CHAT_TYPES = Literal["general", "report", "da"]
+ALLOWED_CHAT_TYPES = Literal["general", "report", "da", "translation", "images", "juridical", "fab-docs"]
 
 
 class ChatRequest(BaseModel):
@@ -42,3 +42,4 @@ class ConversationSessionResponse(BaseModel):
     preview: str
     message_count: int
     updated_at: datetime
+    category: str

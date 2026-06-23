@@ -35,8 +35,8 @@ _EXTRACTABLE = {
     "text/plain",
     "text/csv",
 }
-_EXTRACT_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
-_EXTRACT_MAX_CHARS = 50_000
+_EXTRACT_MAX_BYTES = 300 * 1024 * 1024  # 300 MB
+_EXTRACT_MAX_CHARS = 200_000
 
 
 @router.post("/extract")
@@ -54,7 +54,7 @@ async def extract_text(
     if len(content) > _EXTRACT_MAX_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Arquivo excede 20 MB",
+            detail="Arquivo excede 300 MB",
         )
 
     mime = file.content_type or ""
@@ -106,6 +106,7 @@ async def chat(
         user_id=current_user.id,
         report_id=body.report_id,
         session_id=session_id,
+        category=body.chat_type,
         role="user",
         content=body.message,
         sources=[],
@@ -124,6 +125,7 @@ async def chat(
         user_id=current_user.id,
         report_id=body.report_id,
         session_id=session_id,
+        category=body.chat_type,
         role="assistant",
         content=content,
         sources=sources,
@@ -167,6 +169,7 @@ async def sessions(
         raw_title = first_user.content if first_user else "Conversa"
         title = raw_title[:50] + ("…" if len(raw_title) > 50 else "")
         preview = last_msg.content[:60] + ("…" if len(last_msg.content) > 60 else "")
+        category = first_user.category or "general" if first_user else "general"
         out.append(
             ConversationSessionResponse(
                 session_id=sid,
@@ -174,6 +177,7 @@ async def sessions(
                 preview=preview,
                 message_count=len(msgs),
                 updated_at=last_msg.created_at,
+                category=category,
             )
         )
 

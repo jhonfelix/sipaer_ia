@@ -315,7 +315,7 @@ function AddDocumentModal({
                   </div>
                   <div className="text-center">
                     <p className="text-muted-foreground/70 text-sm font-medium">Selecionar arquivo</p>
-                    <p className="text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · máx. 50 MB</p>
+                    <p className="text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · máx. 300 MB</p>
                   </div>
                 </button>
               )}
@@ -355,7 +355,7 @@ function AddDocumentModal({
                     Arraste arquivos ou clique para selecionar
                   </p>
                   <p className="text-muted-foreground/40 text-xs mt-0.5">
-                    PDF · DOCX · TXT · máx. 50 MB por arquivo · até 50 arquivos
+                    PDF · DOCX · TXT · máx. 300 MB por arquivo · até 50 arquivos
                   </p>
                 </div>
               </div>

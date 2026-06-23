@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Paperclip,
@@ -30,34 +30,172 @@ import {
 } from "@/components/chat";
 import type { AttachedFile, Conversation } from "@/components/chat";
 
-// ── Starter cards ─────────────────────────────────────────────────────────────
+// ── Starter cards por categoria ───────────────────────────────────────────────
 
-const STARTERS = [
-  {
-    icon: FilePlus2,
-    color: "text-blue-400",
-    bg: "bg-blue-400/10",
-    title: "Criar documento",
-    description: "Redija documentos oficiais.",
-    prompt: "Crie o seguinte documento: ",
+type StarterCard = {
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  title: string;
+  description: string;
+  prompt: string;
+};
+
+const STARTERS_BY_CATEGORY: Record<string, StarterCard[]> = {
+  general: [
+    {
+      icon: FilePlus2,
+      color: "text-blue-400",
+      bg: "bg-blue-400/10",
+      title: "Criar documento",
+      description: "Redija documentos oficiais aeronáuticos.",
+      prompt: "Crie o seguinte documento: ",
+    },
+    {
+      icon: Scale,
+      color: "text-violet-400",
+      bg: "bg-violet-400/10",
+      title: "Analisar legislações",
+      description: "Interprete normas, regulamentos e legislações aeronáuticas.",
+      prompt: "Analise a seguinte legislação ou regulamento e explique seus pontos principais: ",
+    },
+    {
+      icon: ImagePlus,
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10",
+      title: "Consulta técnica",
+      description: "Tire dúvidas sobre aviação, SIPAER e FAB.",
+      prompt: "Preciso de informações técnicas sobre: ",
+    },
+  ],
+  translation: [
+    {
+      icon: FilePlus2,
+      color: "text-sky-400",
+      bg: "bg-sky-400/10",
+      title: "Traduzir documento",
+      description: "Traduza textos técnicos aeronáuticos com terminologia OACI.",
+      prompt: "Traduza o seguinte texto para o português, mantendo a terminologia técnica aeronáutica: \n\n",
+    },
+    {
+      icon: Scale,
+      color: "text-indigo-400",
+      bg: "bg-indigo-400/10",
+      title: "Traduzir para inglês",
+      description: "Converta documentos oficiais para o inglês padrão ICAO.",
+      prompt: "Traduza o seguinte texto para o inglês (padrão ICAO): \n\n",
+    },
+    {
+      icon: ImagePlus,
+      color: "text-teal-400",
+      bg: "bg-teal-400/10",
+      title: "Glossário técnico",
+      description: "Monte tabela de termos com tradução e definição aeronáutica.",
+      prompt: "Crie um glossário técnico aeronáutico com tradução português/inglês para os seguintes termos: ",
+    },
+  ],
+  images: [
+    {
+      icon: ImagePlus,
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10",
+      title: "Analisar imagem",
+      description: "Anexe uma imagem e receba análise técnica especializada.",
+      prompt: "Analise a imagem anexada e descreva tecnicamente o que você observa: ",
+    },
+    {
+      icon: FilePlus2,
+      color: "text-green-400",
+      bg: "bg-green-400/10",
+      title: "Identificar aeronave",
+      description: "Identifique modelo, configuração e estado visual da aeronave.",
+      prompt: "Identifique a aeronave na imagem anexada: modelo, fabricante, configuração visível e estado aparente. ",
+    },
+    {
+      icon: Scale,
+      color: "text-lime-400",
+      bg: "bg-lime-400/10",
+      title: "Analisar cena de acidente",
+      description: "Avalie wreckage, marcas de impacto e padrão de dispersão.",
+      prompt: "Analise tecnicamente a cena do acidente na imagem, identificando padrão de impacto, destroços e indicadores de trajetória: ",
+    },
+  ],
+  juridical: [
+    {
+      icon: Scale,
+      color: "text-violet-400",
+      bg: "bg-violet-400/10",
+      title: "Interpretar norma",
+      description: "Analise dispositivos legais do CBA, RBACs e legislação COMAER.",
+      prompt: "Interprete e explique o seguinte dispositivo legal aeronáutico: ",
+    },
+    {
+      icon: FilePlus2,
+      color: "text-purple-400",
+      bg: "bg-purple-400/10",
+      title: "Verificar conformidade",
+      description: "Cheque se uma operação ou documento está em conformidade regulatória.",
+      prompt: "Verifique a conformidade regulatória da seguinte situação com as normas aeronáuticas vigentes: ",
+    },
+    {
+      icon: ImagePlus,
+      color: "text-fuchsia-400",
+      bg: "bg-fuchsia-400/10",
+      title: "Consultar jurisprudência",
+      description: "Busque precedentes do STJ, STF e TCU para casos aeronáuticos.",
+      prompt: "Quais são os precedentes jurisprudenciais (STJ, STF ou TCU) relevantes para a seguinte situação: ",
+    },
+  ],
+  "fab-docs": [
+    {
+      icon: FilePlus2,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+      title: "Redigir ofício",
+      description: "Elabore ofício padrão COMAER com todas as cláusulas obrigatórias.",
+      prompt: "Redija um ofício padrão COMAER com o seguinte assunto e destinatário: ",
+    },
+    {
+      icon: Scale,
+      color: "text-orange-400",
+      bg: "bg-orange-400/10",
+      title: "Elaborar memorando",
+      description: "Crie memorando interno com linguagem e estrutura militares corretas.",
+      prompt: "Elabore um memorando interno da FAB com o seguinte conteúdo: ",
+    },
+    {
+      icon: ImagePlus,
+      color: "text-yellow-400",
+      bg: "bg-yellow-400/10",
+      title: "Redigir nota técnica",
+      description: "Produza nota técnica ou parecer para processos COMAER.",
+      prompt: "Redija uma nota técnica COMAER sobre o seguinte assunto: ",
+    },
+  ],
+};
+
+const CATEGORY_META: Record<string, { title: string; subtitle: string }> = {
+  general: {
+    title: "Workspace de Inteligência Aeronáutica",
+    subtitle: "Como posso ajudar hoje?",
   },
-  {
-    icon: Scale,
-    color: "text-violet-400",
-    bg: "bg-violet-400/10",
-    title: "Analisar legislações",
-    description: "Interprete normas, regulamentos e legislações aeronáuticas",
-    prompt: "Analise a seguinte legislação ou regulamento e explique seus pontos principais: ",
+  translation: {
+    title: "Tradução Técnica Aeronáutica",
+    subtitle: "Traduções com terminologia OACI/COMAER",
   },
-  {
-    icon: ImagePlus,
-    color: "text-emerald-400",
-    bg: "bg-emerald-400/10",
-    title: "Criar imagem",
-    description: "Gere imagens e diagramas a partir de descrições",
-    prompt: "Gere uma imagem com a seguinte descrição: ",
+  images: {
+    title: "Análise Visual Aeronáutica",
+    subtitle: "Anexe uma imagem para análise técnica especializada",
   },
-];
+  juridical: {
+    title: "IA Jurídica Aeronáutica",
+    subtitle: "Legislação, normas e jurisprudência aeronáutica",
+  },
+  "fab-docs": {
+    title: "Documentos Oficiais FAB",
+    subtitle: "Redação de documentos padrão COMAER",
+  },
+};
 
 // ── Message actions ───────────────────────────────────────────────────────────
 
@@ -176,7 +314,7 @@ export default function ChatPage() {
     return {
       id: s.sessionId,
       title: s.title,
-      category: "all",
+      category: s.category,
       preview: s.preview,
       updatedAt: s.updatedAt,
     };
@@ -277,11 +415,17 @@ export default function ChatPage() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
+      const chatType = (
+        ["general", "report", "da", "translation", "images", "juridical", "fab-docs"].includes(activeCategory)
+          ? activeCategory
+          : "general"
+      ) as "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
+
       const reply = await chatApi.send({
         message: text,
         session_id: activeSessionId ?? undefined,
         model,
-        chat_type: "general",
+        chat_type: chatType,
         context,
       });
 
@@ -309,7 +453,7 @@ export default function ChatPage() {
             {
               id: newSessionId,
               title,
-              category: "all",
+              category: activeCategory === "all" ? "general" : activeCategory,
               preview,
               updatedAt: new Date(),
             },
@@ -441,15 +585,17 @@ export default function ChatPage() {
                 </div>
                 <div>
                   <h2 className="text-foreground font-semibold text-base tracking-tight">
-                    Workspace de Inteligência Aeronáutica
+                    {(CATEGORY_META[activeCategory] ?? CATEGORY_META.general).title}
                   </h2>
-                  <p className="text-muted-foreground/50 text-sm mt-1">Como posso ajudar hoje?</p>
+                  <p className="text-muted-foreground/50 text-sm mt-1">
+                    {(CATEGORY_META[activeCategory] ?? CATEGORY_META.general).subtitle}
+                  </p>
                 </div>
               </div>
 
               {/* Starter cards */}
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 w-full max-w-2xl">
-                {STARTERS.map((s) => {
+                {(STARTERS_BY_CATEGORY[activeCategory] ?? STARTERS_BY_CATEGORY.general).map((s) => {
                   const Icon = s.icon;
                   return (
                     <button
