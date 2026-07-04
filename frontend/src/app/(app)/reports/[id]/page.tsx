@@ -2,12 +2,13 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Loader2, Bot, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Loader2, Bot, Sparkles, CheckCircle2, RefreshCw } from "lucide-react";
 import {
   ReportSidebar,
   ReportEditor,
   AIAssistantPanel,
 } from "@/components/report";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { reports as reportsApi, chat as chatApi } from "@/lib/api";
 import type { AIMessage, Report } from "@/types/report";
 
@@ -187,6 +188,99 @@ function ErrorState({ message, onBack }: { message: string; onBack: () => void }
   );
 }
 
+function GenerationProgressModal({ report }: { report: Report }) {
+  const subs = useMemo(
+    () =>
+      report.sections.flatMap((section) =>
+        (section.subsections ?? []).map((sub) => ({ ...sub, sectionTitle: section.title }))
+      ),
+    [report]
+  );
+  const total = subs.length;
+  const completed = subs.filter((s) => hasRealContent(s.content)).length;
+  const currentIndex = subs.findIndex((s) => !hasRealContent(s.content));
+  const currentLabel = currentIndex >= 0 ? subs[currentIndex].title : "Finalizando relatório…";
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return (
+    <Dialog open onOpenChange={() => {}}>
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto"
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <div className="py-4 px-1 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="flex justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center animate-pulse">
+                <Sparkles className="w-7 h-7 text-primary" />
+              </div>
+            </div>
+            <div>
+              <p className="font-semibold text-base">Gerando relatório com IA…</p>
+              <p className="text-muted-foreground text-sm mt-1">{currentLabel}</p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Progresso</span>
+              <span>{completed}/{total} seções · {percent}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-500"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
+            {subs.map((s, i) => {
+              const done = hasRealContent(s.content);
+              const active = !done && i === currentIndex;
+              return (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+                    done
+                      ? "bg-emerald-500/5 border border-emerald-500/20"
+                      : active
+                      ? "bg-primary/8 border border-primary/25"
+                      : "bg-muted/20 border border-border/50 opacity-40"
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                      done ? "bg-emerald-500/20" : active ? "bg-primary/20 animate-pulse" : "bg-muted"
+                    }`}
+                  >
+                    {done ? (
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    ) : active ? (
+                      <RefreshCw className="w-3 h-3 text-primary animate-spin" />
+                    ) : (
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium truncate ${done || active ? "text-foreground" : "text-muted-foreground"}`}>
+                      {s.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 truncate">{s.sectionTitle}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ReportEditPage() {
@@ -228,16 +322,18 @@ export default function ReportEditPage() {
       });
   }, [id]);
 
-  // Polling: verifica geração a cada 4s até concluir ou falhar
+  // Polling: verifica geração a cada 4s até concluir ou falhar.
+  // Atualiza `report` a cada tick (progresso real por subseção no modal),
+  // mas só empurra `documentContent` para o editor quando a geração terminar.
   useEffect(() => {
     if (!isGenerating || !id) return;
     const interval = setInterval(async () => {
       try {
         const updated = await reportsApi.get(id);
+        setReport(updated);
         if (updated.generationStatus === "done") {
           clearInterval(interval);
           setIsGenerating(false);
-          setReport(updated);
           setDocumentContent(buildFullDocument(updated));
         } else if (updated.generationStatus === "failed") {
           clearInterval(interval);
@@ -392,14 +488,8 @@ export default function ReportEditPage() {
         </button>
       )}
 
-      {/* Banner de geração automática */}
-      {isGenerating && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-6 py-3 bg-blue-700/95 backdrop-blur-sm text-white text-sm font-medium shadow-lg">
-          <Sparkles className="w-4 h-4 shrink-0 animate-pulse" />
-          <span>Gerando conteúdo com IA — pesquisando relatórios similares na base de conhecimento…</span>
-          <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-        </div>
-      )}
+      {/* Modal de progresso da geração automática */}
+      {isGenerating && report && <GenerationProgressModal report={report} />}
       {generationFailed && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-6 py-3 bg-red-700/95 backdrop-blur-sm text-white text-sm font-medium shadow-lg">
           <AlertTriangle className="w-4 h-4 shrink-0" />

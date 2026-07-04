@@ -31,17 +31,13 @@ import { ImageBlock } from "./extensions/ImageBlock";
 import {
   Save,
   Upload,
-  Plus,
   Download,
   FileEdit,
   Columns,
   Eye,
   Code2,
   ChevronDown,
-  Sparkles,
   MessageSquarePlus,
-  CheckCircle2,
-  RefreshCw,
   Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,13 +58,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -117,100 +106,6 @@ const SipaerTableHeader = TableHeader.extend({
   addAttributes() { return { ...this.parent?.(), class: classAttr }; },
 });
 
-interface TemplateFormData {
-  classificacao: string;
-  tipoAeronave: string;
-  operacao: string;
-  modeloAeronave: string;
-  nivelDanos: string;
-  nivelLesoes: string;
-  contextoAdicional: string;
-  obstaculos: string[];
-  faseVoo: string;
-  condicoesMet: string[];
-  horasTotais: string;
-  horasAgricola: string;
-  horasTipo: string;
-  altitudeOperacao: string;
-}
-
-function generateSIPAERReport(data: TemplateFormData): string {
-  const dataOcorrencia = "15JAN2026";
-  const horaOcorrencia = "0945 (UTC)";
-  const matricula = "PR-AGR";
-  const fabricante = data.tipoAeronave === "Avião" ? "EMBRAER" : "ROBINSON";
-  const modelo = data.modeloAeronave || "EMB-202A IPANEMA";
-  const coordenadas = "21°12'45\"S / 050°23'18\"W";
-  const municipio = "Presidente Prudente";
-  const estado = "SP";
-
-  const faseVooStr = data.faseVoo || "Não informada";
-  const obstaculosStr = data.obstaculos.length > 0 ? data.obstaculos.join(", ") : "Nenhum identificado";
-  const condicoesMetStr = data.condicoesMet.length > 0 ? data.condicoesMet.join(", ") : "Condições padrão";
-  const altitudeStr = data.altitudeOperacao ? `${data.altitudeOperacao} ft AGL` : "Não informada";
-
-  return `<h1>RELATÓRIO DE INVESTIGAÇÃO</h1>
-<h2>OCORRÊNCIA AERONÁUTICA</h2>
-<h2>1. INFORMAÇÕES SOBRE A OCORRÊNCIA</h2>
-<h3>1.1 Dados da Ocorrência</h3>
-<p><strong>Classificação:</strong> ${data.classificacao}</p>
-<p><strong>Data:</strong> ${dataOcorrencia}</p>
-<p><strong>Hora:</strong> ${horaOcorrencia}</p>
-<p><strong>Fase do Voo:</strong> ${faseVooStr}</p>
-<p><strong>Altitude de Operação:</strong> ${altitudeStr}</p>
-<h3>1.2 Localização</h3>
-<p><strong>Local:</strong> Propriedade Rural - Fazenda Santa Clara</p>
-<p><strong>Município:</strong> ${municipio}</p>
-<p><strong>UF:</strong> ${estado}</p>
-<p><strong>Coordenadas:</strong> ${coordenadas}</p>
-<h3>1.3 Condições Meteorológicas</h3>
-<p><strong>Condições registradas:</strong> ${condicoesMetStr}</p>
-<p><strong>Regime de voo:</strong> VMC (Visual Meteorological Conditions)</p>
-<p><strong>Vento:</strong> 090°/08kt</p>
-<p><strong>Visibilidade:</strong> Superior a 10km</p>
-<p><strong>Temperatura:</strong> 28°C</p>
-<h3>1.4 Obstáculos na Área de Operação</h3>
-<p><strong>Obstáculos identificados:</strong> ${obstaculosStr}</p>
-<h2>2. INFORMAÇÕES SOBRE A AERONAVE</h2>
-<h3>2.1 Dados da Aeronave</h3>
-<p><strong>Matrícula:</strong> ${matricula}</p>
-<p><strong>Fabricante:</strong> ${fabricante}</p>
-<p><strong>Modelo:</strong> ${modelo}</p>
-<p><strong>Tipo:</strong> ${data.tipoAeronave}</p>
-<p><strong>Número de Série:</strong> 202001245</p>
-<p><strong>Ano de Fabricação:</strong> 2019</p>
-<h3>2.2 Nível de Danos</h3>
-<p><strong>Danos à Aeronave:</strong> ${data.nivelDanos}</p>
-<p><strong>Componentes Danificados:</strong> Hélice, trem de pouso principal esquerdo, asa esquerda (bordo de ataque), carenagem do motor.</p>
-<h3>2.3 Operação</h3>
-<p><strong>Tipo de Operação:</strong> ${data.operacao}</p>
-<p><strong>Operador:</strong> AEROAGRÍCOLA OESTE PAULISTA LTDA</p>
-<h2>3. INFORMAÇÕES SOBRE A TRIPULAÇÃO</h2>
-<h3>3.1 Piloto em Comando</h3>
-<p><strong>Horas Totais de Voo:</strong> ${data.horasTotais ? data.horasTotais + ":00" : "8.450:00"}</p>
-<p><strong>Horas em Aviação Agrícola:</strong> ${data.horasAgricola ? data.horasAgricola + ":00" : "4.100:00"}</p>
-<p><strong>Horas no Tipo:</strong> ${data.horasTipo ? data.horasTipo + ":00" : "3.200:00"}</p>
-<h3>3.2 Lesões</h3>
-<p><strong>Tripulantes:</strong> ${data.nivelLesoes === "Ileso" ? "01 ileso" : data.nivelLesoes === "Leves" ? "01 com lesões leves" : data.nivelLesoes === "Graves" ? "01 com lesões graves" : "01 vítima fatal"}</p>
-<h2>4. HISTÓRICO DO VOO</h2>
-<p>No dia ${dataOcorrencia}, a aeronave ${matricula} decolou da pista de operação localizada na Fazenda Santa Clara, município de ${municipio}/${estado}, por volta das 06:30 (UTC), com o objetivo de realizar operação de pulverização aérea agrícola em lavoura de soja.</p>
-<p>De acordo com relato do piloto, as condições meteorológicas estavam favoráveis para a operação, com vento calmo e boa visibilidade. A aeronave estava carregada com aproximadamente 600 litros de calda.</p>
-<p>O piloto informou que realizou procedimento padrão de decolagem, utilizando a pista de terra compactada de aproximadamente 800 metros de extensão. Durante a corrida de decolagem, em velocidade estimada de 55kt, a aeronave sofreu oscilação lateral inesperada.</p>
-${data.contextoAdicional ? `<p><strong>Informações Adicionais:</strong> ${data.contextoAdicional}</p>` : ""}
-<h2>5. ANÁLISE</h2>
-<h3>5.1 Aspecto Operacional</h3>
-<p>A análise do aspecto operacional identificou que o piloto possuía experiência significativa em operações aeroagrícolas.</p>
-<h3>5.2 Fatores Contribuintes</h3>
-<ul>
-<li><strong>Infraestrutura Aeroportuária:</strong> Condições inadequadas da pista de operação.</li>
-<li><strong>Julgamento do Piloto:</strong> Possível subestimação das condições da pista antes da decolagem.</li>
-</ul>
-<h2>6. CONCLUSÃO PRELIMINAR</h2>
-<p>Diante das evidências coletadas e da análise realizada, conclui-se preliminarmente que a ocorrência foi caracterizada como <strong>${data.classificacao}</strong>.</p>
-<hr/>
-<p><em>Relatório gerado em conformidade com os padrões SIPAER.</em></p>`;
-}
-
 export interface ReportEditorProps {
   reportId?: string;
   documentContent: string;
@@ -233,30 +128,11 @@ export function ReportEditor({
   scrollContainerRef,
 }: ReportEditorProps) {
   const [activeTab, setActiveTab] = useState("editor");
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingStep, setGeneratingStep] = useState(0);
   const [isDedaloModalOpen, setIsDedaloModalOpen] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [dedaloCode, setDedaloCode] = useState("");
   const [lastSaved, setLastSaved] = useState<Date>();
-  const [templateFormData, setTemplateFormData] = useState<TemplateFormData>({
-    classificacao: "",
-    tipoAeronave: "",
-    operacao: "",
-    modeloAeronave: "",
-    nivelDanos: "",
-    nivelLesoes: "",
-    contextoAdicional: "",
-    obstaculos: [],
-    faseVoo: "",
-    condicoesMet: [],
-    horasTotais: "",
-    horasAgricola: "",
-    horasTipo: "",
-    altitudeOperacao: "",
-  });
 
   // Slash command state
   const [slashMenu, setSlashMenu] = useState<SlashMenuState | null>(null);
@@ -271,6 +147,8 @@ export function ReportEditor({
   const suggestionsDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const editorWrapperRef = useRef<HTMLDivElement>(null);
   const isFirstMount = useRef(true);
+  const lastAppliedContent = useRef<string | null>(null);
+  const pendingContentRef = useRef<string | null>(null);
 
   // Slash command extension (stable across renders)
   const slashCommandExtension = useMemo(
@@ -408,13 +286,50 @@ export function ReportEditor({
     },
   });
 
-  // Set initial content on mount
+  // Aplica documentContent ao editor: na montagem, e depois sempre que mudar
+  // externamente (ex.: geração de relatório com IA concluída via polling).
+  // Enquanto o usuário está digitando (editor focado), a atualização fica
+  // pendente e só é aplicada quando o editor perder o foco, para não
+  // sobrescrever uma edição em andamento.
   useEffect(() => {
-    if (editor && isFirstMount.current && documentContent) {
-      isFirstMount.current = false;
+    if (!editor || !documentContent) return;
+    if (documentContent === lastAppliedContent.current) return;
+
+    const apply = () => {
+      lastAppliedContent.current = documentContent;
+      pendingContentRef.current = null;
       editor.commands.setContent(documentContent);
+    };
+
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      apply();
+      return;
+    }
+
+    if (editor.isFocused) {
+      pendingContentRef.current = documentContent;
+    } else {
+      apply();
     }
   }, [editor, documentContent]);
+
+  // Aplica conteúdo pendente assim que o editor perder o foco
+  useEffect(() => {
+    if (!editor) return;
+    const onBlur = () => {
+      if (pendingContentRef.current && pendingContentRef.current !== lastAppliedContent.current) {
+        const content = pendingContentRef.current;
+        lastAppliedContent.current = content;
+        pendingContentRef.current = null;
+        editor.commands.setContent(content);
+      }
+    };
+    editor.on("blur", onBlur);
+    return () => {
+      editor.off("blur", onBlur);
+    };
+  }, [editor]);
 
   // Sync reportId into ImageBlock extension storage so ImageBlockView can read it
   useEffect(() => {
@@ -544,70 +459,6 @@ export function ReportEditor({
     [slashMenu]
   );
 
-  const GEN_STEPS = [
-    { label: "Analisando dados da ocorrência...", detail: "Classificação, fase do voo e obstáculos" },
-    { label: "Consultando base de dados SIPAER...", detail: "Ocorrências similares — aviação agrícola" },
-    { label: "Identificando fatores contribuintes...", detail: "Humano · Material · Operacional · Ambiente" },
-    { label: "Estruturando seções do relatório...", detail: "Conformidade NSCA 3-13 e RBAC 137" },
-    { label: "Gerando histórico do voo...", detail: "Sequência cronológica dos eventos" },
-    { label: "Elaborando análise técnica...", detail: "Aspectos operacional, humano e material" },
-    { label: "Verificando conformidade normativa...", detail: "Normas SIPAER e regulamentos ANAC" },
-    { label: "Revisando terminologia técnica...", detail: "Padronização CENIPA / ICAO Annex 13" },
-    { label: "Finalizando relatório...", detail: "Consolidação e formatação final" },
-  ];
-
-  const handleGenerateReport = useCallback(() => {
-    if (!editor) return;
-    if (!templateFormData.classificacao || !templateFormData.tipoAeronave) {
-      toast({
-        title: "Campo Obrigatório",
-        description: "Por favor, preencha pelo menos a classificação e o tipo de aeronave",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsGenerating(true);
-    setGeneratingStep(0);
-
-    const delays = [900, 1000, 1700, 1700, 1700, 1500, 1900, 1800, 1800];
-    let cum = 0;
-    delays.forEach((d, i) => {
-      cum += d;
-      setTimeout(() => setGeneratingStep(i + 1), cum);
-    });
-
-    setTimeout(() => {
-      const reportContent = generateSIPAERReport(templateFormData);
-      editor.commands.setContent(reportContent);
-      onContentChange(reportContent);
-      setIsGenerating(false);
-      setGeneratingStep(0);
-      setIsTemplateModalOpen(false);
-      setTemplateFormData({
-        classificacao: "",
-        tipoAeronave: "",
-        operacao: "",
-        modeloAeronave: "",
-        nivelDanos: "",
-        nivelLesoes: "",
-        contextoAdicional: "",
-        obstaculos: [],
-        faseVoo: "",
-        condicoesMet: [],
-        horasTotais: "",
-        horasAgricola: "",
-        horasTipo: "",
-        altitudeOperacao: "",
-      });
-      toast({
-        title: "Relatório gerado com sucesso",
-        description: "O template do relatório SIPAER foi inserido no editor.",
-        variant: "success",
-      });
-    }, delays.reduce((a, b) => a + b, 0) + 500);
-  }, [editor, templateFormData, onContentChange, toast]);
-
   const handleImportDedalo = useCallback(() => {
     if (!dedaloCode.trim()) {
       toast({ title: "Campo obrigatório", description: "Por favor, insira o código da ocorrência.", variant: "destructive" });
@@ -659,16 +510,6 @@ export function ReportEditor({
           <Button variant="outline" size="sm" onClick={handleSave} className="gap-2">
             <Save className="w-4 h-4" />
             Salvar
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="gap-2"
-            title="Agiliza a confecção inicial, padroniza relatórios e reduz tempo em tarefas repetitivas."
-            onClick={() => setIsTemplateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4" />
-            Criar Template
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -821,247 +662,6 @@ export function ReportEditor({
           </ScrollArea>
         </TabsContent>
       </Tabs>
-
-      {/* Template Modal */}
-      <Dialog open={isTemplateModalOpen} onOpenChange={(open) => { if (!isGenerating) setIsTemplateModalOpen(open); }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-          {isGenerating ? (
-            <div className="py-6 px-2 space-y-6">
-              <div className="text-center space-y-3">
-                <div className="flex justify-center">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center animate-pulse">
-                    <Sparkles className="w-7 h-7 text-primary" />
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold text-base">Gerando relatório SIPAER...</p>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {generatingStep < GEN_STEPS.length ? GEN_STEPS[generatingStep].label : "Finalizando..."}
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progresso</span>
-                  <span>{Math.round((generatingStep / GEN_STEPS.length) * 100)}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary/70 to-primary rounded-full transition-all duration-500"
-                    style={{ width: `${(generatingStep / GEN_STEPS.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                {GEN_STEPS.map((s, i) => (
-                  <div
-                    key={s.label}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                      i < generatingStep
-                        ? "bg-emerald-500/5 border border-emerald-500/20"
-                        : i === generatingStep
-                        ? "bg-primary/8 border border-primary/25"
-                        : "bg-muted/20 border border-border/50 opacity-40"
-                    }`}
-                  >
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                      i < generatingStep ? "bg-emerald-500/20" : i === generatingStep ? "bg-primary/20 animate-pulse" : "bg-muted"
-                    }`}>
-                      {i < generatingStep
-                        ? <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                        : i === generatingStep
-                        ? <RefreshCw className="w-3 h-3 text-primary animate-spin" />
-                        : <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />}
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium ${i <= generatingStep ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p>
-                      <p className="text-xs text-muted-foreground/60 font-mono">{s.detail}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" /> Criar Template de Relatório
-                </DialogTitle>
-                <DialogDescription>
-                  Preencha os campos abaixo para gerar um relatório aeronáutico no padrão SIPAER por meio de inteligência artificial.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="classificacao">Classificação da Ocorrência</Label>
-                  <Select value={templateFormData.classificacao} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, classificacao: v }))}>
-                    <SelectTrigger id="classificacao"><SelectValue placeholder="Selecione a classificação" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACIDENTE">Acidente</SelectItem>
-                      <SelectItem value="INCIDENTE GRAVE">Incidente Grave</SelectItem>
-                      <SelectItem value="INCIDENTE">Incidente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="tipoAeronave">Tipo de Aeronave</Label>
-                  <Select value={templateFormData.tipoAeronave} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, tipoAeronave: v }))}>
-                    <SelectTrigger id="tipoAeronave"><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Avião">Avião</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="operacao">Operação</Label>
-                  <Select value={templateFormData.operacao} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, operacao: v }))}>
-                    <SelectTrigger id="operacao"><SelectValue placeholder="Selecione a operação" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Aeroagrícola">Aeroagrícola</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="modeloAeronave">Modelo da Aeronave</Label>
-                  <Select value={templateFormData.modeloAeronave} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, modeloAeronave: v }))}>
-                    <SelectTrigger id="modeloAeronave"><SelectValue placeholder="Selecione o modelo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EMB-202A IPANEMA">EMB-202A Ipanema</SelectItem>
-                      <SelectItem value="AT-502B AIR TRACTOR">AT-502B Air Tractor</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="nivelDanos">Nível de Danos</Label>
-                  <Select value={templateFormData.nivelDanos} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, nivelDanos: v }))}>
-                    <SelectTrigger id="nivelDanos"><SelectValue placeholder="Selecione o nível de danos" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Nenhum">Nenhum</SelectItem>
-                      <SelectItem value="Leve">Leve</SelectItem>
-                      <SelectItem value="Substancial">Substancial</SelectItem>
-                      <SelectItem value="Destruída">Destruída</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="nivelLesoes">Nível de Lesões</Label>
-                  <Select value={templateFormData.nivelLesoes} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, nivelLesoes: v }))}>
-                    <SelectTrigger id="nivelLesoes"><SelectValue placeholder="Selecione o nível de lesões" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ileso">Ileso</SelectItem>
-                      <SelectItem value="Leves">Leves</SelectItem>
-                      <SelectItem value="Graves">Graves</SelectItem>
-                      <SelectItem value="Fatal">Fatal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="faseVoo">Fase do Voo</Label>
-                  <Select value={templateFormData.faseVoo} onValueChange={(v) => setTemplateFormData((p) => ({ ...p, faseVoo: v }))}>
-                    <SelectTrigger id="faseVoo"><SelectValue placeholder="Selecione a fase do voo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Decolagem">Decolagem</SelectItem>
-                      <SelectItem value="Subida inicial">Subida inicial</SelectItem>
-                      <SelectItem value="Deslocamento">Deslocamento</SelectItem>
-                      <SelectItem value="Aplicação agrícola">Aplicação agrícola</SelectItem>
-                      <SelectItem value="Manobra de retorno">Manobra de retorno</SelectItem>
-                      <SelectItem value="Aproximação">Aproximação</SelectItem>
-                      <SelectItem value="Pouso">Pouso</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Presença de Obstáculos na Área</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["Linhas de energia", "Torres", "Árvores", "Pivô de irrigação", "Cercas", "Não identificado"].map((obs) => {
-                      const active = templateFormData.obstaculos.includes(obs);
-                      return (
-                        <button
-                          key={obs}
-                          type="button"
-                          onClick={() => setTemplateFormData((p) => ({ ...p, obstaculos: active ? p.obstaculos.filter((o) => o !== obs) : [...p.obstaculos, obs] }))}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${active ? "bg-primary/20 border-primary text-primary" : "bg-muted/40 border-border text-muted-foreground hover:border-primary/50"}`}
-                        >
-                          {obs}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Condições Meteorológicas</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["Vento fraco", "Vento moderado", "Vento forte", "Turbulência", "Alta temperatura", "Visibilidade reduzida"].map((cond) => {
-                      const active = templateFormData.condicoesMet.includes(cond);
-                      return (
-                        <button
-                          key={cond}
-                          type="button"
-                          onClick={() => setTemplateFormData((p) => ({ ...p, condicoesMet: active ? p.condicoesMet.filter((c) => c !== cond) : [...p.condicoesMet, cond] }))}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${active ? "bg-primary/20 border-primary text-primary" : "bg-muted/40 border-border text-muted-foreground hover:border-primary/50"}`}
-                        >
-                          {cond}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="altitudeOperacao">Altitude de Operação (ft AGL)</Label>
-                  <Input id="altitudeOperacao" type="number" placeholder="Ex: 10" value={templateFormData.altitudeOperacao} onChange={(e) => setTemplateFormData((p) => ({ ...p, altitudeOperacao: e.target.value }))} />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>Experiência do Piloto (horas)</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="grid gap-1">
-                      <span className="text-xs text-muted-foreground">Horas totais</span>
-                      <Input type="number" placeholder="Ex: 8450" value={templateFormData.horasTotais} onChange={(e) => setTemplateFormData((p) => ({ ...p, horasTotais: e.target.value }))} />
-                    </div>
-                    <div className="grid gap-1">
-                      <span className="text-xs text-muted-foreground">Em aviação agrícola</span>
-                      <Input type="number" placeholder="Ex: 4100" value={templateFormData.horasAgricola} onChange={(e) => setTemplateFormData((p) => ({ ...p, horasAgricola: e.target.value }))} />
-                    </div>
-                    <div className="grid gap-1">
-                      <span className="text-xs text-muted-foreground">No tipo</span>
-                      <Input type="number" placeholder="Ex: 3200" value={templateFormData.horasTipo} onChange={(e) => setTemplateFormData((p) => ({ ...p, horasTipo: e.target.value }))} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="contextoAdicional">Contexto Adicional</Label>
-                  <Textarea
-                    id="contextoAdicional"
-                    placeholder="Descreva brevemente a sequência do acidente..."
-                    value={templateFormData.contextoAdicional}
-                    onChange={(e) => setTemplateFormData((p) => ({ ...p, contextoAdicional: e.target.value }))}
-                    className="min-h-[100px]"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsTemplateModalOpen(false)}>Cancelar</Button>
-                <Button onClick={handleGenerateReport}>
-                  <Sparkles className="h-5 w-5 mr-1" /> Gerar Relatório
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Dédalo Modal */}
       <Dialog open={isDedaloModalOpen} onOpenChange={setIsDedaloModalOpen}>
