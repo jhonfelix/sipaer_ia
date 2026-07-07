@@ -371,7 +371,11 @@ export const mockAIMessages: AIMessage[] = [
 
 Posso reescrever o texto aplicando essas melhorias?`,
     timestamp: new Date("2025-06-20T14:25:00Z"),
-    sources: ["NSCA 3-13", "Manual HFACS", "Anexo 13 ICAO"],
+    sources: [
+      { source: "NSCA 3-13", score: 0.91 },
+      { source: "Manual HFACS", score: 0.78 },
+      { source: "Anexo 13 ICAO", score: 0.62 },
+    ],
   },
 ];
 

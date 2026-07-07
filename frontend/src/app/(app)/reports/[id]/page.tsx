@@ -418,10 +418,7 @@ export default function ReportEditPage() {
         chat_type: "report",
       });
       setAiMessages((prev) =>
-        prev.filter((m) => m.id !== loadingId).concat({
-          ...reply,
-          sources: reply.sources?.length ? reply.sources : ["NSCA 3-13", "Manual CENIPA"],
-        })
+        prev.filter((m) => m.id !== loadingId).concat(reply)
       );
     } catch {
       setAiMessages((prev) =>

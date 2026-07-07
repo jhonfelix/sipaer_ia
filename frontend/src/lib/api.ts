@@ -107,11 +107,16 @@ interface RawReport {
   sections: RawSection[];
 }
 
+interface RawSourceItem {
+  source: string;
+  score: number;
+}
+
 interface RawChatMessage {
   id: string;
   role: string;
   content: string;
-  sources: string[];
+  sources: RawSourceItem[];
   session_id?: string;
   created_at: string;
 }

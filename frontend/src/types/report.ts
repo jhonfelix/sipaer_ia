@@ -134,12 +134,17 @@ export interface Report {
   };
 }
 
+export interface AISource {
+  source: string;
+  score: number;
+}
+
 export interface AIMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  sources?: string[];
+  sources?: AISource[];
   sessionId?: string;
   isLoading?: boolean;
   attachments?: string[];

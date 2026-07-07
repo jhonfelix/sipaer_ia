@@ -386,13 +386,13 @@ function MessageBubble({
         {/* Fontes */}
         {!isUser && !message.isLoading && message.sources && message.sources.length > 0 && (
           <div className="flex flex-wrap gap-1 px-1">
-            {[...new Set(message.sources)].map((s, i) => (
+            {[...new Map(message.sources.map((s) => [s.source, s])).values()].map((s, i) => (
               <span
                 key={i}
                 className="inline-flex items-center gap-1 text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border"
               >
                 <ExternalLink className="w-2.5 h-2.5" />
-                {s}
+                {s.source} · {Math.round(s.score * 100)}%
               </span>
             ))}
           </div>

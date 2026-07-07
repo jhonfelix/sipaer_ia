@@ -405,6 +405,10 @@ SYSTEM_PROMPTS = {
     "fab-docs": SYSTEM_PROMPT_FAB_DOCS,
 }
 
+# Abaixo deste score de relevância (0-1) o chunk é descartado como fonte —
+# evita exibir documentos que só entraram no top_n por falta de candidato melhor.
+RERANK_SCORE_THRESHOLD = 0.4
+
 
 class RAGPipeline:
     def __init__(
@@ -424,7 +428,7 @@ class RAGPipeline:
         model: str = "gpt-oss-120b",
         chat_type: str = "general",
         collections: list[str] | None = None,
-    ) -> tuple[str, list[str]]:
+    ) -> tuple[str, list[dict]]:
         # Step 1: Check Redis cache
         col_key = ",".join(sorted(collections)) if collections else "all"
         cache_key = self.cache.rag_key(query, f"{chat_type}:{model}:{col_key}")
@@ -449,20 +453,23 @@ class RAGPipeline:
             )
 
         # Step 4: Rerank (Cohere format)
-        sources: list[str] = []
+        sources: list[dict] = []
         context_text = extra_context
         if search_results:
             docs = [r.payload.get("text", "") for r in search_results]
             reranked = await self.llm.rerank(query, docs, top_n=5)
-            top_indices = [r["index"] for r in reranked]
-            top_docs = [docs[i] for i in top_indices]
-            seen_sources: set[str] = set()
-            sources: list[str] = []
-            for i in top_indices:
-                s = search_results[i].payload.get("source", "")
-                if s and s not in seen_sources:
-                    seen_sources.add(s)
-                    sources.append(s)
+            relevant = [r for r in reranked if r.get("relevance_score", 0) >= RERANK_SCORE_THRESHOLD]
+            top_docs = [docs[r["index"]] for r in relevant]
+            seen_sources: dict[str, float] = {}
+            for r in relevant:
+                s = search_results[r["index"]].payload.get("source", "")
+                score = r.get("relevance_score", 0)
+                if s and score > seen_sources.get(s, -1):
+                    seen_sources[s] = score
+            sources = [
+                {"source": s, "score": round(score, 4)}
+                for s, score in sorted(seen_sources.items(), key=lambda kv: kv[1], reverse=True)
+            ]
             context_text = "\n\n---\n\n".join(top_docs)
             if extra_context:
                 context_text = extra_context + "\n\n---\n\n" + context_text

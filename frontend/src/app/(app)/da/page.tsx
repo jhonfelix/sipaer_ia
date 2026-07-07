@@ -315,8 +315,8 @@ export default function DAPage() {
                           <div className="mt-3 pt-3 border-t border-border/50">
                             <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">Fontes</p>
                             <div className="flex flex-wrap gap-1.5">
-                              {[...new Set(msg.sources)].map((src, i) => (
-                                <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60">{src}</span>
+                              {[...new Map(msg.sources.map((s) => [s.source, s])).values()].map((s, i) => (
+                                <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60">{s.source} · {Math.round(s.score * 100)}%</span>
                               ))}
                             </div>
                           </div>
