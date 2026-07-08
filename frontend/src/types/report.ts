@@ -166,3 +166,35 @@ export interface User {
   postoGraduacao?: string;
   avatar?: string;
 }
+
+// ── Projetos ──────────────────────────────────────────────────────────────────
+
+export type ProjectScope = "general" | "da";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  instructions: string | null;
+  chatType: ProjectScope;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProjectDocument {
+  id: number;
+  projectId: number;
+  title: string;
+  source: string;
+  status: "pending" | "indexing" | "indexed" | "error";
+  chunkCount: number;
+  originalName: string | null;
+  sizeBytes: number;
+  errorMsg: string | null;
+  addedBy: number;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import {
   Building2, Send, Sparkles, FileText, ClipboardList, Scale,
   CheckCircle2, ChevronRight, Copy, Download, FileEdit, RotateCcw,
-  BookOpen, AlertCircle, Search, X, User2, Check, Plus,
+  BookOpen, AlertCircle, Search, X, User2, Check, Plus, Paperclip, Upload,
 } from "lucide-react";
 import { chat as chatApi } from "@/lib/api";
-import { MarkdownRenderer, ModelSelector } from "@/components/chat";
+import { MarkdownRenderer, ModelSelector, AttachmentPreview } from "@/components/chat";
+import type { AttachedFile } from "@/components/chat";
+import { ProjectsSection } from "@/components/project";
 import type { AIMessage } from "@/types/report";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -96,6 +98,16 @@ function MessageActions({ content, onContinue }: { content: string; onContinue: 
 
 function uid() { return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`; }
 
+const ACCEPTED = [
+  "image/*",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/csv",
+].join(",");
+
 export default function DAPage() {
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
@@ -105,8 +117,40 @@ export default function DAPage() {
   const [activeCategory, setActiveCategory] = useState<string>("Todos");
   const [search, setSearch] = useState("");
 
+  const [attached, setAttached] = useState<AttachedFile[]>([]);
+  const [extracting, setExtracting] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function addFiles(files: FileList | File[]) {
+    const next: AttachedFile[] = Array.from(files).map((file) => ({
+      id: uid(),
+      file,
+      preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
+    }));
+    setAttached((prev) => [...prev, ...next]);
+  }
+
+  function removeFile(id: string) {
+    setAttached((prev) => {
+      const f = prev.find((a) => a.id === id);
+      if (f?.preview) URL.revokeObjectURL(f.preview);
+      return prev.filter((a) => a.id !== id);
+    });
+  }
+
+  function onDragOver(e: React.DragEvent) { e.preventDefault(); setIsDragOver(true); }
+  function onDragLeave(e: React.DragEvent) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false);
+  }
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
+  }
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
@@ -119,16 +163,40 @@ export default function DAPage() {
 
   async function handleSend(text?: string) {
     const msg = (text ?? input).trim();
-    if (!msg || sending) return;
+    if (!msg || sending || extracting) return;
 
-    const userMsg: AIMessage = { id: `u-${uid()}`, role: "user", content: msg, timestamp: new Date() };
+    // Extrai o texto dos arquivos anexados antes de enviar (igual ao /chat).
+    let context = "";
+    const attachmentNames = attached.map((a) => a.file.name);
+    if (attached.length > 0) {
+      setExtracting(true);
+      try {
+        const extractions = await Promise.all(attached.map((a) => chatApi.extract(a.file)));
+        context = extractions
+          .map((e) => `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 200.000 caracteres" : ""}]\n${e.text}`)
+          .join("\n\n---\n\n");
+      } catch {
+        // segue sem contexto de arquivo se a extração falhar
+      } finally {
+        setExtracting(false);
+      }
+    }
+
+    const userMsg: AIMessage = {
+      id: `u-${uid()}`,
+      role: "user",
+      content: msg,
+      timestamp: new Date(),
+      attachments: attachmentNames.length > 0 ? attachmentNames : undefined,
+    };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
+    setAttached([]);
     setSending(true);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da" });
+      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da", context });
       setMessages(prev => [...prev.filter(m => m.id !== userMsg.id), userMsg, reply]);
     } catch {
       setMessages(prev => prev.map(m =>
@@ -160,7 +228,24 @@ export default function DAPage() {
   );
 
   return (
-    <div className="flex flex-1 h-full min-h-0 overflow-hidden">
+    <div
+      className="flex flex-1 h-full min-h-0 overflow-hidden relative"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {/* Drag overlay */}
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 bg-blue-600/[0.08] border-2 border-dashed border-blue-500/40 flex flex-col items-center justify-center gap-4 pointer-events-none">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-400/25 flex items-center justify-center">
+            <Upload className="w-7 h-7 text-blue-400" />
+          </div>
+          <div className="text-center">
+            <p className="text-blue-700 dark:text-blue-300 font-semibold">Solte para anexar</p>
+            <p className="text-blue-600/60 dark:text-blue-400/50 text-sm mt-1">PDF · DOCX · XLSX · CSV · imagens</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Left Sidebar ── */}
       <div className="w-64 flex flex-col border-r border-border bg-sidebar shrink-0">
@@ -187,6 +272,11 @@ export default function DAPage() {
           {categories.map(c => (
             <button key={c} onClick={() => setActiveCategory(c)} className={`px-2 py-0.5 rounded-full text-[11px] transition-all ${activeCategory === c ? "bg-blue-500/20 border border-blue-400/30 text-blue-300" : "bg-muted/40 border border-border text-muted-foreground hover:text-foreground/60"}`}>{c}</button>
           ))}
+        </div>
+
+        {/* Projetos */}
+        <div className="border-b border-border py-1">
+          <ProjectsSection scope="da" basePath="/da" />
         </div>
 
         {/* Quick actions */}
@@ -296,6 +386,16 @@ export default function DAPage() {
                   <div key={msg.id} className="flex justify-end">
                     <div className="flex items-end gap-2.5 max-w-[80%]">
                       <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2 pb-2 border-b border-blue-400/20">
+                            {msg.attachments.map((name) => (
+                              <span key={name} className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-400/20 text-blue-300/80">
+                                <Paperclip className="w-2.5 h-2.5 shrink-0" />
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {msg.content}
                       </div>
                       <div className="w-7 h-7 rounded-full bg-blue-600/18 border border-blue-500/22 flex items-center justify-center shrink-0 mb-0.5">
@@ -328,6 +428,18 @@ export default function DAPage() {
                 )
               )}
 
+              {/* Extracting indicator */}
+              {extracting && (
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600/15 to-blue-800/20 border border-blue-400/15 flex items-center justify-center shrink-0">
+                    <Paperclip className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 animate-pulse" />
+                  </div>
+                  <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
+                    <span className="text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
+                  </div>
+                </div>
+              )}
+
               {/* Typing indicator */}
               {sending && (
                 <div className="flex gap-3">
@@ -353,7 +465,23 @@ export default function DAPage() {
         <div className="shrink-0 border-t border-border/50 p-4">
           <div className="max-w-3xl mx-auto">
             <div className="rounded-2xl bg-muted/30 border border-border focus-within:border-blue-500/30 focus-within:bg-muted/40 transition-all overflow-hidden">
+
+              {/* Attachment previews */}
+              {attached.length > 0 && (
+                <div className="px-3 pt-3">
+                  <AttachmentPreview files={attached} onRemove={removeFile} />
+                </div>
+              )}
+
               <div className="flex items-end gap-2 px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  title="Anexar arquivo (PDF, DOCX, XLSX, CSV, imagem)"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                </button>
                 <textarea
                   ref={textareaRef}
                   value={input}
@@ -366,7 +494,7 @@ export default function DAPage() {
                 />
                 <button
                   onClick={() => handleSend()}
-                  disabled={!input.trim() || sending}
+                  disabled={!input.trim() || sending || extracting}
                   className="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-all shadow-lg shadow-blue-600/20 shrink-0 mb-0.5"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -383,6 +511,19 @@ export default function DAPage() {
           </div>
         </div>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileRef}
+        type="file"
+        multiple
+        accept={ACCEPTED}
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }

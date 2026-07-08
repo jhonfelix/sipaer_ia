@@ -17,6 +17,7 @@ import {
   ChevronRight,
   MessageSquare,
 } from "lucide-react";
+import { ProjectsSection } from "@/components/project";
 
 export const CATEGORIES = [
   { id: "all", label: "Todos", icon: LayoutGrid },
@@ -134,6 +135,11 @@ export function ConversationSidebar({
               })}
             </div>
           </div>
+
+          <div className="h-px bg-border/40 mx-3 my-1.5" />
+
+          {/* Projetos */}
+          <ProjectsSection scope="general" basePath="/chat" />
 
           <div className="h-px bg-border/40 mx-3 my-1.5" />
 

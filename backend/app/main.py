@@ -1,10 +1,16 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Garante que logs de nível INFO da aplicação (app.*) apareçam no stdout do container.
+# Sem isto, o Python só emite WARNING+ pelo "last resort handler".
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("app").setLevel(logging.INFO)
+
 from app.config import settings
-from app.routers import auth, chat, knowledge, reports, upload
+from app.routers import auth, chat, knowledge, projects, reports, upload
 from app.services.llm_service import llm_service
 from app.services.vector_service import vector_service
 from app.services.cache_service import cache_service
@@ -40,6 +46,7 @@ app.include_router(reports.router)
 app.include_router(chat.router)
 app.include_router(upload.router)
 app.include_router(knowledge.router)
+app.include_router(projects.router)
 
 
 @app.get("/health")

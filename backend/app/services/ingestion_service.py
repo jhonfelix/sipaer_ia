@@ -1,6 +1,6 @@
 import io
 
-from app.config import KNOWLEDGE_COLLECTIONS
+from app.config import KNOWLEDGE_COLLECTIONS, PROJECT_VECTOR_COLLECTION
 from app.services.llm_service import llm_service
 from app.services.vector_service import vector_service
 
@@ -86,6 +86,68 @@ async def ingest_document(
                             "type": "knowledge",
                         },
                         collection_name=qdrant_collection,
+                    )
+                    count += 1
+                except Exception:
+                    continue
+
+            if count == 0:
+                raise RuntimeError(
+                    "Nenhum trecho pôde ser indexado. Verifique a conectividade com o CCABR."
+                )
+
+            doc.status = "indexed"
+            doc.chunk_count = count
+            await db.commit()
+
+        except Exception as exc:
+            doc.status = "error"
+            doc.error_msg = str(exc)[:500]
+            await db.commit()
+
+
+async def ingest_project_document(
+    doc_id: int, project_id: int, title: str, source: str, text: str
+) -> None:
+    """Background task: chunk → embed → upsert na coleção de projetos (payload project_id) → update MySQL."""
+    from sqlalchemy import select
+
+    from app.database import AsyncSessionLocal
+    from app.models.project import ProjectDocument
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(ProjectDocument).where(ProjectDocument.id == doc_id)
+        )
+        doc = result.scalar_one_or_none()
+        if not doc:
+            return
+
+        try:
+            doc.status = "indexing"
+            await db.commit()
+
+            chunks = chunk_text(text)
+            count = 0
+
+            for i, chunk in enumerate(chunks):
+                try:
+                    vector = await llm_service.embed(chunk)
+                    if not vector:
+                        continue
+                    await vector_service.upsert(
+                        doc_id=f"pdoc-{doc_id}-{i}",
+                        vector=vector,
+                        payload={
+                            "text": chunk,
+                            "source": source,
+                            "title": title,
+                            "doc_id": doc_id,
+                            "chunk_index": i,
+                            "project_id": project_id,
+                            "type": "project",
+                        },
+                        collection_name=PROJECT_VECTOR_COLLECTION,
                     )
                     count += 1
                 except Exception:

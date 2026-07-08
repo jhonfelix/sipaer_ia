@@ -10,6 +10,7 @@ ALLOWED_CHAT_TYPES = Literal["general", "report", "da", "translation", "images",
 class ChatRequest(BaseModel):
     message: str
     report_id: int | None = None
+    project_id: int | None = None
     context: str = ""
     session_id: str | None = None
     model: ALLOWED_MODELS = "gpt-oss-120b"

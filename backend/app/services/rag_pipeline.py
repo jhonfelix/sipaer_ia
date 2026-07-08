@@ -1,8 +1,11 @@
 import json
+import logging
 
 from app.services.cache_service import CacheService, cache_service
 from app.services.llm_service import LLMService, llm_service
 from app.services.vector_service import VectorService, vector_service
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT_GENERAL = """Você é SAPAER-AI, um assistente especializado de alto nível em aviação aeronáutica brasileira, criado para apoiar profissionais da Força Aérea Brasileira (FAB), investigadores do CENIPA, operadores de aviação civil e pesquisadores da área aeronáutica.
 
@@ -428,10 +431,13 @@ class RAGPipeline:
         model: str = "gpt-oss-120b",
         chat_type: str = "general",
         collections: list[str] | None = None,
+        project_id: int | None = None,
+        project_instructions: str | None = None,
     ) -> tuple[str, list[dict]]:
         # Step 1: Check Redis cache
         col_key = ",".join(sorted(collections)) if collections else "all"
-        cache_key = self.cache.rag_key(query, f"{chat_type}:{model}:{col_key}")
+        scope_key = f"proj{project_id}" if project_id is not None else col_key
+        cache_key = self.cache.rag_key(query, f"{chat_type}:{model}:{scope_key}")
         cached = await self.cache.get(cache_key)
         if cached:
             data = json.loads(cached)
@@ -440,25 +446,57 @@ class RAGPipeline:
         # Step 2: Embed query
         query_vector = await self.llm.embed(query)
 
-        # Step 3: ANN search in Qdrant (one or all collections)
+        # Step 3: ANN search in Qdrant.
+        # Projeto → busca robusta escopada por project_id (coleção de projetos).
+        # Caso contrário → coleções de conhecimento (uma, várias ou todas).
         from app.config import KNOWLEDGE_COLLECTIONS
-        qdrant_targets = (
-            [KNOWLEDGE_COLLECTIONS[c] for c in collections if c in KNOWLEDGE_COLLECTIONS]
-            if collections else None
-        )
         search_results = []
         if query_vector:
-            search_results = await self.vector.search(
-                query_vector, collection_names=qdrant_targets, limit=10
-            )
+            if project_id is not None:
+                search_results = await self.vector.search_project(query_vector, project_id, limit=10)
+                logger.info(
+                    "RAG projeto %s: %d trecho(s) recuperado(s) do Qdrant",
+                    project_id,
+                    len(search_results),
+                )
+            else:
+                qdrant_targets = (
+                    [KNOWLEDGE_COLLECTIONS[c] for c in collections if c in KNOWLEDGE_COLLECTIONS]
+                    if collections else None
+                )
+                search_results = await self.vector.search(
+                    query_vector, collection_names=qdrant_targets, limit=10
+                )
 
         # Step 4: Rerank (Cohere format)
         sources: list[dict] = []
         context_text = extra_context
         if search_results:
             docs = [r.payload.get("text", "") for r in search_results]
-            reranked = await self.llm.rerank(query, docs, top_n=5)
+            reranked: list[dict] = []
+            try:
+                reranked = await self.llm.rerank(query, docs, top_n=5)
+            except Exception:
+                logger.exception("Reranker falhou — usando resultados brutos da busca vetorial")
+
             relevant = [r for r in reranked if r.get("relevance_score", 0) >= RERANK_SCORE_THRESHOLD]
+
+            # Fallback: num projeto, os anexos são a base curada do próprio usuário.
+            # Se o reranker descartou tudo (ou falhou), ainda assim usa os melhores
+            # trechos recuperados — caso contrário o documento seria totalmente ignorado.
+            if not relevant and project_id is not None and search_results:
+                relevant = (
+                    reranked[:3]
+                    if reranked
+                    else [{"index": i, "relevance_score": 0.0} for i in range(min(3, len(docs)))]
+                )
+                logger.info(
+                    "RAG projeto %s: reranker sem trechos ≥ %.2f — aplicando fallback (%d trecho(s))",
+                    project_id,
+                    RERANK_SCORE_THRESHOLD,
+                    len(relevant),
+                )
+
             top_docs = [docs[r["index"]] for r in relevant]
             seen_sources: dict[str, float] = {}
             for r in relevant:
@@ -476,6 +514,8 @@ class RAGPipeline:
 
         # Step 5: Build prompt
         system = SYSTEM_PROMPTS.get(chat_type, SYSTEM_PROMPT_GENERAL)
+        if project_instructions and project_instructions.strip():
+            system += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
         if context_text:
             system += f"\n\nContexto relevante:\n{context_text}"
 

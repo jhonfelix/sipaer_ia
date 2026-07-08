@@ -1,5 +1,8 @@
 import type {
   AIMessage,
+  Project,
+  ProjectDocument,
+  ProjectScope,
   Report,
   ReportSection,
   ReportSubsection,
@@ -490,6 +493,7 @@ export const chat = {
   async send(payload: {
     message: string;
     report_id?: number;
+    project_id?: number;
     context?: string;
     session_id?: string;
     model?: string;
@@ -518,11 +522,13 @@ export const chat = {
   async history(opts?: {
     sessionId?: string;
     reportId?: number;
+    projectId?: number;
     limit?: number;
   }): Promise<AIMessage[]> {
     const params = new URLSearchParams();
     if (opts?.sessionId != null) params.set("session_id", opts.sessionId);
     if (opts?.reportId != null) params.set("report_id", String(opts.reportId));
+    if (opts?.projectId != null) params.set("project_id", String(opts.projectId));
     if (opts?.limit != null) params.set("limit", String(opts.limit));
     const qs = params.size ? `?${params}` : "";
     return (await request<RawChatMessage[]>(`/chat/history${qs}`)).map(mapChatMessage);
@@ -543,5 +549,155 @@ export const chat = {
       throw new ApiError(res.status, data.detail ?? "Erro na extração do arquivo");
     }
     return data as { text: string; filename: string; truncated: boolean };
+  },
+};
+
+// ── Projetos ──────────────────────────────────────────────────────────────────
+
+interface RawProject {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  instructions: string | null;
+  chat_type: string;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface RawProjectDocument {
+  id: number;
+  project_id: number;
+  title: string;
+  source: string;
+  status: string;
+  chunk_count: number;
+  original_name: string | null;
+  size_bytes: number;
+  error_msg: string | null;
+  added_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapProject(raw: RawProject): Project {
+  return {
+    id: String(raw.id),
+    name: raw.name,
+    description: raw.description,
+    color: raw.color,
+    icon: raw.icon,
+    instructions: raw.instructions,
+    chatType: raw.chat_type as ProjectScope,
+    createdBy: String(raw.created_by),
+    createdAt: new Date(raw.created_at),
+    updatedAt: new Date(raw.updated_at),
+  };
+}
+
+function mapProjectDocument(raw: RawProjectDocument): ProjectDocument {
+  return {
+    id: raw.id,
+    projectId: raw.project_id,
+    title: raw.title,
+    source: raw.source,
+    status: raw.status as ProjectDocument["status"],
+    chunkCount: raw.chunk_count,
+    originalName: raw.original_name,
+    sizeBytes: raw.size_bytes,
+    errorMsg: raw.error_msg,
+    addedBy: raw.added_by,
+    createdAt: new Date(raw.created_at),
+    updatedAt: new Date(raw.updated_at),
+  };
+}
+
+export const projects = {
+  async list(scope?: ProjectScope): Promise<Project[]> {
+    const qs = scope ? `?scope=${scope}` : "";
+    return (await request<RawProject[]>(`/projects${qs}`)).map(mapProject);
+  },
+
+  async get(id: string): Promise<Project> {
+    return mapProject(await request<RawProject>(`/projects/${id}`));
+  },
+
+  async create(payload: {
+    name: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+    instructions?: string;
+    chat_type?: ProjectScope;
+  }): Promise<Project> {
+    return mapProject(
+      await request<RawProject>("/projects", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      })
+    );
+  },
+
+  async update(
+    id: string,
+    payload: {
+      name?: string;
+      description?: string | null;
+      color?: string | null;
+      icon?: string | null;
+      instructions?: string | null;
+    }
+  ): Promise<Project> {
+    return mapProject(
+      await request<RawProject>(`/projects/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      })
+    );
+  },
+
+  async remove(id: string): Promise<void> {
+    await request<void>(`/projects/${id}`, { method: "DELETE" });
+  },
+
+  async documents(id: string): Promise<ProjectDocument[]> {
+    return (await request<RawProjectDocument[]>(`/projects/${id}/documents`)).map(
+      mapProjectDocument
+    );
+  },
+
+  async uploadDocuments(id: string, files: File[]): Promise<ProjectDocument[]> {
+    const token = getToken();
+    const body = new FormData();
+    for (const f of files) body.append("files", f);
+    const res = await fetch(`${BASE}/projects/${id}/documents/upload`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? "Erro no upload de arquivos");
+    }
+    return (data as RawProjectDocument[]).map(mapProjectDocument);
+  },
+
+  async removeDocument(id: string, docId: number): Promise<void> {
+    await request<void>(`/projects/${id}/documents/${docId}`, { method: "DELETE" });
+  },
+
+  async sessions(id: string): Promise<ChatSession[]> {
+    const raw = await request<RawChatSession[]>(`/projects/${id}/sessions`);
+    return raw.map((s) => ({
+      sessionId: s.session_id,
+      title: s.title,
+      preview: s.preview,
+      messageCount: s.message_count,
+      updatedAt: new Date(s.updated_at),
+      category: s.category ?? "general",
+    }));
   },
 };

@@ -15,6 +15,9 @@ class Conversation(Base):
     report_id: Mapped[int | None] = mapped_column(
         ForeignKey("reports.id", ondelete="SET NULL"), nullable=True
     )
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+    )
     session_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     category: Mapped[str | None] = mapped_column(String(50), nullable=True, default="general")
     role: Mapped[str] = mapped_column(String(20))

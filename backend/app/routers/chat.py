@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 from app.database import AsyncSession, get_db
 from app.middleware.auth import get_current_user
 from app.models.conversation import Conversation
+from app.models.project import Project
 from app.models.user import User
 from app.schemas.chat import (
     ChatRequest,
@@ -102,9 +103,24 @@ async def chat(
     session_id = body.session_id or str(uuid4())
     now = datetime.now(timezone.utc)
 
+    # Projeto (opcional): valida posse e carrega as instruções para o contexto.
+    project_instructions: str | None = None
+    if body.project_id is not None:
+        result = await db.execute(
+            select(Project).where(
+                Project.id == body.project_id,
+                Project.created_by == current_user.id,
+            )
+        )
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projeto não encontrado")
+        project_instructions = project.instructions
+
     user_msg = Conversation(
         user_id=current_user.id,
         report_id=body.report_id,
+        project_id=body.project_id,
         session_id=session_id,
         category=body.chat_type,
         role="user",
@@ -115,7 +131,14 @@ async def chat(
     await db.flush()
 
     try:
-        content, sources = await rag_pipeline.process(body.message, body.context, body.model, body.chat_type)
+        content, sources = await rag_pipeline.process(
+            body.message,
+            body.context,
+            body.model,
+            body.chat_type,
+            project_id=body.project_id,
+            project_instructions=project_instructions,
+        )
     except Exception:
         logger.exception("RAG pipeline falhou")
         content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
@@ -124,6 +147,7 @@ async def chat(
     ai_msg = Conversation(
         user_id=current_user.id,
         report_id=body.report_id,
+        project_id=body.project_id,
         session_id=session_id,
         category=body.chat_type,
         role="assistant",
@@ -189,6 +213,7 @@ async def sessions(
 async def history(
     session_id: str | None = None,
     report_id: int | None = None,
+    project_id: int | None = None,
     limit: int = 100,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -203,6 +228,8 @@ async def history(
         query = query.where(Conversation.session_id == session_id)
     if report_id is not None:
         query = query.where(Conversation.report_id == report_id)
+    if project_id is not None:
+        query = query.where(Conversation.project_id == project_id)
 
     result = await db.execute(query)
     return list(result.scalars().all())
