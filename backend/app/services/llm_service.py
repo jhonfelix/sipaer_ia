@@ -22,12 +22,15 @@ class LLMService:
         return self._client
 
     async def chat_completion(
-        self, messages: list[dict], model: str = "gpt-oss-120b"
+        self,
+        messages: list[dict],
+        model: str = "gpt-oss-120b",
+        temperature: float | None = None,
     ) -> str:
-        response = await self.client.post(
-            "/v1/chat/completions",
-            json={"model": model, "messages": messages},
-        )
+        payload: dict = {"model": model, "messages": messages}
+        if temperature is not None:
+            payload["temperature"] = temperature
+        response = await self.client.post("/v1/chat/completions", json=payload)
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"]

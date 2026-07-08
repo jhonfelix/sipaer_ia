@@ -9,6 +9,7 @@ KNOWLEDGE_COLLECTIONS: dict[str, str] = {
     "licitacoes":         "sipaer_licitacoes",
     "analise_audio":      "sipaer_analise_audio",
     "analise_spectral":   "sipaer_analise_spectral",
+    "traducao_terminologia": "sipaer_traducao_terminologia",
     "outros":             "sipaer_outros",
 }
 
@@ -23,6 +24,7 @@ KNOWLEDGE_COLLECTION_LABELS: dict[str, str] = {
     "licitacoes":         "Licitações",
     "analise_audio":      "Análise de Áudio",
     "analise_spectral":   "Análise Espectral",
+    "traducao_terminologia": "Tradução — Terminologia",
     "outros":             "Outros",
 }
 

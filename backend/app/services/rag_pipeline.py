@@ -208,6 +208,26 @@ SYSTEM_PROMPT_TRANSLATION = """Você é SAPAER-AI Tradução, assistente especia
 - Comunicações aeronáuticas: phraseology ICAO, NOTAMs, METARs, TAFs, PIREPs
 - Textos técnicos: relatórios de investigação, laudos periciais, pareceres técnicos
 
+## REGRA DE GROUNDING (OBRIGATÓRIA)
+
+- Sempre que houver a seção "Contexto relevante" abaixo, ela contém a **base terminológica/glossário e a
+  fraseologia oficial recuperada** para esta tradução. **Priorize sempre esses termos** sobre o seu
+  conhecimento interno.
+- **Não invente equivalências.** Se um termo não estiver na base recuperada e a tradução não for pacífica na
+  literatura aeronáutica, use a melhor opção e **marque com `[verificar]`** logo após.
+- Mantenha **consistência absoluta**: o mesmo termo-fonte deve receber sempre a mesma tradução ao longo de
+  todo o documento.
+- Ao final de traduções longas, quando útil, liste os **termos-chave usados** (tabela original | tradução |
+  fonte), citando de qual documento da base o termo veio.
+
+## FRASEOLOGIA E TAXONOMIA PADRÃO
+
+- Comunicações aeronáuticas: siga a **fraseologia ICAO** (Annex 10 / Doc 9432 — Manual of Radiotelephony) e,
+  no contexto brasileiro, o **MCA 100-16 / ICA de fraseologia (DECEA)**.
+- Categorias de ocorrência: use a **taxonomia OACI/CICTT** (ex.: LOC-I, CFIT, RE, MAC) — **mantenha os
+  códigos originais**, traduzindo apenas a descrição.
+- Terminologia OACI oficial nos pares PT/EN/ES/FR; unidades e formatos conforme padrão OACI.
+
 ## COMPORTAMENTO
 
 - Ao traduzir: apresente o texto original e a tradução lado a lado quando for útil
@@ -217,6 +237,15 @@ SYSTEM_PROMPT_TRANSLATION = """Você é SAPAER-AI Tradução, assistente especia
 - Para expressões idiomáticas técnicas: adapte o sentido, não traduza literalmente
 - Indique quando há duas traduções aceitas para o mesmo termo (ex.: "aileron" vs "aileron" — geralmente mantido)
 - Sinalizar termos controversos ou com tradução não pacificada na literatura aeronáutica brasileira
+
+## TRADUÇÃO DE RELATÓRIOS E DOCUMENTOS
+
+- **Preserve integralmente a estrutura**: numeração de seções/subseções, títulos, listas, tabelas e a ordem
+  do documento original.
+- Traduza o conteúdo mantendo a formatação (Markdown) equivalente à do original.
+- Não resuma nem omita trechos, salvo pedido explícito; traduza o documento na íntegra.
+- Preserve identificadores que não se traduzem: matrículas de aeronave, códigos, referências normativas,
+  números de documento.
 
 ## FORMATO DE SAÍDA
 
@@ -412,6 +441,12 @@ SYSTEM_PROMPTS = {
 # evita exibir documentos que só entraram no top_n por falta de candidato melhor.
 RERANK_SCORE_THRESHOLD = 0.4
 
+# Roteamento de coleções por categoria de chat (quando não há projeto e nenhuma
+# coleção explícita). Ex.: Tradução ancora nos glossários/fraseologia, não em tudo.
+CHAT_TYPE_COLLECTIONS: dict[str, list[str]] = {
+    "translation": ["traducao_terminologia", "normas_legislacoes", "relatorios_finais"],
+}
+
 
 class RAGPipeline:
     def __init__(
@@ -434,8 +469,11 @@ class RAGPipeline:
         project_id: int | None = None,
         project_instructions: str | None = None,
     ) -> tuple[str, list[dict]]:
+        # Coleções efetivas: explícitas > roteadas por chat_type > todas.
+        effective_collections = collections or CHAT_TYPE_COLLECTIONS.get(chat_type)
+
         # Step 1: Check Redis cache
-        col_key = ",".join(sorted(collections)) if collections else "all"
+        col_key = ",".join(sorted(effective_collections)) if effective_collections else "all"
         scope_key = f"proj{project_id}" if project_id is not None else col_key
         cache_key = self.cache.rag_key(query, f"{chat_type}:{model}:{scope_key}")
         cached = await self.cache.get(cache_key)
@@ -450,6 +488,10 @@ class RAGPipeline:
         # Projeto → busca robusta escopada por project_id (coleção de projetos).
         # Caso contrário → coleções de conhecimento (uma, várias ou todas).
         from app.config import KNOWLEDGE_COLLECTIONS
+        # Tradução puxa mais candidatos para maximizar recall do glossário/fraseologia.
+        is_translation = chat_type == "translation"
+        search_limit = 15 if is_translation else 10
+        rerank_top_n = 8 if is_translation else 5
         search_results = []
         if query_vector:
             if project_id is not None:
@@ -461,11 +503,11 @@ class RAGPipeline:
                 )
             else:
                 qdrant_targets = (
-                    [KNOWLEDGE_COLLECTIONS[c] for c in collections if c in KNOWLEDGE_COLLECTIONS]
-                    if collections else None
+                    [KNOWLEDGE_COLLECTIONS[c] for c in effective_collections if c in KNOWLEDGE_COLLECTIONS]
+                    if effective_collections else None
                 )
                 search_results = await self.vector.search(
-                    query_vector, collection_names=qdrant_targets, limit=10
+                    query_vector, collection_names=qdrant_targets, limit=search_limit
                 )
 
         # Step 4: Rerank (Cohere format)
@@ -475,7 +517,7 @@ class RAGPipeline:
             docs = [r.payload.get("text", "") for r in search_results]
             reranked: list[dict] = []
             try:
-                reranked = await self.llm.rerank(query, docs, top_n=5)
+                reranked = await self.llm.rerank(query, docs, top_n=rerank_top_n)
             except Exception:
                 logger.exception("Reranker falhou — usando resultados brutos da busca vetorial")
 
@@ -525,7 +567,9 @@ class RAGPipeline:
         ]
 
         # Step 6: Generate response
-        content = await self.llm.chat_completion(messages, model=model)
+        # Tradução usa temperatura baixa para consistência terminológica.
+        temperature = 0.2 if is_translation else None
+        content = await self.llm.chat_completion(messages, model=model, temperature=temperature)
 
         # Step 8: Cache response (TTL via cache_service default)
         await self.cache.set(

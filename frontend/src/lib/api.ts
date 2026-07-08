@@ -348,6 +348,7 @@ export const COLLECTION_OPTIONS = [
   { value: "licitacoes",         label: "Licitações" },
   { value: "analise_audio",      label: "Análise de Áudio" },
   { value: "analise_spectral",   label: "Análise Espectral" },
+  { value: "traducao_terminologia", label: "Tradução — Terminologia" },
   { value: "outros",             label: "Outros" },
 ] as const;
 
