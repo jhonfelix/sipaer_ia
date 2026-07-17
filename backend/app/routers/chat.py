@@ -23,9 +23,31 @@ from app.schemas.chat import (
     ConversationResponse,
     ConversationSessionResponse,
 )
-from app.services.rag_pipeline import rag_pipeline
+from app.agents.chat_agent import build_agent
+from app.agents.tools.knowledge_tools import (
+    collected_sources,
+    get_tools,
+    new_source_collector,
+)
+from app.services.rag_pipeline import (
+    SYSTEM_PROMPT_GENERAL,
+    SYSTEM_PROMPTS,
+    rag_pipeline,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+# Limite de contexto anexado injetado nas instruções do agente (evita estourar a
+# janela). O texto extraído já vem truncado pelo /chat/extract.
+_AGENT_CTX_LIMIT = 120_000
+
+# Instrução extra que orienta o agente a usar as tools de busca e citar fontes.
+_AGENT_TOOL_GUIDANCE = (
+    "\n\nVocê dispõe de ferramentas de busca na base de conhecimento SIPAER. "
+    "Use-as para fundamentar respostas factuais e cite as fontes encontradas. "
+    "Se a base não retornar nada relevante, responda com seu conhecimento e "
+    "sinalize que não havia fonte na base."
+)
 
 _EXTRACTABLE = {
     "application/pdf",
@@ -141,6 +163,121 @@ async def chat(
         )
     except Exception:
         logger.exception("RAG pipeline falhou")
+        content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
+        sources = []
+
+    ai_msg = Conversation(
+        user_id=current_user.id,
+        report_id=body.report_id,
+        project_id=body.project_id,
+        session_id=session_id,
+        category=body.chat_type,
+        role="assistant",
+        content=content,
+        sources=sources,
+    )
+    db.add(ai_msg)
+    await db.commit()
+    await db.refresh(ai_msg)
+
+    return ChatResponse(
+        id=str(ai_msg.id),
+        content=content,
+        sources=sources,
+        session_id=session_id,
+        created_at=now,
+    )
+
+
+async def _run_chat_agent(
+    body: ChatRequest,
+    session_id: str,
+    user: User,
+    project_instructions: str | None,
+) -> tuple[str, list[dict]]:
+    """Executa o agente Agno (tool calling + memória) e devolve (conteúdo, fontes)."""
+    instructions = SYSTEM_PROMPTS.get(body.chat_type, SYSTEM_PROMPT_GENERAL)
+    instructions += _AGENT_TOOL_GUIDANCE
+    if project_instructions and project_instructions.strip():
+        instructions += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
+    if body.context:
+        instructions += f"\n\nContexto anexado pelo usuário:\n{body.context[:_AGENT_CTX_LIMIT]}"
+
+    # Coletor de fontes por-requisição (as tools fazem append via contextvars).
+    new_source_collector()
+    agent = build_agent(
+        model_id=body.model,
+        instructions=instructions,
+        tools=get_tools(body.chat_type),
+        session_id=session_id,
+        user_id=str(user.id),
+        enable_memory=True,
+    )
+    result = await agent.arun(body.message)
+    content = getattr(result, "content", None) or ""
+    return content, collected_sources()
+
+
+@router.post("/agent", response_model=ChatResponse)
+async def chat_agent(
+    body: ChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Chat agêntico (Agno) — coexiste com POST /chat clássico.
+
+    O agente decide o que/onde buscar (tool calling) e tem memória de sessão
+    (MySQL + Agno). `images` e chats de projeto ainda usam o rag_pipeline clássico.
+    """
+    session_id = body.session_id or str(uuid4())
+    now = datetime.now(timezone.utc)
+
+    project_instructions: str | None = None
+    if body.project_id is not None:
+        result = await db.execute(
+            select(Project).where(
+                Project.id == body.project_id,
+                Project.created_by == current_user.id,
+            )
+        )
+        project = result.scalar_one_or_none()
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projeto não encontrado")
+        project_instructions = project.instructions
+
+    user_msg = Conversation(
+        user_id=current_user.id,
+        report_id=body.report_id,
+        project_id=body.project_id,
+        session_id=session_id,
+        category=body.chat_type,
+        role="user",
+        content=body.message,
+        sources=[],
+    )
+    db.add(user_msg)
+    await db.flush()
+
+    # O agente cobre os chats de base de conhecimento. `images` (visão) e chats de
+    # projeto (busca escopada por project_id) permanecem no pipeline clássico.
+    use_agent = body.chat_type != "images" and body.project_id is None
+
+    try:
+        if use_agent:
+            content, sources = await _run_chat_agent(
+                body, session_id, current_user, project_instructions
+            )
+        else:
+            content, sources = await rag_pipeline.process(
+                body.message,
+                body.context,
+                body.model,
+                body.chat_type,
+                project_id=body.project_id,
+                project_instructions=project_instructions,
+            )
+    except Exception:
+        logger.exception("Chat agent falhou")
         content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
         sources = []
 

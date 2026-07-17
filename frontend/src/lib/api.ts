@@ -491,17 +491,22 @@ export interface ChatSession {
 }
 
 export const chat = {
-  async send(payload: {
-    message: string;
-    report_id?: number;
-    project_id?: number;
-    context?: string;
-    session_id?: string;
-    model?: string;
-    chat_type?: "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
-  }): Promise<AIMessage> {
+  async send(
+    payload: {
+      message: string;
+      report_id?: number;
+      project_id?: number;
+      context?: string;
+      session_id?: string;
+      model?: string;
+      chat_type?: "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
+    },
+    opts?: { agent?: boolean }
+  ): Promise<AIMessage> {
+    // Modo Agente → POST /chat/agent (tool calling + memória); senão o /chat clássico.
+    const url = opts?.agent ? "/chat/agent" : "/chat";
     return mapChatMessage(
-      await request<RawChatMessage>("/chat", {
+      await request<RawChatMessage>(url, {
         method: "POST",
         body: JSON.stringify(payload),
       })

@@ -301,6 +301,7 @@ export default function ChatPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [model, setModel] = useState("gpt-oss-120b");
+  const [agentMode, setAgentMode] = useState(false);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -421,13 +422,16 @@ export default function ChatPage() {
           : "general"
       ) as "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
 
-      const reply = await chatApi.send({
-        message: text,
-        session_id: activeSessionId ?? undefined,
-        model,
-        chat_type: chatType,
-        context,
-      });
+      const reply = await chatApi.send(
+        {
+          message: text,
+          session_id: activeSessionId ?? undefined,
+          model,
+          chat_type: chatType,
+          context,
+        },
+        { agent: agentMode }
+      );
 
       const newSessionId = reply.sessionId ?? activeSessionId;
 
@@ -773,7 +777,26 @@ export default function ChatPage() {
 
               {/* Bottom toolbar */}
               <div className="flex items-center justify-between px-3 pb-2.5">
-                <ModelSelector value={model} onChange={setModel} />
+                <div className="flex items-center gap-2">
+                  <ModelSelector value={model} onChange={setModel} />
+                  <button
+                    type="button"
+                    onClick={() => setAgentMode((v) => !v)}
+                    title={
+                      agentMode
+                        ? "Modo Agente ativo — o assistente decide o que e onde pesquisar na base"
+                        : "Ativar Modo Agente (busca autônoma na base de conhecimento)"
+                    }
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all ${
+                      agentMode
+                        ? "bg-blue-600/20 border-blue-500/30 text-blue-600 dark:text-blue-300"
+                        : "bg-muted/30 border-border text-muted-foreground/60 hover:text-foreground"
+                    }`}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Modo Agente
+                  </button>
+                </div>
                 <p className="text-muted-foreground/40 text-[10px]">
                   A IA pode cometer erros — verifique informações críticas nas fontes oficiais.
                 </p>
