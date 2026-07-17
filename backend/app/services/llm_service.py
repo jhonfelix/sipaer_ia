@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 
 from app.config import settings
@@ -34,6 +36,51 @@ class LLMService:
         response.raise_for_status()
         data = response.json()
         return data["choices"][0]["message"]["content"]
+
+    async def transcribe_audio(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        content_type: str,
+        language: str = "pt",
+        model: str = "whisper-large-v3",
+    ) -> dict:
+        """Transcreve áudio via Whisper (OpenAI-compatible /v1/audio/transcriptions).
+
+        Usa `verbose_json` para obter segmentos com timestamps. NÃO reutiliza
+        `self.client` porque este tem header fixo `Content-Type: application/json`,
+        o que quebraria o boundary do multipart — abre um client dedicado só com
+        o Authorization.
+        """
+        data = {
+            "model": model,
+            "language": language,
+            "response_format": "verbose_json",
+            "timestamp_granularities[]": "segment",
+        }
+        # A VPN corporativa às vezes derruba o primeiro connect (client novo, não
+        # fica "quente" como o self.client persistente). Retenta em ConnectError.
+        last_exc: Exception | None = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(
+                    base_url=settings.CCABR_BASE_URL,
+                    headers={"Authorization": f"Bearer {settings.CCABR_API_KEY}"},
+                    timeout=300.0,
+                    verify=False,
+                ) as client:
+                    response = await client.post(
+                        "/v1/audio/transcriptions",
+                        files={"file": (filename, file_bytes, content_type)},
+                        data=data,
+                    )
+                response.raise_for_status()
+                return response.json()
+            except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+                last_exc = exc
+                if attempt < 2:
+                    await asyncio.sleep(0.5 * (attempt + 1))
+        raise last_exc  # type: ignore[misc]
 
     async def embed(self, text: str, model: str = "text-embedding") -> list[float]:
         response = await self.client.post(

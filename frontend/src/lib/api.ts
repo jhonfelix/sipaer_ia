@@ -553,6 +553,113 @@ export const chat = {
   },
 };
 
+// ── Transcrição de áudio (Whisper + análise LLM) ──────────────────────────────
+
+export type SpeakerRole =
+  | "Investigador" | "Piloto" | "Copiloto" | "Testemunha"
+  | "Controlador" | "Mecânico" | "Indeterminado";
+
+export type StressLevel = "baixo" | "medio" | "alto";
+
+export interface TranscriptSpeaker {
+  id: string;
+  role: SpeakerRole;
+  confidence: number;
+  reason: string;
+}
+
+export interface TranscriptTurn {
+  start: number;
+  end: number;
+  speaker: string;
+  role: SpeakerRole;
+  text: string;
+}
+
+export interface TranscriptKeyFact {
+  time: string;
+  fact: string;
+}
+
+export interface TranscriptTerm {
+  term: string;
+  note: string;
+}
+
+export interface TranscriptStressMarker {
+  start: number;
+  end: number;
+  level: StressLevel;
+  reason: string;
+}
+
+export interface TranscriptAnalysis {
+  speakers: TranscriptSpeaker[];
+  turns: TranscriptTurn[];
+  summary: string;
+  keyFacts: TranscriptKeyFact[];
+  terminology: TranscriptTerm[];
+  stress: TranscriptStressMarker[];
+}
+
+export interface TranscriptionResult {
+  text: string;
+  language: string;
+  duration: number;
+  analysis: TranscriptAnalysis;
+}
+
+interface RawTranscriptAnalysis {
+  speakers: TranscriptSpeaker[];
+  turns: TranscriptTurn[];
+  summary: string;
+  key_facts: TranscriptKeyFact[];
+  terminology: TranscriptTerm[];
+  stress: TranscriptStressMarker[];
+}
+
+interface RawTranscription {
+  text: string;
+  language: string;
+  duration: number;
+  analysis: RawTranscriptAnalysis;
+}
+
+function mapTranscription(raw: RawTranscription): TranscriptionResult {
+  return {
+    text: raw.text,
+    language: raw.language,
+    duration: raw.duration,
+    analysis: {
+      speakers: raw.analysis?.speakers ?? [],
+      turns: raw.analysis?.turns ?? [],
+      summary: raw.analysis?.summary ?? "",
+      keyFacts: raw.analysis?.key_facts ?? [],
+      terminology: raw.analysis?.terminology ?? [],
+      stress: raw.analysis?.stress ?? [],
+    },
+  };
+}
+
+export const transcription = {
+  async analyze(file: File): Promise<TranscriptionResult> {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch(`${BASE}/transcription`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? "Erro na transcrição");
+    }
+    return mapTranscription(data as RawTranscription);
+  },
+};
+
 // ── Projetos ──────────────────────────────────────────────────────────────────
 
 interface RawProject {

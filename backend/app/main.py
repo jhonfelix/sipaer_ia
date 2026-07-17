@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger("app").setLevel(logging.INFO)
 
 from app.config import settings
-from app.routers import auth, chat, knowledge, projects, reports, upload
+from app.routers import auth, chat, knowledge, projects, reports, transcription, upload
 from app.services.llm_service import llm_service
 from app.services.vector_service import vector_service
 from app.services.cache_service import cache_service
@@ -45,6 +45,7 @@ app.include_router(auth.router)
 app.include_router(reports.router)
 app.include_router(chat.router)
 app.include_router(upload.router)
+app.include_router(transcription.router)
 app.include_router(knowledge.router)
 app.include_router(projects.router)
 
