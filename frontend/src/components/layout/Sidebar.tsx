@@ -17,9 +17,9 @@ import { useState } from "react";
 const navItems = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Início",
     icon: LayoutDashboard,
-    href: "/dashboard",
+    href: "/chat",
     exact: true,
   },
   {

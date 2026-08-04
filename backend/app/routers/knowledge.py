@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,11 +9,21 @@ from app.database import get_db
 from app.middleware.auth import get_current_user
 from app.models.knowledge import KnowledgeDocument
 from app.models.user import User
-from app.schemas.knowledge import KnowledgeDocumentResponse, KnowledgeTextCreate
+from app.schemas.knowledge import (
+    KnowledgeDocumentResponse,
+    KnowledgeTextCreate,
+    WebDiscoverRequest,
+    WebDiscoverResponse,
+    WebImportRequest,
+)
 from app.services.ingestion_service import (
+    discover_links,
     extract_text_from_docx,
+    extract_text_from_html,
     extract_text_from_pdf,
+    fetch_url,
     ingest_document,
+    ingest_web_page,
 )
 from app.services.vector_service import vector_service
 
@@ -21,7 +33,13 @@ UPLOAD_TYPES = {
     "application/pdf",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "text/plain",
+    "text/markdown",
+    "text/x-markdown",
 }
+
+# Navegadores frequentemente não reconhecem o MIME type de .md/.markdown
+# (mandam "" ou "application/octet-stream"), então validamos também pela extensão.
+ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".markdown"}
 
 ALLOWED_ROLES = {"admin", "manager"}
 VALID_COLLECTIONS = set(KNOWLEDGE_COLLECTIONS.keys())
@@ -37,6 +55,12 @@ def require_manager(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+def _is_allowed_upload(file: UploadFile) -> bool:
+    if file.content_type in UPLOAD_TYPES:
+        return True
+    return Path(file.filename or "").suffix.lower() in ALLOWED_EXTENSIONS
+
+
 def _validate_collection(collection: str) -> str:
     if collection not in VALID_COLLECTIONS:
         raise HTTPException(
@@ -47,10 +71,15 @@ def _validate_collection(collection: str) -> str:
 
 
 async def _extract_text(file: UploadFile, content: bytes) -> str:
+    ext = Path(file.filename or "").suffix.lower()
     try:
-        if file.content_type == "application/pdf":
+        if file.content_type == "application/pdf" or ext == ".pdf":
             return extract_text_from_pdf(content)
-        elif file.content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        elif (
+            file.content_type
+            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            or ext == ".docx"
+        ):
             return extract_text_from_docx(content)
         else:
             return content.decode("utf-8", errors="ignore")
@@ -94,6 +123,64 @@ async def add_text(
     return doc
 
 
+@router.post("/web/discover", response_model=WebDiscoverResponse)
+async def discover_web_links(
+    body: WebDiscoverRequest,
+    _: User = Depends(require_manager),
+):
+    try:
+        html = await fetch_url(body.url)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422, detail=f"Não foi possível acessar a URL: {exc}"
+        )
+
+    title, _ = extract_text_from_html(html)
+    links = discover_links(html, body.url)
+
+    return WebDiscoverResponse(source_url=body.url, title=title or body.url, links=links)
+
+
+@router.post("/web/import", response_model=list[KnowledgeDocumentResponse], status_code=201)
+async def import_web_pages(
+    body: WebImportRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_manager),
+    db: AsyncSession = Depends(get_db),
+):
+    _validate_collection(body.collection)
+
+    # O fetch/parse de cada página acontece em background (ingest_web_page), não aqui —
+    # com dezenas/centenas de URLs, buscá-las antes de responder travaria a requisição.
+    created: list[KnowledgeDocument] = []
+
+    for url in body.urls:
+        doc_source = (body.source or "").strip() or url
+
+        doc = KnowledgeDocument(
+            title=url,
+            source=doc_source,
+            collection=body.collection,
+            status="pending",
+            original_name=url,
+            size_bytes=0,
+            added_by=current_user.id,
+        )
+        db.add(doc)
+        await db.flush()  # gera o ID sem fechar a transação
+
+        background_tasks.add_task(
+            ingest_web_page, doc.id, url, doc_source, body.collection
+        )
+        created.append(doc)
+
+    await db.commit()
+    for doc in created:
+        await db.refresh(doc)
+
+    return created
+
+
 @router.post("/upload", response_model=KnowledgeDocumentResponse, status_code=201)
 async def add_upload(
     file: UploadFile,
@@ -106,10 +193,10 @@ async def add_upload(
 ):
     _validate_collection(collection)
 
-    if file.content_type not in UPLOAD_TYPES:
+    if not _is_allowed_upload(file):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Tipo não suportado. Use PDF, DOCX ou TXT.",
+            detail="Tipo não suportado. Use PDF, DOCX, TXT ou MD.",
         )
 
     content = await file.read()
@@ -163,7 +250,7 @@ async def add_upload_batch(
     created: list[KnowledgeDocument] = []
 
     for file in files:
-        if file.content_type not in UPLOAD_TYPES:
+        if not _is_allowed_upload(file):
             continue  # pula silenciosamente tipos inválidos no lote
 
         content = await file.read()
@@ -201,7 +288,7 @@ async def add_upload_batch(
     if not created:
         raise HTTPException(
             status_code=422,
-            detail="Nenhum arquivo válido encontrado no lote. Verifique os tipos (PDF, DOCX, TXT) e tamanhos (máx. 50 MB).",
+            detail="Nenhum arquivo válido encontrado no lote. Verifique os tipos (PDF, DOCX, TXT, MD) e tamanhos (máx. 50 MB).",
         )
 
     await db.commit()

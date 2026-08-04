@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Plus,
   FileText,
@@ -16,8 +18,19 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  LayoutDashboard,
+  AudioLines,
+  BookOpen,
 } from "lucide-react";
 import { ProjectsSection } from "@/components/project";
+
+const MODULES = [
+  { id: "chat", label: "Início", icon: LayoutDashboard, href: "/chat", exact: true },
+  { id: "reports", label: "Gerenciar Relatórios", icon: FileText, href: "/reports" },
+  { id: "labdata", label: "Análise Áudio & Espectro", icon: AudioLines, href: "/labdata" },
+  { id: "da", label: "Gestão Administrativa", icon: Building2, href: "/da" },
+  { id: "knowledge", label: "Base de Conhecimento", icon: BookOpen, href: "/knowledge" },
+];
 
 export const CATEGORIES = [
   { id: "all", label: "Todos", icon: LayoutGrid },
@@ -77,6 +90,12 @@ export function ConversationSidebar({
   onNew,
 }: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const pathname = usePathname();
+
+  function isModuleActive(m: (typeof MODULES)[0]) {
+    if (m.exact) return pathname === m.href;
+    return pathname === m.href || pathname?.startsWith(m.href + "/");
+  }
 
   const filtered =
     activeCategory === "all"
@@ -103,6 +122,40 @@ export function ConversationSidebar({
           <Plus className="w-3.5 h-3.5 shrink-0" />
           {!collapsed && <span className="text-[13px]">Nova conversa</span>}
         </button>
+      </div>
+
+      <div className={`h-px bg-border/40 mx-3 my-1.5 ${collapsed ? "mx-1.5" : ""}`} />
+
+      {/* Módulos */}
+      <div className={`px-2 pb-0.5 ${collapsed ? "px-1.5" : ""}`}>
+        {!collapsed && (
+          <p className="text-muted-foreground/40 text-[9px] uppercase tracking-[0.12em] font-semibold px-1.5 mb-1.5">
+            Módulos
+          </p>
+        )}
+        <div className="space-y-0.5">
+          {MODULES.map((m) => {
+            const Icon = m.icon;
+            const active = isModuleActive(m);
+            return (
+              <Link
+                key={m.id}
+                href={m.href}
+                title={collapsed ? m.label : undefined}
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+                  collapsed ? "justify-center" : ""
+                } ${
+                  active
+                    ? "bg-blue-600/14 text-blue-600 dark:text-blue-300 border border-blue-500/18"
+                    : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/30 border border-transparent"
+                }`}
+              >
+                <Icon className="w-3 h-3 shrink-0" />
+                {!collapsed && <span className="truncate">{m.label}</span>}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       {!collapsed && (

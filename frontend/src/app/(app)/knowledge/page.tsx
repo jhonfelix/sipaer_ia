@@ -7,10 +7,12 @@ import {
   CheckCircle2,
   FileText,
   FileUp,
+  Globe,
   Layers,
   Loader2,
   Plus,
   RefreshCw,
+  Search,
   Trash2,
   Type,
   Upload,
@@ -22,7 +24,7 @@ import {
   COLLECTION_OPTIONS,
   knowledge as knowledgeApi,
 } from "@/lib/api";
-import type { KnowledgeDocument } from "@/lib/api";
+import type { KnowledgeDocument, WebDiscoverResult } from "@/lib/api";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -97,7 +99,7 @@ function AddDocumentModal({
   onClose: () => void;
   onAdded: (docs: KnowledgeDocument[]) => void;
 }) {
-  const [tab, setTab] = useState<"text" | "file" | "batch">("file");
+  const [tab, setTab] = useState<"text" | "file" | "batch" | "web">("file");
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
   const [collection, setCollection] = useState<string>(COLLECTION_OPTIONS[0].value);
@@ -110,20 +112,68 @@ function AddDocumentModal({
   const batchRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
+  const [webUrl, setWebUrl] = useState("");
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverResult, setDiscoverResult] = useState<WebDiscoverResult | null>(null);
+  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+  const [onlySameDomain, setOnlySameDomain] = useState(false);
+
   const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
   const estimatedChunks = wordCount ? Math.ceil(wordCount / 400) : 0;
+
+  const visibleLinks = discoverResult
+    ? discoverResult.links.filter((l) => !onlySameDomain || l.sameDomain)
+    : [];
 
   const canSubmit =
     tab === "text"
       ? title.trim() && source.trim() && content.trim()
       : tab === "file"
       ? title.trim() && source.trim() && file !== null
-      : batchFiles.length > 0;
+      : tab === "batch"
+      ? batchFiles.length > 0
+      : selectedUrls.size > 0;
+
+  function toggleUrl(url: string) {
+    setSelectedUrls((prev) => {
+      const next = new Set(prev);
+      if (next.has(url)) next.delete(url);
+      else next.add(url);
+      return next;
+    });
+  }
+
+  async function handleDiscover() {
+    const url = webUrl.trim();
+    if (!url || discovering) return;
+    setDiscovering(true);
+    setError("");
+    setDiscoverResult(null);
+    setSelectedUrls(new Set());
+    try {
+      const result = await knowledgeApi.discoverLinks(url);
+      setDiscoverResult(result);
+      setSelectedUrls(new Set([result.sourceUrl]));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erro ao buscar links da página.");
+    } finally {
+      setDiscovering(false);
+    }
+  }
 
   function addBatchFiles(incoming: FileList | File[]) {
-    const arr = Array.from(incoming).filter((f) =>
-      ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"].includes(f.type)
-    );
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+      "text/markdown",
+    ];
+    const allowedExt = [".pdf", ".docx", ".txt", ".md", ".markdown"];
+    const arr = Array.from(incoming).filter((f) => {
+      if (allowedTypes.includes(f.type)) return true;
+      const ext = f.name.slice(f.name.lastIndexOf(".")).toLowerCase();
+      return allowedExt.includes(ext);
+    });
     setBatchFiles((prev) => {
       const names = new Set(prev.map((f) => f.name + f.size));
       return [...prev, ...arr.filter((f) => !names.has(f.name + f.size))];
@@ -146,8 +196,14 @@ function AddDocumentModal({
       } else if (tab === "file") {
         const doc = await knowledgeApi.addFile(file!, { title, source, collection });
         onAdded([doc]);
-      } else {
+      } else if (tab === "batch") {
         const docs = await knowledgeApi.addFileBatch(batchFiles, { collection, source: source || undefined });
+        onAdded(docs);
+      } else {
+        const docs = await knowledgeApi.importUrls(Array.from(selectedUrls), {
+          collection,
+          source: source || undefined,
+        });
         onAdded(docs);
       }
     } catch (e: unknown) {
@@ -185,6 +241,7 @@ function AddDocumentModal({
               [
                 { id: "file" as const, label: "Arquivo", Icon: FileUp },
                 { id: "batch" as const, label: "Lote", Icon: Upload },
+                { id: "web" as const, label: "Site", Icon: Globe },
                 { id: "text" as const, label: "Texto", Icon: Type },
               ] as const
             ).map(({ id, label, Icon }) => (
@@ -222,7 +279,7 @@ function AddDocumentModal({
           </div>
 
           {/* Single file / Text: common fields */}
-          {tab !== "batch" && (
+          {tab !== "batch" && tab !== "web" && (
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
@@ -259,6 +316,21 @@ function AddDocumentModal({
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
                 placeholder="Ex: CENIPA 2024 — deixe em branco para usar o nome do arquivo"
+                className={inputCls}
+              />
+            </div>
+          )}
+
+          {/* Web: optional source prefix */}
+          {tab === "web" && (
+            <div>
+              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                Fonte (opcional — aplicada a todas as páginas selecionadas)
+              </label>
+              <input
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                placeholder="Ex: Site CENIPA — deixe em branco para usar a URL de cada página"
                 className={inputCls}
               />
             </div>
@@ -315,14 +387,14 @@ function AddDocumentModal({
                   </div>
                   <div className="text-center">
                     <p className="text-muted-foreground/70 text-sm font-medium">Selecionar arquivo</p>
-                    <p className="text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · máx. 300 MB</p>
+                    <p className="text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · MD · máx. 300 MB</p>
                   </div>
                 </button>
               )}
               <input
                 ref={fileRef}
                 type="file"
-                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -355,7 +427,7 @@ function AddDocumentModal({
                     Arraste arquivos ou clique para selecionar
                   </p>
                   <p className="text-muted-foreground/40 text-xs mt-0.5">
-                    PDF · DOCX · TXT · máx. 300 MB por arquivo · até 50 arquivos
+                    PDF · DOCX · TXT · MD · máx. 300 MB por arquivo · até 50 arquivos
                   </p>
                 </div>
               </div>
@@ -363,7 +435,7 @@ function AddDocumentModal({
                 ref={batchRef}
                 type="file"
                 multiple
-                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                accept=".pdf,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files) addBatchFiles(e.target.files);
@@ -398,6 +470,135 @@ function AddDocumentModal({
             </div>
           )}
 
+          {tab === "web" && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                  URL da página *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={webUrl}
+                    onChange={(e) => setWebUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleDiscover();
+                      }
+                    }}
+                    placeholder="Ex: https://www.cenipa.gov.br"
+                    className={inputCls}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleDiscover}
+                    disabled={!webUrl.trim() || discovering}
+                    className="flex items-center gap-2 px-4 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border disabled:opacity-40 disabled:cursor-not-allowed text-foreground/80 text-sm font-medium transition-all shrink-0"
+                  >
+                    {discovering ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Search className="w-3.5 h-3.5" />
+                    )}
+                    Buscar links
+                  </button>
+                </div>
+                <p className="text-muted-foreground/40 text-xs mt-1">
+                  A página informada busca todos os links encontrados nela para você escolher quais indexar.
+                </p>
+              </div>
+
+              {discoverResult && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="text-xs text-muted-foreground/60 font-medium">
+                      {visibleLinks.length} link{visibleLinks.length !== 1 ? "s" : ""} encontrado{visibleLinks.length !== 1 ? "s" : ""}
+                      {" · "}
+                      {selectedUrls.size} selecionada{selectedUrls.size !== 1 ? "s" : ""}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground/60 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={onlySameDomain}
+                          onChange={(e) => setOnlySameDomain(e.target.checked)}
+                          className="accent-blue-600"
+                        />
+                        Só mesmo domínio
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUrls(new Set(visibleLinks.map((l) => l.url)))}
+                        className="text-xs text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUrls(new Set())}
+                        className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors"
+                      >
+                        Limpar
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto rounded-xl border border-border divide-y divide-border/40">
+                    {/* Own page, listed first */}
+                    <label className="flex items-start gap-2.5 px-3 py-2.5 bg-blue-500/[0.04] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedUrls.has(discoverResult.sourceUrl)}
+                        onChange={() => toggleUrl(discoverResult.sourceUrl)}
+                        className="mt-0.5 accent-blue-600 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-foreground/90 text-xs font-medium truncate">
+                          {discoverResult.title || discoverResult.sourceUrl}
+                          <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 align-middle">
+                            página informada
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground/50 text-[11px] truncate mt-0.5">
+                          {discoverResult.sourceUrl}
+                        </p>
+                      </div>
+                    </label>
+
+                    {visibleLinks.map((link) => (
+                      <label
+                        key={link.url}
+                        className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/20 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedUrls.has(link.url)}
+                          onChange={() => toggleUrl(link.url)}
+                          className="mt-0.5 accent-blue-600 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-foreground/80 text-xs font-medium truncate">
+                            {link.text}
+                            {link.sameDomain && (
+                              <span className="ml-1.5 text-[10px] text-muted-foreground/40">· mesmo domínio</span>
+                            )}
+                          </p>
+                          <p className="text-muted-foreground/50 text-[11px] truncate mt-0.5">{link.url}</p>
+                        </div>
+                      </label>
+                    ))}
+
+                    {visibleLinks.length === 0 && (
+                      <p className="text-muted-foreground/40 text-xs text-center py-4">
+                        Nenhum link encontrado com esse filtro.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 text-xs">
@@ -412,6 +613,8 @@ function AddDocumentModal({
           <p className="text-muted-foreground/40 text-xs">
             {tab === "batch" && batchFiles.length > 0
               ? `${batchFiles.length} arquivo${batchFiles.length !== 1 ? "s" : ""} · todos na coleção "${COLLECTION_LABELS[collection]}"`
+              : tab === "web" && selectedUrls.size > 0
+              ? `${selectedUrls.size} página${selectedUrls.size !== 1 ? "s" : ""} · todas na coleção "${COLLECTION_LABELS[collection]}"`
               : `Coleção: ${COLLECTION_LABELS[collection]}`}
           </p>
           <div className="flex gap-3">
@@ -435,6 +638,8 @@ function AddDocumentModal({
                 ? "Processando..."
                 : tab === "batch"
                 ? `Indexar ${batchFiles.length || ""} arquivo${batchFiles.length !== 1 ? "s" : ""}`
+                : tab === "web"
+                ? `Indexar ${selectedUrls.size || ""} página${selectedUrls.size !== 1 ? "s" : ""}`
                 : "Indexar documento"}
             </button>
           </div>

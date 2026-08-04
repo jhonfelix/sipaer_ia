@@ -388,6 +388,30 @@ export interface KnowledgeDocument {
   updatedAt: Date;
 }
 
+export interface WebLink {
+  url: string;
+  text: string;
+  sameDomain: boolean;
+}
+
+export interface WebDiscoverResult {
+  sourceUrl: string;
+  title: string;
+  links: WebLink[];
+}
+
+interface RawWebLink {
+  url: string;
+  text: string;
+  same_domain: boolean;
+}
+
+interface RawWebDiscoverResponse {
+  source_url: string;
+  title: string;
+  links: RawWebLink[];
+}
+
 function mapKnowledgeDocument(raw: RawKnowledgeDocument): KnowledgeDocument {
   return {
     id: raw.id,
@@ -472,6 +496,29 @@ export const knowledge = {
       throw new ApiError(res.status, data.detail ?? "Erro no upload em lote");
     }
     return (data as RawKnowledgeDocument[]).map(mapKnowledgeDocument);
+  },
+
+  async discoverLinks(url: string): Promise<WebDiscoverResult> {
+    const raw = await request<RawWebDiscoverResponse>("/knowledge/web/discover", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    });
+    return {
+      sourceUrl: raw.source_url,
+      title: raw.title,
+      links: raw.links.map((l) => ({ url: l.url, text: l.text, sameDomain: l.same_domain })),
+    };
+  },
+
+  async importUrls(
+    urls: string[],
+    meta: { collection: string; source?: string }
+  ): Promise<KnowledgeDocument[]> {
+    const raw = await request<RawKnowledgeDocument[]>("/knowledge/web/import", {
+      method: "POST",
+      body: JSON.stringify({ urls, collection: meta.collection, source: meta.source }),
+    });
+    return raw.map(mapKnowledgeDocument);
   },
 
   async remove(id: number): Promise<void> {

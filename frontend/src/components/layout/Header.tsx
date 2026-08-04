@@ -30,7 +30,7 @@ interface HeaderProps {
   user: User;
 }
 
-const SIDEBAR_ROUTES = ["/dashboard"];
+const SIDEBAR_ROUTES = ["/chat"];
 
 export function Header({ user }: HeaderProps) {
   const router = useRouter();
@@ -71,7 +71,7 @@ export function Header({ user }: HeaderProps) {
 
         {showHome && (
           <Link
-            href="/dashboard"
+            href="/chat"
             className="flex items-center gap-1.5 ml-3 px-3 py-1.5 rounded-lg bg-white/[0.07] hover:bg-white/[0.12] border border-white/[0.1] text-white/60 hover:text-white text-xs font-medium transition-all"
           >
             <House className="w-3.5 h-3.5" />

@@ -122,7 +122,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 underline underline-offset-2 decoration-blue-400/40 transition-colors"
+              className="text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline underline-offset-2 decoration-blue-700/40 dark:decoration-blue-400/40 transition-colors"
             >
               {children}
             </a>

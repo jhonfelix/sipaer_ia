@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/dashboard");
+      router.push("/chat");
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Erro ao realizar login. Tente novamente."

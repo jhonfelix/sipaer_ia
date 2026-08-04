@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Header, Sidebar } from "@/components/layout";
+import { useRouter } from "next/navigation";
+import { Header } from "@/components/layout";
 import { useAuth } from "@/components/providers/AuthProvider";
-
-const SIDEBAR_ROUTES = ["/dashboard"];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,15 +25,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  const showSidebar = SIDEBAR_ROUTES.some((r) => pathname === r || pathname?.startsWith(r + "/"));
-
   return (
     <div className="h-screen max-h-screen flex flex-col overflow-hidden">
       <Header user={user} />
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {showSidebar && <Sidebar />}
-        <main className="flex-1 flex min-h-0 overflow-hidden">{children}</main>
-      </div>
+      <main className="flex-1 flex min-h-0 overflow-hidden">{children}</main>
     </div>
   );
 }
