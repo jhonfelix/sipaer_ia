@@ -97,6 +97,16 @@ interface RawSection {
   subsections: RawSubsection[];
 }
 
+interface RawGenerationSource {
+  docId: number | null;
+  title: string;
+  source: string | null;
+  chunkIndex: number | null;
+  relevanceScore: number | null;
+  vectorScore: number | null;
+  excerpt: string;
+}
+
 interface RawReport {
   id: number;
   status: string;
@@ -105,6 +115,7 @@ interface RawReport {
   created_by: number;
   last_edited_by: number;
   generation_status: string | null;
+  generation_sources: RawGenerationSource[] | null;
   created_at: string;
   updated_at: string;
   sections: RawSection[];
@@ -183,6 +194,7 @@ function mapReport(raw: RawReport): Report {
     status: raw.status as Report["status"],
     version: raw.version,
     generationStatus: (raw.generation_status ?? null) as Report["generationStatus"],
+    generationSources: raw.generation_sources ?? null,
     sections: raw.sections.map(mapSection),
     createdAt: new Date(raw.created_at),
     updatedAt: new Date(raw.updated_at),

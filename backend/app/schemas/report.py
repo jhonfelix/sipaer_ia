@@ -56,6 +56,7 @@ class ReportResponse(BaseModel):
     created_by: int
     last_edited_by: int
     generation_status: str | None = None
+    generation_sources: list[dict] | None = None
     created_at: datetime
     updated_at: datetime
     sections: list[SectionResponse] = []

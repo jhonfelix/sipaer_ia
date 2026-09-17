@@ -2,7 +2,10 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Loader2, Bot, Sparkles, CheckCircle2, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle, ArrowLeft, Loader2, Bot, Sparkles, CheckCircle2, RefreshCw,
+  Library, FileText, X,
+} from "lucide-react";
 import {
   ReportSidebar,
   ReportEditor,
@@ -10,7 +13,7 @@ import {
 } from "@/components/report";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { reports as reportsApi, chat as chatApi } from "@/lib/api";
-import type { AIMessage, Report } from "@/types/report";
+import type { AIMessage, Report, GenerationSource } from "@/types/report";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -188,6 +191,79 @@ function ErrorState({ message, onBack }: { message: string; onBack: () => void }
   );
 }
 
+function formatScore(score: number | null): string {
+  if (score === null || score === undefined) return "";
+  const pct = score <= 1 ? score * 100 : score;
+  return `${pct.toFixed(0)}%`;
+}
+
+function SourcesList({ sources }: { sources: GenerationSource[] }) {
+  return (
+    <div className="space-y-2">
+      {sources.map((s, i) => (
+        <div
+          key={`${s.docId ?? "src"}-${s.chunkIndex ?? i}`}
+          className="p-3 rounded-xl border border-border/60 bg-muted/10"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+              <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground/50 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground/85 truncate">{s.title}</p>
+                {s.source && s.source !== s.title && (
+                  <p className="text-xs text-muted-foreground/50 truncate">{s.source}</p>
+                )}
+              </div>
+            </div>
+            {(s.relevanceScore ?? s.vectorScore) != null && (
+              <span className="shrink-0 text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                {formatScore(s.relevanceScore ?? s.vectorScore)} similar
+              </span>
+            )}
+          </div>
+          {s.excerpt && (
+            <p className="text-xs text-muted-foreground/60 mt-2 leading-relaxed line-clamp-3">
+              {s.excerpt}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SourcesDialog({ sources, onClose }: { sources: GenerationSource[]; onClose: () => void }) {
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+        <div className="py-2 px-1 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                <Library className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Fontes consultadas pela IA</p>
+                <p className="text-muted-foreground/60 text-xs">
+                  Relatórios similares usados como referência para gerar este documento.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-muted-foreground/50 hover:text-foreground transition-colors"
+              aria-label="Fechar"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <SourcesList sources={sources} />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function GenerationProgressModal({ report }: { report: Report }) {
   const subs = useMemo(
     () =>
@@ -275,6 +351,15 @@ function GenerationProgressModal({ report }: { report: Report }) {
               );
             })}
           </div>
+
+          {!!report.generationSources?.length && (
+            <div className="space-y-2 pt-2 border-t border-border/50">
+              <p className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">
+                Fontes consultadas
+              </p>
+              <SourcesList sources={report.generationSources} />
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -299,6 +384,7 @@ export default function ReportEditPage() {
   const [aiModel, setAiModel] = useState("gpt-oss-120b");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationFailed, setGenerationFailed] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const editorScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -483,6 +569,21 @@ export default function ReportEditPage() {
           <Bot className="w-6 h-6" />
           <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-background" />
         </button>
+      )}
+
+      {/* Botão flutuante — fontes usadas pela IA na geração */}
+      {!!report.generationSources?.length && (
+        <button
+          onClick={() => setSourcesOpen(true)}
+          className="fixed bottom-24 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-card border border-border shadow-lg hover:border-emerald-500/40 hover:text-emerald-400 transition-all hover:scale-105 active:scale-95"
+          title="Ver fontes consultadas pela IA"
+          aria-label="Ver fontes consultadas pela IA"
+        >
+          <Library className="w-5 h-5" />
+        </button>
+      )}
+      {sourcesOpen && report.generationSources && (
+        <SourcesDialog sources={report.generationSources} onClose={() => setSourcesOpen(false)} />
       )}
 
       {/* Modal de progresso da geração automática */}

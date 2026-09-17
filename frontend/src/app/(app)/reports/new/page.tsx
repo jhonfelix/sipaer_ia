@@ -23,6 +23,10 @@ import {
   Users,
   MapPin,
   Calendar,
+  CloudSun,
+  AlertTriangle,
+  ScrollText,
+  Wand2,
 } from "lucide-react";
 import { reports as reportsApi, users as usersApi, ApiError } from "@/lib/api";
 import type { User } from "@/types/report";
@@ -55,6 +59,11 @@ interface OccFormData {
   invUnit: string;
   municipality: string;
   uf: string;
+  flightPhase: string;
+  weatherCondition: string;
+  weatherDescription: string;
+  obstacleType: string;
+  obstacleDescription: string;
   // Aeronave
   acRegistration: string;
   acManufacturer: string;
@@ -74,16 +83,63 @@ interface OccFormData {
   thirdFatal: string;
   thirdSerious: string;
   thirdMinor: string;
+  // Histórico
+  narrative: string;
 }
 
 const EMPTY_FORM: OccFormData = {
   number: "", date: "", time: "", classification: "", occurrenceType: "", aerodrome: "",
   coordLat: "", coordLon: "", invUnit: "", municipality: "", uf: "",
+  flightPhase: "", weatherCondition: "", weatherDescription: "",
+  obstacleType: "", obstacleDescription: "",
   acRegistration: "", acManufacturer: "", acModel: "", acOperator: "",
   acOperation: "", acDamage: "",
   crewFatal: "", crewSerious: "", crewMinor: "", crewNone: "",
   paxFatal: "", paxSerious: "", paxMinor: "", paxNone: "",
   thirdFatal: "", thirdSerious: "", thirdMinor: "",
+  narrative: "",
+};
+
+// Modelo de ocorrência para preencher o formulário rapidamente durante testes.
+const SAMPLE_FORM: OccFormData = {
+  number: "A001/2026",
+  date: "2026-09-16",
+  time: "14:00",
+  classification: "ACIDENTE",
+  occurrenceType: "LOC-I",
+  aerodrome: "FAZENDA LETÍCIA",
+  coordLat: "17°28'45\"S",
+  coordLon: "052°44'58\"W",
+  invUnit: "SERIPA VI",
+  municipality: "Mineiros",
+  uf: "GO",
+  flightPhase: "Manobra",
+  weatherCondition: "Não Determinada",
+  weatherDescription:
+    "A Fazenda Letícia, no município de Mineiros, GO, não dispunha de estação meteorológica, " +
+    "nem de estações próximas. Assim, a Comissão de Investigação utilizou, como referência, os " +
+    "dados de temperatura da estação (A026) de Mineiros, GO, do Instituto Nacional de " +
+    "Meteorologia (INMET), distante 16 km do local da ocorrência, bem como das informações " +
+    "disponibilizadas pelo site METEOBLUE.",
+  obstacleType: "Árvores/Vegetação",
+  obstacleDescription: "colisão na copa da árvore",
+  acRegistration: "PR-AAM",
+  acManufacturer: "CESSNA AIRCRAFT",
+  acModel: "A188B",
+  acOperator: "Savana Aero Agrícola Ltda.",
+  acOperation: "AEROAGRICOLA",
+  acDamage: "SUBSTANCIAL",
+  crewFatal: "1", crewSerious: "", crewMinor: "", crewNone: "",
+  paxFatal: "", paxSerious: "", paxMinor: "", paxNone: "",
+  thirdFatal: "", thirdSerious: "", thirdMinor: "",
+  narrative:
+    "A aeronave decolou da área de pouso para uso aeroagrícola da Fazenda Letícia, no município " +
+    "de Mineiros, GO, por volta das 10h15min (UTC), a fim de realizar um voo aeroagrícola, com um " +
+    "piloto a bordo.\n\n" +
+    "Durante uma curva de reposicionamento, ocorreu, possivelmente, a perda de controle, a colisão " +
+    "contra a copa de árvores e, posteriormente, contra o solo.\n\n" +
+    "A aeronave teve danos substanciais.\n\n" +
+    "O piloto sofreu lesões fatais.",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -568,6 +624,9 @@ function buildOccurrenceHTML(form: OccFormData, investigator: string): string {
   const coords = [form.coordLat, form.coordLon].filter(Boolean).join("  ");
   const municipioUF = [form.municipality, form.uf].filter(Boolean).join("/");
 
+  const obstacleValue = [form.obstacleType, form.obstacleDescription].filter(Boolean).join(" — ");
+  const weatherValue = [form.weatherCondition, form.weatherDescription].filter(Boolean).join(" — ");
+
   const occTable = `<table class="sipaer-table"><tbody>
 <tr><th class="sipaer-header" colspan="4">DADOS DA OCORRÊNCIA</th></tr>
 <tr>${td("DATA - HORA", datetimeStr)}${td("INVESTIGAÇÃO", form.invUnit)}</tr>
@@ -575,6 +634,8 @@ function buildOccurrenceHTML(form: OccFormData, investigator: string): string {
 <tr>${td("TIPO", occType ? `[${occType.value}] ${occType.label.split("—")[1]?.trim() ?? occType.value}` : "", 3)}</tr>
 <tr>${td("AERÓDROMO", form.aerodrome)}${td("MUNICÍPIO/UF", municipioUF)}</tr>
 <tr>${td("COORDENADAS", coords, 3)}</tr>
+<tr>${td("FASE DO VOO", form.flightPhase)}${td("CONDIÇÃO METEOROLÓGICA", weatherValue)}</tr>
+<tr>${td("OBSTÁCULOS", obstacleValue, 3)}</tr>
 <tr>${td("INVESTIGADOR ENCARREGADO", investigator, 3)}</tr>
 </tbody></table>`;
 
@@ -601,7 +662,11 @@ function buildOccurrenceHTML(form: OccFormData, investigator: string): string {
 ${personRows}
 </tbody></table>`;
 
-  return occTable + acTable + personsTable;
+  const narrativeBlock = form.narrative
+    ? `<p><strong>Histórico da Ocorrência (relato do investigador):</strong></p><p>${form.narrative.replace(/\n/g, "<br>")}</p>`
+    : "";
+
+  return occTable + acTable + personsTable + narrativeBlock;
 }
 
 function buildSections(type: DocType, scope: Scope, agro: boolean, form?: OccFormData, investigator?: string) {
@@ -705,6 +770,43 @@ const DAMAGE_OPTIONS = [
   { value: "LEVE", label: "Leve" },
   { value: "SUBSTANCIAL", label: "Substancial" },
   { value: "DESTRUÍDA", label: "Destruída" },
+];
+
+const FLIGHT_PHASE_OPTIONS = [
+  "Estacionado / Preparação para o voo",
+  "Táxi",
+  "Decolagem",
+  "Subida Inicial",
+  "Subida",
+  "Cruzeiro",
+  "Aplicação Agrícola (Voo Baixo)",
+  "Manobra",
+  "Descida",
+  "Aproximação",
+  "Arremetida",
+  "Pouso",
+  "Rolagem Após Pouso",
+  "Indeterminada",
+];
+
+const WEATHER_CONDITION_OPTIONS = [
+  "VMC — Condições Visuais",
+  "IMC — Condições por Instrumentos",
+  "Marginal / Em Deterioração",
+  "Não Determinada",
+];
+
+const OBSTACLE_TYPE_OPTIONS = [
+  "Nenhum",
+  "Fios/Cabos de Energia",
+  "Árvores/Vegetação",
+  "Edificações/Construções",
+  "Torres/Antenas",
+  "Cercas",
+  "Terreno Irregular/Aclive",
+  "Animais na Pista ou Área",
+  "Outra Aeronave",
+  "Outros",
 ];
 
 const OPERATION_OPTIONS = [
@@ -833,6 +935,8 @@ const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
 const selectCls =
   "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all";
+const textareaCls =
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all resize-y min-h-[110px] leading-relaxed";
 const labelCls = "block text-xs text-muted-foreground/60 font-medium mb-1.5";
 const sectionHeadCls =
   "flex items-center gap-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-widest mb-4 mt-6 first:mt-0";
@@ -889,6 +993,14 @@ export default function NewReportPage() {
               investigationUnit: form.invUnit || undefined,
               municipality: form.municipality || undefined,
               uf: form.uf || undefined,
+              flightPhase: form.flightPhase || undefined,
+              weather: (form.weatherCondition || form.weatherDescription)
+                ? { condition: form.weatherCondition || undefined, description: form.weatherDescription || undefined }
+                : undefined,
+              obstacle: (form.obstacleType || form.obstacleDescription)
+                ? { type: form.obstacleType || undefined, description: form.obstacleDescription || undefined }
+                : undefined,
+              narrative: form.narrative || undefined,
               aircraft: {
                 registration: form.acRegistration || undefined,
                 manufacturer: form.acManufacturer || undefined,
@@ -1189,9 +1301,20 @@ export default function NewReportPage() {
             ) : (
               /* ── Manual: formulário completo ── */
               <div>
-                <p className="text-muted-foreground text-sm font-medium mb-6">
-                  Preencha os dados da ocorrência manualmente.
-                </p>
+                <div className="flex items-center justify-between gap-3 mb-6">
+                  <p className="text-muted-foreground text-sm font-medium">
+                    Preencha os dados da ocorrência manualmente.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setForm(SAMPLE_FORM)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-500/30 bg-violet-500/[0.08] text-violet-400 hover:bg-violet-500/[0.15] text-xs font-medium transition-all shrink-0"
+                    title="Preenche todos os campos com um modelo de ocorrência para agilizar testes"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Modelo de Ocorrência
+                  </button>
+                </div>
 
                 {/* ── DADOS DA OCORRÊNCIA ── */}
                 <div className={sectionHeadCls}>
@@ -1338,6 +1461,81 @@ export default function NewReportPage() {
                         <option key={u} value={u}>{u}</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Fase do Voo</label>
+                    <select
+                      value={form.flightPhase}
+                      onChange={(e) => setField("flightPhase", e.target.value)}
+                      className={selectCls}
+                    >
+                      <option value="">Selecionar fase...</option>
+                      {FLIGHT_PHASE_OPTIONS.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* ── CONDIÇÕES METEOROLÓGICAS E OBSTÁCULOS ── */}
+                <div className={sectionHeadCls}>
+                  <CloudSun className="w-3.5 h-3.5" />
+                  Condições Meteorológicas e Obstáculos
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls}>Condição Meteorológica</label>
+                      <select
+                        value={form.weatherCondition}
+                        onChange={(e) => setField("weatherCondition", e.target.value)}
+                        className={selectCls}
+                      >
+                        <option value="">Selecionar...</option>
+                        {WEATHER_CONDITION_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Tipo de Obstáculo</label>
+                      <select
+                        value={form.obstacleType}
+                        onChange={(e) => setField("obstacleType", e.target.value)}
+                        className={selectCls}
+                      >
+                        <option value="">Selecionar...</option>
+                        {OBSTACLE_TYPE_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Descrição das Condições Meteorológicas</label>
+                    <textarea
+                      value={form.weatherDescription}
+                      onChange={(e) => setField("weatherDescription", e.target.value)}
+                      placeholder="Ex: vento 090/12kt, visibilidade 8km, teto 2500ft, sem fenômenos significativos..."
+                      className={`${textareaCls} min-h-[70px]`}
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>
+                      <AlertTriangle className="w-3 h-3 inline mr-1 -mt-0.5 text-muted-foreground/50" />
+                      Descrição do Obstáculo
+                    </label>
+                    <input
+                      type="text"
+                      value={form.obstacleDescription}
+                      onChange={(e) => setField("obstacleDescription", e.target.value)}
+                      placeholder="Detalhe o obstáculo envolvido, se houver"
+                      className={inputCls}
+                    />
                   </div>
                 </div>
 
@@ -1487,6 +1685,27 @@ export default function NewReportPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* ── HISTÓRICO DA OCORRÊNCIA ── */}
+                <div className={sectionHeadCls}>
+                  <ScrollText className="w-3.5 h-3.5" />
+                  Histórico da Ocorrência
+                </div>
+                <div>
+                  <label className={labelCls}>
+                    Narrativa Livre <span className="text-red-400">*</span>
+                  </label>
+                  <textarea
+                    value={form.narrative}
+                    onChange={(e) => setField("narrative", e.target.value)}
+                    placeholder="Descreva, em texto livre, como a ocorrência se desenrolou: contexto da operação, sequência dos fatos, ações da tripulação e o resultado. Este relato é a base para a análise e para a geração automática das seções do relatório."
+                    className={textareaCls}
+                    rows={6}
+                  />
+                  <p className="text-muted-foreground/50 text-xs mt-1.5">
+                    Informação decisiva para a geração assistida por IA das demais seções do relatório.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -1553,6 +1772,28 @@ export default function NewReportPage() {
                   <span className="text-foreground/75 text-sm font-mono">
                     {[form.acRegistration, form.acModel].filter(Boolean).join(" · ")}
                   </span>
+                </div>
+              )}
+              {!useDedalo && (form.flightPhase || form.weatherCondition) && (
+                <div className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-muted-foreground/60 text-xs">Fase / Meteorologia</span>
+                  <span className="text-foreground/75 text-sm">
+                    {[form.flightPhase, form.weatherCondition].filter(Boolean).join(" · ")}
+                  </span>
+                </div>
+              )}
+              {!useDedalo && form.obstacleType && (
+                <div className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-muted-foreground/60 text-xs">Obstáculo</span>
+                  <span className="text-foreground/75 text-sm">{form.obstacleType}</span>
+                </div>
+              )}
+              {!useDedalo && form.narrative && (
+                <div className="px-5 py-3.5">
+                  <span className="text-muted-foreground/60 text-xs block mb-1.5">Histórico da Ocorrência</span>
+                  <p className="text-foreground/75 text-sm leading-relaxed line-clamp-3">
+                    {form.narrative}
+                  </p>
                 </div>
               )}
             </div>

@@ -14,16 +14,56 @@ logger = logging.getLogger(__name__)
 
 _SYSTEM_PROMPT = """Você é SAPAER-AI, assistente especializado em redação de relatórios de investigação aeronáutica do sistema SIPAER/CENIPA.
 
-Seu papel é preencher seções específicas de relatórios (RFA, ROCA, RAI, Minuta) com base nos dados da ocorrência fornecidos e em trechos de relatórios similares como referência.
+Seu papel é preencher seções específicas de relatórios (RF, SUMA, RAI, Minuta) com base nos dados da ocorrência fornecidos e em trechos de relatórios similares como referência.
 
 ## REGRAS DE GERAÇÃO
 
-- Escreva exclusivamente o conteúdo da seção solicitada, sem repetir o título
+- Escreva exclusivamente o conteúdo da seção solicitada, sem repetir o
+  título
 - Use linguagem técnica impessoal e objetiva, conforme padrão COMAER/SIPAER
-- Para campos com dados insuficientes, escreva "A verificar" ou "Não informado"
+- Para campos com dados insuficientes, escreva "A verificar" ou
+  "Não informado" — nunca infira ou estime um valor plausível
 - Não especule sobre responsabilização; foque em fatos e análise técnica
-- Baseie-se nos dados da ocorrência e nos exemplos de relatórios similares fornecidos
-- Cite normas aplicáveis quando pertinente (NSCA 3-6, MCA 3-3, RBAC, Anexo 13 OACI)
+- Cite normas aplicáveis quando pertinente (NSCA 3-6, MCA 3-3, RBAC,
+  Anexo 13 OACI), apenas quando diretamente relacionadas ao conteúdo da
+  seção
+- Ajuste profundidade e formalidade conforme o tipo de documento: RF exige
+  desenvolvimento técnico completo; SUMA é sintético (parágrafo-resumo);
+  RAI e Minuta seguem o nível de detalhe indicado no pedido
+
+## HIERARQUIA DE FONTES (regra crítica)
+
+- Os DADOS DA OCORRÊNCIA são a única fonte de fatos do caso atual (aeronave,
+  local, data, pessoas, danos, condições, sequência de eventos).
+- Os RELATÓRIOS SIMILARES servem apenas para dois fins:
+  (a) referência de estrutura, terminologia e profundidade técnica esperada
+      na seção;
+  (b) precedentes de fatores contribuintes e recomendações de segurança já
+      emitidas em casos análogos, para consistência do sistema.
+- NUNCA transfira um fato específico (data, matrícula, nome, coordenada,
+  número de horas, condição meteorológica etc.) de um relatório similar
+  para o relatório sendo gerado. Se um dado não está nos "Dados da
+  Ocorrência" fornecidos, ele é desconhecido para este caso, mesmo que
+  apareça em um caso parecido.
+- Não copie frases ou trechos literais dos relatórios similares. Use-os
+  para calibrar tom e estrutura; a redação deve ser original para o caso
+  atual.
+
+## SEÇÃO: RECOMENDAÇÕES DE SEGURANÇA (quando aplicável)
+
+- Antes de propor uma nova recomendação, verifique se algum dos relatórios
+  similares já contém RECOMENDAÇÕES DE SEGURANÇA para o mesmo fator contribuinte
+- Se houver precedente, referencie-o e mantenha coerência com a
+  recomendação já emitida, em vez de propor uma redação divergente para o
+  mesmo problema
+
+## QUANDO OS DADOS NÃO SUSTENTAM A SEÇÃO
+
+Se os dados da ocorrência fornecidos forem insuficientes para redigir a
+seção com o nível de detalhe exigido pelo tipo de documento, gere o texto
+possível com o que há disponível e sinalize explicitamente, entre
+colchetes, os pontos que exigem complementação pelo investigador — nunca
+preencha a lacuna com inferência.
 
 ## FORMATO DE SAÍDA
 
@@ -65,6 +105,18 @@ def build_occurrence_summary(occurrence: dict) -> str:
         lines.append(f"- Unidade de Investigação: {v}")
     if v := occurrence.get("investigator"):
         lines.append(f"- Investigador: {v}")
+    if v := occurrence.get("flightPhase"):
+        lines.append(f"- Fase do Voo: {v}")
+
+    weather = occurrence.get("weather") or {}
+    weather_parts = [p for p in [weather.get("condition"), weather.get("description")] if p]
+    if weather_parts:
+        lines.append(f"- Condição Meteorológica: {' — '.join(weather_parts)}")
+
+    obstacle = occurrence.get("obstacle") or {}
+    obstacle_parts = [p for p in [obstacle.get("type"), obstacle.get("description")] if p]
+    if obstacle_parts:
+        lines.append(f"- Obstáculos: {' — '.join(obstacle_parts)}")
 
     aircraft = occurrence.get("aircraft", {})
     if aircraft:
@@ -119,6 +171,11 @@ def build_occurrence_summary(occurrence: dict) -> str:
     if scope:
         lines.append(f"- Escopo: {scope}")
 
+    if v := occurrence.get("narrative"):
+        lines.append("")
+        lines.append("HISTÓRICO DA OCORRÊNCIA (relato do investigador):")
+        lines.append(v)
+
     return "\n".join(lines)
 
 
@@ -162,9 +219,23 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
         )
     if any(k in c for k in ["meteorológic", "condições atmosféricas", "condições do tempo"]):
         return (
-            "Descreva as condições meteorológicas na área e horário da ocorrência. "
+            "Descreva as condições meteorológicas na área e horário da ocorrência, com base na "
+            "condição meteorológica e na descrição informadas nos dados da ocorrência. "
             "Indique: visibilidade, teto, vento, temperatura e fenômenos significativos. "
             "Se dados não disponíveis, indique cada campo como 'A verificar'."
+        )
+    if "fase do voo" in c or ("fase" in c and "voo" in c):
+        return (
+            "Indique a fase do voo em que ocorreu o evento, com base no dado informado. "
+            "Descreva brevemente as características operacionais dessa fase e sua relevância "
+            "para o entendimento da ocorrência."
+        )
+    if "obstác" in c or "obstacul" in c:
+        return (
+            "Descreva o(s) obstáculo(s) envolvido(s) ou presentes na área da ocorrência, com "
+            "base no tipo e na descrição informados nos dados da ocorrência. "
+            "Indique a relação do obstáculo com a sequência de eventos, quando pertinente. "
+            "Se não houver obstáculos, declare explicitamente 'Não havia obstáculos relevantes na área'."
         )
     if "descrição detalhada" in c or ("narrativa" in c and "sequência" not in c):
         return (
@@ -299,6 +370,7 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
 
     # ── 3. Vector search: sipaer_relatorios_finais ─────────────────────────────
     rag_context = ""
+    sources: list[dict] = []
     try:
         query_vector = await llm_service.embed(occurrence_summary[:600])
         if query_vector:
@@ -310,9 +382,31 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
             )
             if hits:
                 docs = [h.payload.get("text", "") for h in hits]
-                reranked = await llm_service.rerank(occurrence_summary[:600], docs, top_n=5)
+                try:
+                    reranked = await llm_service.rerank(occurrence_summary[:600], docs, top_n=5)
+                except Exception:
+                    logger.warning(
+                        "Reranker indisponível para report %s — usando ordem da busca vetorial",
+                        report_id,
+                    )
+                    reranked = [
+                        {"index": i, "relevance_score": None} for i in range(min(5, len(hits)))
+                    ]
                 top_docs = [docs[r["index"]] for r in reranked]
                 rag_context = "\n\n---\n\n".join(top_docs)
+
+                for r in reranked:
+                    hit = hits[r["index"]]
+                    payload = hit.payload or {}
+                    sources.append({
+                        "docId": payload.get("doc_id"),
+                        "title": payload.get("title") or payload.get("source") or "Documento sem título",
+                        "source": payload.get("source"),
+                        "chunkIndex": payload.get("chunk_index"),
+                        "relevanceScore": r.get("relevance_score"),
+                        "vectorScore": getattr(hit, "score", None),
+                        "excerpt": (payload.get("text") or "")[:400],
+                    })
     except Exception:
         logger.warning("RAG search failed for report %s — generating without context", report_id)
 
@@ -334,6 +428,9 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
         report = result.scalar_one_or_none()
         if not report:
             return
+
+        report.generation_sources = sources
+        await db.commit()
 
         for section in report.sections:
             for subsection in section.subsections:

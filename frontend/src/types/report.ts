@@ -117,12 +117,23 @@ export interface Occurrence {
   };
 }
 
+export interface GenerationSource {
+  docId: number | null;
+  title: string;
+  source: string | null;
+  chunkIndex: number | null;
+  relevanceScore: number | null;
+  vectorScore: number | null;
+  excerpt: string;
+}
+
 export interface Report {
   id: string;
   occurrence: Occurrence;
   status: ReportStatus;
   version: number;
   generationStatus?: "pending" | "generating" | "done" | "failed" | null;
+  generationSources?: GenerationSource[] | null;
   sections: ReportSection[];
   createdAt: Date;
   updatedAt: Date;

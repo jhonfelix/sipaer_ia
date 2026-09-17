@@ -18,6 +18,7 @@ class Report(Base):
     last_edited_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
     generation_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
     generation_started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    generation_sources: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now()
