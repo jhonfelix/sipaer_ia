@@ -289,6 +289,42 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
             "para a ocorrência: procedimentos de pulverização, equipamentos de aplicação, "
             "condições do terreno agrícola e fatores de risco específicos da atividade."
         )
+    # Seção "20. Conclusão" do template FULL_COMPLETE segue o formato real do
+    # FORMRF do CENIPA (Fatos + Fatores Contribuintes com determinação), em vez
+    # de "Causa Provável". Escopado pelo número da seção para não alterar o
+    # comportamento dos demais templates (RF_SIMPLIFIED/RAI/MINUTA), que ainda
+    # usam a subseção "Causa Provável".
+    if "20. conclus" in c and "fatos" in c:
+        return (
+            "Liste os fatos apurados durante a investigação, em formato de lista "
+            "objetiva com marcadores (a, b, c...), um fato por item, sem análise ou "
+            "interpretação — apenas o que foi confirmado pelos dados da ocorrência "
+            "fornecidos. Siga o padrão CENIPA (seção Conclusões > Fatos)."
+        )
+    if "20. conclus" in c and ("fator contribu" in c or "fatores contribu" in c):
+        return (
+            "Liste os fatores contribuintes identificados. Para cada fator: (1) nome "
+            "objetivo do fator, (2) determinação — 'contribuiu', 'indeterminado' ou "
+            "'não contribuiu' — e (3) uma justificativa de 1 a 3 frases com base nos "
+            "dados da ocorrência. Formato: <p><strong>Nome do fator</strong> — "
+            "determinação.</p><p>Justificativa.</p>. Não use categorias fixas "
+            "(Humano/Material/Operacional/Ambiental) — nomeie o fator livremente, como "
+            "no padrão do Relatório Final do CENIPA. Se não há dados suficientes, "
+            "indique 'Não apurado — a verificar'."
+        )
+    if "outros danos" in c:
+        return (
+            "Descreva danos a terceiros, propriedades, infraestrutura ou ao meio "
+            "ambiente resultantes da ocorrência, além dos danos à própria aeronave. "
+            "Se não houve outros danos, declare explicitamente 'Não houve'."
+        )
+    if "ações corretivas" in c or "preventivas adotadas" in c:
+        return (
+            "Descreva as ações corretivas ou preventivas já adotadas pelo operador, "
+            "pela ANAC ou por outros envolvidos, em resposta a esta ocorrência, "
+            "anteriormente à publicação deste relatório. Se nenhuma ação foi adotada "
+            "até o momento, declare explicitamente 'Nada a relatar'."
+        )
     if "causa provável" in c:
         return (
             "Redija a causa provável da ocorrência em um único parágrafo objetivo. "

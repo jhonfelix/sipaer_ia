@@ -370,6 +370,7 @@ const FULL_COMPLETE: SectionDef[] = [
     id: "danos", title: "4. Danos à Aeronave",
     subsections: [
       { id: "descricao", title: "Descrição dos Danos" },
+      { id: "outros_danos", title: "Outros Danos" },
       { id: "fotos", title: "Registro Fotográfico" },
     ],
     agroSubs: [{ id: "danos_agro", title: "Danos ao Sistema de Aplicação Agrícola" }],
@@ -515,7 +516,7 @@ const FULL_COMPLETE: SectionDef[] = [
   {
     id: "conclusao", title: "20. Conclusão",
     subsections: [
-      { id: "causa", title: "Causa Provável" },
+      { id: "fatos", title: "Fatos" },
       { id: "contrib", title: "Fatores Contribuintes" },
     ],
   },
@@ -525,6 +526,10 @@ const FULL_COMPLETE: SectionDef[] = [
       { id: "lista", title: "Recomendações" },
       { id: "destinatarios", title: "Destinatários e Responsáveis" },
     ],
+  },
+  {
+    id: "acoes_corretivas", title: "22. Ações Corretivas ou Preventivas Adotadas",
+    subsections: [{ id: "acoes", title: "Ações Adotadas" }],
   },
 ];
 
@@ -653,12 +658,12 @@ function buildOccurrenceHTML(form: OccFormData, investigator: string): string {
   ];
 
   const personRows = rows.map(r =>
-    `<tr><td class="sipaer-label">${r.label}</td><td class="sipaer-value">${r.none || "&nbsp;"}</td><td class="sipaer-value">${r.minor || "&nbsp;"}</td><td class="sipaer-value">${r.serious || "&nbsp;"}</td><td class="sipaer-value">${r.fatal || "&nbsp;"}</td></tr>`
+    `<tr><td class="sipaer-label">${r.label}</td><td class="sipaer-value">${r.fatal || "&nbsp;"}</td><td class="sipaer-value">${r.serious || "&nbsp;"}</td><td class="sipaer-value">${r.minor || "&nbsp;"}</td><td class="sipaer-value">${r.none || "&nbsp;"}</td></tr>`
   ).join("");
 
   const personsTable = `<table class="sipaer-table"><tbody>
 <tr><th class="sipaer-header" colspan="5">LESÕES E DANOS A PESSOAS A BORDO</th></tr>
-<tr><th class="sipaer-col-header">&nbsp;</th><th class="sipaer-col-header">Ileso</th><th class="sipaer-col-header">Leve</th><th class="sipaer-col-header">Grave</th><th class="sipaer-col-header">Fatal</th></tr>
+<tr><th class="sipaer-col-header">&nbsp;</th><th class="sipaer-col-header">Fatal</th><th class="sipaer-col-header">Grave</th><th class="sipaer-col-header">Leve</th><th class="sipaer-col-header">Ileso</th></tr>
 ${personRows}
 </tbody></table>`;
 
