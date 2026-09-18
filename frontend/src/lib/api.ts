@@ -556,6 +556,7 @@ export const chat = {
       report_id?: number;
       project_id?: number;
       context?: string;
+      images?: string[];
       session_id?: string;
       model?: string;
       chat_type?: "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";

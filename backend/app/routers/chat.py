@@ -160,6 +160,7 @@ async def chat(
             body.chat_type,
             project_id=body.project_id,
             project_instructions=project_instructions,
+            images=body.images,
         )
     except Exception:
         logger.exception("RAG pipeline falhou")
@@ -258,9 +259,10 @@ async def chat_agent(
     db.add(user_msg)
     await db.flush()
 
-    # O agente cobre os chats de base de conhecimento. `images` (visão) e chats de
-    # projeto (busca escopada por project_id) permanecem no pipeline clássico.
-    use_agent = body.chat_type != "images" and body.project_id is None
+    # O agente cobre os chats de base de conhecimento. Imagens anexadas (visão,
+    # qualquer categoria) e chats de projeto (busca escopada por project_id)
+    # permanecem no pipeline clássico — o Agno ainda não tem tool multimodal.
+    use_agent = body.chat_type != "images" and body.project_id is None and not body.images
 
     try:
         if use_agent:
@@ -275,6 +277,7 @@ async def chat_agent(
                 body.chat_type,
                 project_id=body.project_id,
                 project_instructions=project_instructions,
+                images=body.images,
             )
     except Exception:
         logger.exception("Chat agent falhou")

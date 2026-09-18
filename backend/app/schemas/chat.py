@@ -15,6 +15,17 @@ class ChatRequest(BaseModel):
     session_id: str | None = None
     model: ALLOWED_MODELS = "gpt-oss-120b"
     chat_type: ALLOWED_CHAT_TYPES = "general"
+    images: list[str] = []
+
+    @field_validator("images")
+    @classmethod
+    def _validate_images(cls, v: list[str]) -> list[str]:
+        if len(v) > 6:
+            raise ValueError("Máximo de 6 imagens por mensagem")
+        for img in v:
+            if not img.startswith("data:image/"):
+                raise ValueError("Formato de imagem inválido — esperado data URL (data:image/...)")
+        return v
 
 
 class SourceItem(BaseModel):

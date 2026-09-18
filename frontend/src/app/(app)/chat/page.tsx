@@ -22,6 +22,7 @@ import {
 import { chat as chatApi } from "@/lib/api";
 import type { ChatSession } from "@/lib/api";
 import type { AIMessage } from "@/types/report";
+import { useToast } from "@/hooks/use-toast";
 import {
   MarkdownRenderer,
   ModelSelector,
@@ -286,10 +287,20 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function fileToDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ChatPage() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
@@ -381,21 +392,52 @@ export default function ChatPage() {
     const text = input.trim();
     if (!text || sending || extracting) return;
 
-    // Extract text from attached files before sending
-    let context = "";
+    // Imagens vão como image_url multimodal (visão); os demais tipos têm o
+    // texto extraído via /chat/extract e viram contexto textual.
+    const imageFiles = attached.filter((a) => a.file.type.startsWith("image/"));
+    const otherFiles = attached.filter((a) => !a.file.type.startsWith("image/"));
     const attachmentNames = attached.map((a) => a.file.name);
+
+    let context = "";
+    let images: string[] = [];
+
     if (attached.length > 0) {
       setExtracting(true);
       try {
-        const extractions = await Promise.all(attached.map((a) => chatApi.extract(a.file)));
-        context = extractions
-          .map(
-            (e) =>
-              `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 50.000 caracteres" : ""}]\n${e.text}`
-          )
-          .join("\n\n---\n\n");
-      } catch {
-        // continua sem contexto de arquivo se a extração falhar
+        if (otherFiles.length > 0) {
+          const contextParts: string[] = [];
+          const failedNames: string[] = [];
+          await Promise.all(
+            otherFiles.map(async (a) => {
+              try {
+                const e = await chatApi.extract(a.file);
+                contextParts.push(
+                  `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 50.000 caracteres" : ""}]\n${e.text}`
+                );
+              } catch {
+                failedNames.push(a.file.name);
+              }
+            })
+          );
+          context = contextParts.join("\n\n---\n\n");
+          if (failedNames.length > 0) {
+            toast({
+              description: `Não foi possível ler: ${failedNames.join(", ")}. Tipo de arquivo não suportado para leitura de texto.`,
+              variant: "destructive",
+            });
+          }
+        }
+
+        if (imageFiles.length > 0) {
+          try {
+            images = await Promise.all(imageFiles.map((a) => fileToDataURL(a.file)));
+          } catch {
+            toast({
+              description: "Não foi possível processar a(s) imagem(ns) anexada(s).",
+              variant: "destructive",
+            });
+          }
+        }
       } finally {
         setExtracting(false);
       }
@@ -429,6 +471,7 @@ export default function ChatPage() {
           model,
           chat_type: chatType,
           context,
+          images,
         },
         { agent: agentMode }
       );

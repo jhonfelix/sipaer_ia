@@ -26,8 +26,8 @@ Você possui conhecimento aprofundado e atualizado sobre:
 - Estrutura, missão, visão e competências legais do CENIPA
 - Sistema de Investigação e Prevenção de Acidentes Aeronáuticos (SIPAER)
 - Metodologia de investigação: análise de fatores contributivos
-- Relatório Final de Acidente (RF), Relatório de Ocorrência Aeronáutica (ROCA)
-- Relatório de Recomendação de Segurança (RRS)
+- Relatório Final de Acidente (RF), Relatório de Ocorrência Aeronáutica
+- Recomendação de Segurança
 - Banco de dados de ocorrências: DÉDALO, SGSV
 - Diferença entre investigação SIPAER e investigação criminal/judicial
 - Etapas do processo investigativo: notificação, coleta, análise, relatório, divulgação
@@ -441,6 +441,17 @@ SYSTEM_PROMPTS = {
 # evita exibir documentos que só entraram no top_n por falta de candidato melhor.
 RERANK_SCORE_THRESHOLD = 0.4
 
+# Único modelo confirmado com suporte a entrada de imagem na CCABR (testado via
+# GET /v1/models + envio de image_url em /v1/chat/completions em 2026-09-17).
+# gpt-oss-120b/20b, qwen36-35b-fp8 e deepseek-v4-flash-0731 são texto-only;
+# DeepSeek-OCR-2 é especializado em OCR e não faz análise visual geral.
+VISION_MODEL = "gemma-4-26B-A4B-it"
+
+_IMAGE_ANALYSIS_INSTRUCTION = (
+    "\n\nO usuário anexou uma ou mais imagens nesta mensagem. Analise-as "
+    "tecnicamente e baseie sua resposta no que for visualmente observável nelas."
+)
+
 # Roteamento de coleções por categoria de chat (quando não há projeto e nenhuma
 # coleção explícita). Ex.: Tradução ancora nos glossários/fraseologia, não em tudo.
 CHAT_TYPE_COLLECTIONS: dict[str, list[str]] = {
@@ -468,7 +479,13 @@ class RAGPipeline:
         collections: list[str] | None = None,
         project_id: int | None = None,
         project_instructions: str | None = None,
+        images: list[str] | None = None,
     ) -> tuple[str, list[dict]]:
+        if images:
+            return await self._process_with_images(
+                query, extra_context, chat_type, project_instructions, images
+            )
+
         # Coleções efetivas: explícitas > roteadas por chat_type > todas.
         effective_collections = collections or CHAT_TYPE_COLLECTIONS.get(chat_type)
 
@@ -577,6 +594,37 @@ class RAGPipeline:
         )
 
         return content, sources
+
+    async def _process_with_images(
+        self,
+        query: str,
+        extra_context: str,
+        chat_type: str,
+        project_instructions: str | None,
+        images: list[str],
+    ) -> tuple[str, list[dict]]:
+        """Análise visual — sem busca vetorial/cache, sempre via VISION_MODEL.
+
+        Base64 de imagem no cache key/valor inflaria o Redis sem ganho real
+        (reuso de uma mesma imagem+pergunta é raro), então esse caminho não
+        passa pelo cache_service.
+        """
+        system = SYSTEM_PROMPTS.get(chat_type, SYSTEM_PROMPT_GENERAL) + _IMAGE_ANALYSIS_INSTRUCTION
+        if project_instructions and project_instructions.strip():
+            system += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
+        if extra_context:
+            system += f"\n\nContexto relevante:\n{extra_context}"
+
+        user_content: list[dict] = [{"type": "text", "text": query}]
+        for image in images:
+            user_content.append({"type": "image_url", "image_url": {"url": image}})
+
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user_content},
+        ]
+        content = await self.llm.chat_completion(messages, model=VISION_MODEL)
+        return content, []
 
 
 rag_pipeline = RAGPipeline(llm=llm_service, vector=vector_service, cache=cache_service)
