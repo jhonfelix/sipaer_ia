@@ -4,6 +4,7 @@ from app.models.conversation import Conversation
 from app.models.media_file import MediaFile
 from app.models.knowledge import KnowledgeDocument
 from app.models.project import Project, ProjectDocument
+from app.models.group import Group, user_groups
 
 __all__ = [
     "User",
@@ -15,4 +16,6 @@ __all__ = [
     "KnowledgeDocument",
     "Project",
     "ProjectDocument",
+    "Group",
+    "user_groups",
 ]

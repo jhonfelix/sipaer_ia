@@ -21,8 +21,10 @@ import {
   LayoutDashboard,
   AudioLines,
   BookOpen,
+  Users,
 } from "lucide-react";
 import { ProjectsSection } from "@/components/project";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const MODULES = [
   { id: "chat", label: "Início", icon: LayoutDashboard, href: "/chat", exact: true },
@@ -30,6 +32,7 @@ const MODULES = [
   { id: "labdata", label: "Análise Áudio & Espectro", icon: AudioLines, href: "/labdata" },
   { id: "da", label: "Gestão Administrativa", icon: Building2, href: "/da" },
   { id: "knowledge", label: "Base de Conhecimento", icon: BookOpen, href: "/knowledge" },
+  { id: "users", label: "Usuários e Grupos", icon: Users, href: "/users", adminOnly: true },
 ];
 
 export const CATEGORIES = [
@@ -91,6 +94,8 @@ export function ConversationSidebar({
 }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   function isModuleActive(m: (typeof MODULES)[0]) {
     if (m.exact) return pathname === m.href;
@@ -134,7 +139,7 @@ export function ConversationSidebar({
           </p>
         )}
         <div className="space-y-0.5">
-          {MODULES.map((m) => {
+          {MODULES.filter((m) => !("adminOnly" in m && m.adminOnly) || isAdmin).map((m) => {
             const Icon = m.icon;
             const active = isModuleActive(m);
             return (

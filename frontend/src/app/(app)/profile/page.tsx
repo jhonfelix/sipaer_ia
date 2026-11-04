@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { auth as authApi } from "@/lib/api";
-import { User2, Mail, Shield, Lock, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { User2, Mail, Shield, Lock, Save, CheckCircle2, AlertCircle, Building2 } from "lucide-react";
+import { POSTO_GROUPS, POSTO_OPTIONS, UNIT_OPTIONS } from "@/lib/military";
 
 type Status = { type: "success" | "error"; message: string } | null;
 
@@ -12,6 +13,7 @@ export default function ProfilePage() {
 
   const [email, setEmail]               = useState(user?.email ?? "");
   const [posto, setPosto]               = useState(user?.postoGraduacao ?? "");
+  const [unit, setUnit]                 = useState(user?.unit ?? "");
   const [currentPw, setCurrentPw]       = useState("");
   const [newPw, setNewPw]               = useState("");
   const [confirmPw, setConfirmPw]       = useState("");
@@ -45,6 +47,7 @@ export default function ProfilePage() {
       const payload: Parameters<typeof authApi.updateProfile>[0] = {};
       if (email !== user!.email) payload.email = email;
       if (posto !== (user!.postoGraduacao ?? "")) payload.posto_graduacao = posto;
+      if (unit && unit !== user!.unit) payload.unit = unit;
       if (newPw) { payload.current_password = currentPw; payload.new_password = newPw; }
 
       if (Object.keys(payload).length === 0) {
@@ -124,13 +127,46 @@ export default function ProfilePage() {
               </label>
               <div className="relative">
                 <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
+                <select
                   value={posto}
                   onChange={(e) => setPosto(e.target.value)}
-                  placeholder="Ex: Tenente-Coronel, Sargento…"
                   className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
+                >
+                  <option value="">Não informado</option>
+                  {POSTO_GROUPS.map((g) => (
+                    <optgroup key={g.label} label={g.label}>
+                      {g.options.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  {!!posto && !POSTO_OPTIONS.includes(posto) && (
+                    <option value={posto}>{posto} (atual)</option>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Unidade
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="" disabled>Selecione…</option>
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u.value} value={u.value}>{u.label}</option>
+                  ))}
+                  {!!unit && !UNIT_OPTIONS.some((u) => u.value === unit) && (
+                    <option value={unit}>{unit} (atual)</option>
+                  )}
+                </select>
               </div>
             </div>
           </section>

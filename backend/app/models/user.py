@@ -28,3 +28,5 @@ class User(Base):
     )
     conversations = relationship("Conversation", back_populates="user", lazy="selectin")
     media_files = relationship("MediaFile", back_populates="uploader")
+    # Carregamento explícito (selectinload) — evita custo extra em todo get_current_user
+    groups = relationship("Group", secondary="user_groups", back_populates="members")

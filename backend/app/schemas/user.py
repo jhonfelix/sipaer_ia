@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 class UserCreate(BaseModel):
@@ -15,6 +15,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
     posto_graduacao: str | None = None
+    unit: str | None = Field(default=None, min_length=1, max_length=100)
     current_password: str | None = None
     new_password: str | None = None
 

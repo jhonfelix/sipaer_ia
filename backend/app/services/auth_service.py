@@ -76,6 +76,9 @@ async def update_user(user: User, data: UserUpdate, db: AsyncSession) -> User:
     if data.posto_graduacao is not None:
         user.posto_graduacao = data.posto_graduacao
 
+    if data.unit is not None:
+        user.unit = data.unit.strip()
+
     if data.current_password and data.new_password:
         if not verify_password(data.current_password, user.hashed_password):
             raise ValueError("Senha atual incorreta")

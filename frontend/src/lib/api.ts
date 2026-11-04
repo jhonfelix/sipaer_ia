@@ -247,6 +247,7 @@ export const auth = {
   async updateProfile(payload: {
     email?: string;
     posto_graduacao?: string;
+    unit?: string;
     current_password?: string;
     new_password?: string;
   }): Promise<User> {
@@ -268,6 +269,150 @@ export const auth = {
 export const users = {
   async list(): Promise<User[]> {
     return (await request<RawUser[]>("/auth/users")).map(mapUser);
+  },
+};
+
+// ── Admin: gestão de usuários e grupos (/admin/*, somente role admin) ─────────
+
+export type UserRole = User["role"];
+
+export const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+  { value: "investigator", label: "Investigador" },
+  { value: "reviewer", label: "Revisor" },
+  { value: "manager", label: "Gestor" },
+  { value: "admin", label: "Administrador" },
+];
+
+export const ROLE_LABELS: Record<string, string> = Object.fromEntries(
+  ROLE_OPTIONS.map((r) => [r.value, r.label])
+);
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: UserRole;
+  unit: string;
+  postoGraduacao: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  groups: { id: number; name: string }[];
+}
+
+export interface AdminGroup {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: Date;
+  members: { id: number; name: string; email: string; postoGraduacao: string | null; isActive: boolean }[];
+}
+
+export interface AdminUserPayload {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: UserRole;
+  unit?: string;
+  posto_graduacao?: string;
+  is_active?: boolean;
+  group_ids?: number[];
+}
+
+export interface AdminGroupPayload {
+  name?: string;
+  description?: string;
+  member_ids?: number[];
+}
+
+interface RawAdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  unit: string;
+  posto_graduacao: string | null;
+  is_active: boolean;
+  created_at: string;
+  groups: { id: number; name: string }[];
+}
+
+interface RawAdminGroup {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
+  members: { id: number; name: string; email: string; posto_graduacao: string | null; is_active: boolean }[];
+}
+
+function mapAdminUser(raw: RawAdminUser): AdminUser {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    role: raw.role as UserRole,
+    unit: raw.unit,
+    postoGraduacao: raw.posto_graduacao,
+    isActive: raw.is_active,
+    createdAt: new Date(raw.created_at),
+    groups: raw.groups ?? [],
+  };
+}
+
+function mapAdminGroup(raw: RawAdminGroup): AdminGroup {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    createdAt: new Date(raw.created_at),
+    members: (raw.members ?? []).map((m) => ({
+      id: m.id,
+      name: m.name,
+      email: m.email,
+      postoGraduacao: m.posto_graduacao,
+      isActive: m.is_active,
+    })),
+  };
+}
+
+export const admin = {
+  async listUsers(): Promise<AdminUser[]> {
+    return (await request<RawAdminUser[]>("/admin/users")).map(mapAdminUser);
+  },
+
+  async createUser(payload: AdminUserPayload): Promise<AdminUser> {
+    return mapAdminUser(
+      await request<RawAdminUser>("/admin/users", { method: "POST", body: JSON.stringify(payload) })
+    );
+  },
+
+  async updateUser(id: number, payload: AdminUserPayload): Promise<AdminUser> {
+    return mapAdminUser(
+      await request<RawAdminUser>(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
+    );
+  },
+
+  async deactivateUser(id: number): Promise<void> {
+    await request<void>(`/admin/users/${id}`, { method: "DELETE" });
+  },
+
+  async listGroups(): Promise<AdminGroup[]> {
+    return (await request<RawAdminGroup[]>("/admin/groups")).map(mapAdminGroup);
+  },
+
+  async createGroup(payload: AdminGroupPayload): Promise<AdminGroup> {
+    return mapAdminGroup(
+      await request<RawAdminGroup>("/admin/groups", { method: "POST", body: JSON.stringify(payload) })
+    );
+  },
+
+  async updateGroup(id: number, payload: AdminGroupPayload): Promise<AdminGroup> {
+    return mapAdminGroup(
+      await request<RawAdminGroup>(`/admin/groups/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
+    );
+  },
+
+  async deleteGroup(id: number): Promise<void> {
+    await request<void>(`/admin/groups/${id}`, { method: "DELETE" });
   },
 };
 
