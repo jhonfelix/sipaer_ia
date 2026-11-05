@@ -14,18 +14,40 @@ from app.services.vector_service import vector_service
 
 logger = logging.getLogger(__name__)
 
+# Temperatura baixa reduz a tendência do modelo a "enriquecer" a narrativa com fatos plausíveis.
+GENERATION_TEMPERATURE = 0.2
+
 _SYSTEM_PROMPT = """Você é SAPAER-AI, assistente especializado em redação de relatórios de investigação aeronáutica do sistema SIPAER/CENIPA.
 
 Seu papel é preencher seções específicas de relatórios (RF, SUMA, RAI, Minuta) com base nos dados da ocorrência fornecidos e em trechos de relatórios similares como referência.
+
+## REGRA ZERO — NÃO INVENTAR FATOS
+
+Este é um documento oficial de investigação. Todo fato escrito precisa estar
+nas FONTES DO CASO (abaixo). Em especial, é PROIBIDO:
+- completar a sequência de eventos com etapas plausíveis que não foram
+  relatadas (ex.: "completou o padrão de aplicação", "iniciou o retorno");
+- afirmar AUSÊNCIA de algo sem que a fonte diga isso explicitamente
+  ("não foram identificados indícios de fadiga", "não havia obstáculos",
+  "não houve outros danos", "o piloto estava apto") — ausência de informação
+  não é informação de ausência;
+- estimar valores (horas, distâncias, altitudes, velocidades, pesos,
+  condições meteorológicas) ou deduzi-los de casos parecidos;
+- atribuir causas, intenções, estados físicos ou emocionais não registrados.
+
+Quando faltar o dado, escreva o que é conhecido e marque a lacuna com
+<strong>[A verificar: o que falta]</strong>. Uma seção curta e correta é
+melhor que uma seção completa com suposições.
 
 ## REGRAS DE GERAÇÃO
 
 - Escreva exclusivamente o conteúdo da seção solicitada, sem repetir o
   título
 - Use linguagem técnica impessoal e objetiva, conforme padrão COMAER/SIPAER
-- Para campos com dados insuficientes, escreva "A verificar" ou
-  "Não informado" — nunca infira ou estime um valor plausível
 - Não especule sobre responsabilização; foque em fatos e análise técnica
+- Em RF, SUMA e Minuta NÃO identifique pessoas pelo nome (use "o piloto",
+  "o mecânico", "a testemunha"), conforme o Anexo 13 da OACI. Nomes só
+  aparecem no RAI, nos campos de pessoal envolvido
 - Cite normas aplicáveis quando pertinente (NSCA 3-6, MCA 3-3, RBAC,
   Anexo 13 OACI), apenas quando diretamente relacionadas ao conteúdo da
   seção
@@ -35,8 +57,13 @@ Seu papel é preencher seções específicas de relatórios (RF, SUMA, RAI, Minu
 
 ## HIERARQUIA DE FONTES (regra crítica)
 
-- Os DADOS DA OCORRÊNCIA são a única fonte de fatos do caso atual (aeronave,
-  local, data, pessoas, danos, condições, sequência de eventos).
+- FONTES DO CASO (as únicas fontes de fatos desta ocorrência):
+  1. DADOS DA OCORRÊNCIA — revisados pelo investigador; prevalecem em caso
+     de divergência;
+  2. TRECHOS DOS DOCUMENTOS DA INVESTIGAÇÃO, quando fornecidos (notificações,
+     depoimentos, cadernetas, laudos). Ao usar um fato de depoimento, deixe
+     claro que é relato ("segundo o mecânico…"). Se divergirem dos DADOS DA
+     OCORRÊNCIA, use os DADOS e sinalize [A verificar: divergência …].
 - Os RELATÓRIOS SIMILARES servem apenas para dois fins:
   (a) referência de estrutura, terminologia e profundidade técnica esperada
       na seção;
@@ -44,9 +71,8 @@ Seu papel é preencher seções específicas de relatórios (RF, SUMA, RAI, Minu
       emitidas em casos análogos, para consistência do sistema.
 - NUNCA transfira um fato específico (data, matrícula, nome, coordenada,
   número de horas, condição meteorológica etc.) de um relatório similar
-  para o relatório sendo gerado. Se um dado não está nos "Dados da
-  Ocorrência" fornecidos, ele é desconhecido para este caso, mesmo que
-  apareça em um caso parecido.
+  para o relatório sendo gerado. Se um dado não está nas FONTES DO CASO,
+  ele é desconhecido para este caso, mesmo que apareça em um caso parecido.
 - Não copie frases ou trechos literais dos relatórios similares. Use-os
   para calibrar tom e estrutura; a redação deve ser original para o caso
   atual.
@@ -205,68 +231,74 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
         return (
             "Preencha os dados de identificação da aeronave usando as informações fornecidas. "
             "Formato: <p><strong>Campo:</strong> valor</p> para cada dado. "
-            "Para campos não informados, use 'A verificar'."
+            "Para campos não informados, use '[A verificar]'."
         )
     if any(k in c for k in ["sistema de aplicação", "produto", "dosagem"]):
         return (
-            "Descreva o sistema de aplicação aeroagrícola utilizado, produtos e dosagens. "
-            "Para campos não informados, indique 'A verificar'."
+            "Descreva o sistema de aplicação aeroagrícola, produtos e dosagens SOMENTE se "
+            "constarem das fontes do caso. Para cada item não informado, indique '[A verificar]'."
         )
     if any(k in c for k in ["habilitação agr", "hab agr"]):
         return (
-            "Descreva a habilitação do piloto para operações aeroagrícolas. "
-            "Liste os requisitos verificados e pendentes conforme RBAC 61 e RBAC 137."
+            "Descreva a habilitação do piloto para operações aeroagrícolas conforme as fontes do caso. "
+            "Liste os requisitos do RBAC 61 e RBAC 137 e, para cada um, indique se as fontes "
+            "comprovam o atendimento ou '[A verificar]'. Não presuma que um requisito foi cumprido."
         )
     if any(k in c for k in ["piloto", "tripulação", "piloto em comando"]):
         return (
-            "Estruture o espaço de preenchimento dos dados do piloto em comando. "
-            "Liste os campos obrigatórios: licença, habilitações, horas totais de voo, "
-            "horas no tipo/modelo, validade do CMA e condição física declarada. "
-            "Para dados não informados, use 'A verificar'."
+            "Apresente os dados do piloto em comando: licença, habilitações, horas totais de voo, "
+            "horas no tipo/modelo e validade do CMA, usando apenas as fontes do caso. "
+            "Para dados não informados, use '[A verificar]'. Não escreva avaliações sobre "
+            "aptidão, fadiga, estresse ou estado físico/psicológico, a menos que as fontes as registrem."
         )
     if any(k in c for k in ["meteorológic", "condições atmosféricas", "condições do tempo"]):
         return (
-            "Descreva as condições meteorológicas na área e horário da ocorrência, com base na "
-            "condição meteorológica e na descrição informadas nos dados da ocorrência. "
+            "Descreva as condições meteorológicas na área e horário da ocorrência, com base "
+            "exclusivamente nas fontes do caso (condição, descrição, METAR/TAF, depoimentos). "
             "Indique: visibilidade, teto, vento, temperatura e fenômenos significativos. "
-            "Se dados não disponíveis, indique cada campo como 'A verificar'."
+            "Nunca estime valores; para cada item sem dado, indique '[A verificar]'."
         )
     if "fase do voo" in c or ("fase" in c and "voo" in c):
         return (
-            "Indique a fase do voo em que ocorreu o evento, com base no dado informado. "
-            "Descreva brevemente as características operacionais dessa fase e sua relevância "
-            "para o entendimento da ocorrência."
+            "Indique a fase do voo em que ocorreu o evento, conforme as fontes do caso, e o que "
+            "elas relatam sobre a aeronave nessa fase. Não acrescente manobras, altitudes ou "
+            "procedimentos que não estejam nas fontes."
         )
     if "obstác" in c or "obstacul" in c:
         return (
             "Descreva o(s) obstáculo(s) envolvido(s) ou presentes na área da ocorrência, com "
             "base no tipo e na descrição informados nos dados da ocorrência. "
-            "Indique a relação do obstáculo com a sequência de eventos, quando pertinente. "
-            "Se não houver obstáculos, declare explicitamente 'Não havia obstáculos relevantes na área'."
+            "Indique a relação do obstáculo com a sequência de eventos, quando as fontes a descreverem. "
+            "Só declare que não havia obstáculos se as fontes disserem isso; se não houver "
+            "informação, escreva '[A verificar: obstáculos na área]'."
         )
     if "descrição detalhada" in c or ("narrativa" in c and "sequência" not in c):
         return (
-            "Redija uma narrativa detalhada da ocorrência em linguagem técnica impessoal. "
-            "Descreva o contexto operacional, o voo ou operação em andamento e "
-            "os eventos que culminaram na ocorrência. Use verbos no passado."
+            "Redija a narrativa da ocorrência em linguagem técnica impessoal, verbos no passado, "
+            "com os eventos NA ORDEM e NA MEDIDA em que as fontes os relatam. Não preencha lacunas "
+            "da sequência com etapas plausíveis: onde houver salto, registre "
+            "'[A verificar: o que ocorreu entre X e Y]'."
         )
     if "sequência de eventos" in c:
         return (
             "Apresente a sequência cronológica de eventos que levou à ocorrência. "
             "Organize em lista numerada com marcações temporais quando disponíveis. "
-            "Cada item deve ser um fato objetivo, sem análise ou interpretação."
+            "Cada item deve ser um fato objetivo presente nas fontes do caso, sem análise, "
+            "interpretação ou etapas intermediárias deduzidas."
         )
     if any(k in c for k in ["operação agrícola", "operação aeroagrícola"]):
         return (
-            "Descreva a operação aeroagrícola em andamento: tipo de trabalho, cultura, "
-            "área de operação, fase da operação e condições do terreno no momento da ocorrência."
+            "Descreva a operação aeroagrícola em andamento (tipo de trabalho, cultura, área de "
+            "operação, fase da operação e condições do terreno) apenas com o que consta das fontes "
+            "do caso; marque cada item ausente como '[A verificar]'."
         )
     if any(k in c for k in ["fator human", "fatores human"]):
         return (
             "Analise os fatores humanos utilizando o framework HFACS. "
             "Avalie cada nível: atos inseguros (erros e violações), pré-condições dos atos inseguros "
             "(estado do operador, práticas pessoais, ambiente), supervisão insegura e "
-            "influências organizacionais. Justifique com base nos dados disponíveis. "
+            "influências organizacionais. Justifique cada ponto com um fato das fontes do caso; "
+            "hipóteses devem ser apresentadas como hipóteses a investigar, nunca como constatação. "
             "Para fatores sem dados suficientes, indique 'Não apurado — a verificar'."
         )
     if any(k in c for k in ["fator material", "fatores material"]):
@@ -323,21 +355,25 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
         return (
             "Descreva danos a terceiros, propriedades, infraestrutura ou ao meio "
             "ambiente resultantes da ocorrência, além dos danos à própria aeronave. "
-            "Se não houve outros danos, declare explicitamente 'Não houve'."
+            "Declare 'Não houve' apenas se as fontes informarem isso; sem informação, "
+            "escreva '[A verificar: outros danos]'."
         )
     if "ações corretivas" in c or "preventivas adotadas" in c:
         return (
             "Descreva as ações corretivas ou preventivas já adotadas pelo operador, "
             "pela ANAC ou por outros envolvidos, em resposta a esta ocorrência, "
-            "anteriormente à publicação deste relatório. Se nenhuma ação foi adotada "
-            "até o momento, declare explicitamente 'Nada a relatar'."
+            "anteriormente à publicação deste relatório, conforme as fontes do caso. "
+            "Se as fontes não registrarem ações, escreva 'Nada a relatar' seguido de "
+            "'[A verificar com o operador]'."
         )
     if "causa provável" in c:
         return (
-            "Redija a causa provável da ocorrência em um único parágrafo objetivo. "
+            "Redija a causa provável da ocorrência em um único parágrafo objetivo, SOMENTE se as "
+            "fontes do caso trouxerem evidências que a sustentem. "
             "Formato: 'A ocorrência foi causada por [causa principal], evidenciada por [evidências]. "
             "Contribuíram para a ocorrência [fatores contribuintes].' "
-            "Siga o padrão da NSCA 3-6 e do Anexo 13 OACI."
+            "Se as evidências forem insuficientes, escreva '[A determinar: causa provável pendente "
+            "de análise]' e liste as evidências disponíveis. Siga a NSCA 3-6 e o Anexo 13 OACI."
         )
     if "fator contribu" in c:
         return (
@@ -349,7 +385,9 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
         )
     if any(k in c for k in ["recomendação", "recomendações", "segurança operacional", "lista"]):
         return (
-            "Elabore recomendações de segurança operacional em lista numerada. "
+            "Elabore recomendações de segurança operacional em lista numerada, derivadas "
+            "EXCLUSIVAMENTE de fatores apurados nas fontes do caso. Se nenhum fator foi apurado, "
+            "escreva '[A definir pelo investigador após a análise]' em vez de recomendações genéricas. "
             "Para cada recomendação: (1) destinatário entre colchetes [FAB/ANAC/Operador/Piloto], "
             "(2) verbo de ação no imperativo, (3) ação específica e mensurável, "
             "(4) justificativa em uma frase. "
@@ -360,13 +398,14 @@ def _get_instruction(section_title: str, sub_title: str) -> str:
     if any(k in c for k in ["danos ao equipamento", "danos agr", "danos equip"]):
         return (
             "Descreva os danos ao equipamento agrícola (sistema de aplicação, hastes, bicos) "
-            "e à aeronave resultantes da ocorrência. Para campos não informados, use 'A verificar'."
+            "e à aeronave conforme as fontes do caso. Para itens não informados, use '[A verificar]'."
         )
 
     return (
-        f"Preencha a seção '{sub_title}' do relatório SIPAER com base nos dados da ocorrência "
-        "e nos exemplos de relatórios similares fornecidos. "
-        "Use linguagem técnica impessoal e objetiva. Seja específico e factual."
+        f"Preencha a seção '{sub_title}' do relatório SIPAER usando somente as fontes do caso "
+        "(dados da ocorrência e trechos dos documentos). Os relatórios similares servem apenas "
+        "de modelo de estrutura e linguagem. Use linguagem técnica impessoal e objetiva. "
+        "O que não constar das fontes deve ser marcado como '[A verificar]'."
     )
 
 
@@ -509,7 +548,10 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
                 user_prompt = (
                     f"{occurrence_summary}{documents_block}\n\n"
                     f"SEÇÃO A PREENCHER: {section.title} > {subsection.title}\n\n"
-                    f"INSTRUÇÃO: {instruction}"
+                    f"INSTRUÇÃO: {instruction}\n\n"
+                    "LEMBRETE: escreva apenas fatos presentes nos DADOS DA OCORRÊNCIA e nos TRECHOS DOS "
+                    "DOCUMENTOS acima. Não complete lacunas, não afirme ausências não relatadas e não "
+                    "estime valores — marque com [A verificar: …]."
                 )
 
                 try:
@@ -517,7 +559,8 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
                         [
                             {"role": "system", "content": system},
                             {"role": "user", "content": user_prompt},
-                        ]
+                        ],
+                        temperature=GENERATION_TEMPERATURE,
                     )
                 except Exception:
                     logger.warning(
