@@ -45,7 +45,7 @@ export function ProjectWorkspace({ projectId, scope }: Props) {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-muted-foreground/50 text-sm">
+      <div className="flex flex-1 items-center justify-center text-muted-foreground dark:text-muted-foreground/50 text-sm">
         Carregando projeto…
       </div>
     );
@@ -54,7 +54,7 @@ export function ProjectWorkspace({ projectId, scope }: Props) {
   if (notFound || !project) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <p className="text-muted-foreground/60 text-sm">Projeto não encontrado.</p>
+        <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm">Projeto não encontrado.</p>
         <Button variant="outline" onClick={() => router.push(backHref)}>
           Voltar
         </Button>
@@ -84,7 +84,7 @@ export function ProjectWorkspace({ projectId, scope }: Props) {
         <button
           onClick={() => router.push(backHref)}
           title="Voltar"
-          className="p-1.5 rounded-lg hover:bg-muted/40 text-muted-foreground/60 hover:text-foreground transition-all"
+          className="p-1.5 rounded-lg hover:bg-muted/40 text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -97,7 +97,7 @@ export function ProjectWorkspace({ projectId, scope }: Props) {
         <div className="min-w-0">
           <h1 className="text-foreground font-semibold text-sm leading-none truncate">{project.name}</h1>
           {project.description && (
-            <p className="text-muted-foreground/50 text-[11px] mt-0.5 truncate">{project.description}</p>
+            <p className="text-muted-foreground dark:text-muted-foreground/50 text-[11px] mt-0.5 truncate">{project.description}</p>
           )}
         </div>
       </div>
@@ -139,14 +139,14 @@ export function ProjectWorkspace({ projectId, scope }: Props) {
                       : "hover:bg-muted/20 border border-transparent"
                   }`}
                 >
-                  <span className="text-foreground/80 text-[12px] font-medium truncate leading-tight">
+                  <span className="text-foreground dark:text-foreground/80 text-[12px] font-medium truncate leading-tight">
                     {s.title}
                   </span>
-                  <span className="text-muted-foreground/50 text-[10px] truncate">{s.preview}</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground/50 text-[10px] truncate">{s.preview}</span>
                 </button>
               ))}
               {sessions.length === 0 && (
-                <p className="text-center text-[11px] text-muted-foreground/40 py-6">
+                <p className="text-center text-[11px] text-muted-foreground dark:text-muted-foreground/40 py-6">
                   Nenhuma conversa ainda.
                 </p>
               )}

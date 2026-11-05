@@ -578,7 +578,7 @@ export default function SkillsPage() {
               <ArrowLeft className="w-3.5 h-3.5" /> Início
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Skills</h1>
-            <p className="text-muted-foreground/60 text-sm mt-0.5">
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm mt-0.5">
               Instruções reutilizáveis para o assistente. Ative no chat com o seletor ou digitando{" "}
               <code className="px-1 rounded bg-muted/50 text-xs">/identificador</code>.
             </p>
@@ -587,7 +587,7 @@ export default function SkillsPage() {
             <button
               onClick={load}
               title="Atualizar"
-              className="p-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
+              className="p-2 rounded-xl border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -641,7 +641,7 @@ export default function SkillsPage() {
             ))}
           </div>
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground/60" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -658,7 +658,7 @@ export default function SkillsPage() {
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-14 text-center space-y-2">
-            <Wand2 className="w-8 h-8 mx-auto text-muted-foreground/40" />
+            <Wand2 className="w-8 h-8 mx-auto text-muted-foreground dark:text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
               {items.length === 0 ? "Nenhuma skill ainda. Crie a primeira para padronizar tarefas recorrentes." : "Nenhuma skill encontrada."}
             </p>

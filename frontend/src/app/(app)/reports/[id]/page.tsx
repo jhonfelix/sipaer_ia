@@ -207,11 +207,11 @@ function SourcesList({ sources }: { sources: GenerationSource[] }) {
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2 min-w-0">
-              <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground/50 shrink-0" />
+              <FileText className="w-3.5 h-3.5 mt-0.5 text-muted-foreground dark:text-muted-foreground/50 shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground/85 truncate">{s.title}</p>
+                <p className="text-sm font-medium text-foreground dark:text-foreground/85 truncate">{s.title}</p>
                 {s.source && s.source !== s.title && (
-                  <p className="text-xs text-muted-foreground/50 truncate">{s.source}</p>
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 truncate">{s.source}</p>
                 )}
               </div>
             </div>
@@ -222,7 +222,7 @@ function SourcesList({ sources }: { sources: GenerationSource[] }) {
             )}
           </div>
           {s.excerpt && (
-            <p className="text-xs text-muted-foreground/60 mt-2 leading-relaxed line-clamp-3">
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground/60 mt-2 leading-relaxed line-clamp-3">
               {s.excerpt}
             </p>
           )}
@@ -244,14 +244,14 @@ function SourcesDialog({ sources, onClose }: { sources: GenerationSource[]; onCl
               </div>
               <div>
                 <p className="font-semibold text-sm">Fontes consultadas pela IA</p>
-                <p className="text-muted-foreground/60 text-xs">
+                <p className="text-muted-foreground dark:text-muted-foreground/60 text-xs">
                   Relatórios similares usados como referência para gerar este documento.
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-muted-foreground/50 hover:text-foreground transition-colors"
+              className="text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground transition-colors"
               aria-label="Fechar"
             >
               <X className="w-4 h-4" />
@@ -345,7 +345,7 @@ function GenerationProgressModal({ report }: { report: Report }) {
                     <p className={`text-sm font-medium truncate ${done || active ? "text-foreground" : "text-muted-foreground"}`}>
                       {s.title}
                     </p>
-                    <p className="text-xs text-muted-foreground/60 truncate">{s.sectionTitle}</p>
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground/60 truncate">{s.sectionTitle}</p>
                   </div>
                 </div>
               );
@@ -354,7 +354,7 @@ function GenerationProgressModal({ report }: { report: Report }) {
 
           {!!report.generationSources?.length && (
             <div className="space-y-2 pt-2 border-t border-border/50">
-              <p className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground/70 uppercase tracking-wide">
                 Fontes consultadas
               </p>
               <SourcesList sources={report.generationSources} />

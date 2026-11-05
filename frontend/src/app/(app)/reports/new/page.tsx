@@ -857,14 +857,14 @@ function StepBar({ current }: { current: number }) {
                     ? "bg-blue-600 text-white"
                     : active
                     ? "bg-blue-600/20 border-2 border-blue-500 text-blue-400"
-                    : "bg-muted/30 border border-border/60 text-muted-foreground/30"
+                    : "bg-muted/30 border border-border/60 text-muted-foreground dark:text-muted-foreground/30"
                 }`}
               >
                 {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
               </div>
               <span
                 className={`text-[11px] font-medium whitespace-nowrap ${
-                  active ? "text-blue-400" : done ? "text-muted-foreground/70" : "text-muted-foreground/30"
+                  active ? "text-blue-400" : done ? "text-muted-foreground dark:text-muted-foreground/70" : "text-muted-foreground dark:text-muted-foreground/30"
                 }`}
               >
                 {label}
@@ -898,8 +898,8 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
         className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>
-          <span className="text-foreground/80 font-medium">{sections.length}</span> seções ·{" "}
-          <span className="text-foreground/80 font-medium">{total}</span> subseções
+          <span className="text-foreground dark:text-foreground/80 font-medium">{sections.length}</span> seções ·{" "}
+          <span className="text-foreground dark:text-foreground/80 font-medium">{total}</span> subseções
           {agro && (
             <span className="ml-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
               + Aeroagrícola
@@ -912,10 +912,10 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
         <ul className="border-t border-border/50 max-h-64 overflow-y-auto divide-y divide-border/40">
           {sections.map((sec) => (
             <li key={sec.id} className="px-4 py-2.5">
-              <p className="text-foreground/80 text-xs font-medium">{sec.title}</p>
+              <p className="text-foreground dark:text-foreground/80 text-xs font-medium">{sec.title}</p>
               <ul className="mt-1 space-y-0.5">
                 {sec.subsections.map((sub) => (
-                  <li key={sub.id} className="flex items-center gap-1.5 text-muted-foreground/60 text-xs pl-3">
+                  <li key={sub.id} className="flex items-center gap-1.5 text-muted-foreground dark:text-muted-foreground/60 text-xs pl-3">
                     <span className="w-1 h-1 rounded-full bg-muted-foreground/30 shrink-0" />
                     {sub.title}
                   </li>
@@ -937,14 +937,14 @@ function SectionPreview({ sections, agro }: { sections: SectionDef[]; agro: bool
 
 // shared field styles
 const inputCls =
-  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
 const selectCls =
   "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all";
 const textareaCls =
-  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all resize-y min-h-[110px] leading-relaxed";
-const labelCls = "block text-xs text-muted-foreground/60 font-medium mb-1.5";
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all resize-y min-h-[110px] leading-relaxed";
+const labelCls = "block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5";
 const sectionHeadCls =
-  "flex items-center gap-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-widest mb-4 mt-6 first:mt-0";
+  "flex items-center gap-2 text-xs font-semibold text-muted-foreground dark:text-muted-foreground/70 uppercase tracking-widest mb-4 mt-6 first:mt-0";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Page
@@ -1046,14 +1046,14 @@ export default function NewReportPage() {
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link
           href="/reports"
-          className="inline-flex items-center gap-1.5 text-muted-foreground/50 hover:text-muted-foreground text-sm mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-muted-foreground dark:text-muted-foreground/50 hover:text-muted-foreground text-sm mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para relatórios
         </Link>
 
         <h1 className="text-2xl font-bold text-foreground mb-1">Novo Relatório</h1>
-        <p className="text-muted-foreground/60 text-sm mb-8">
+        <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm mb-8">
           Preencha as etapas abaixo para configurar a estrutura do documento.
         </p>
 
@@ -1088,9 +1088,9 @@ export default function NewReportPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-foreground font-semibold text-sm">{dt.label}</span>
-                      <span className="text-muted-foreground/50 text-xs">— {dt.full}</span>
+                      <span className="text-muted-foreground dark:text-muted-foreground/50 text-xs">— {dt.full}</span>
                     </div>
-                    <p className="text-muted-foreground/60 text-xs mt-1 leading-relaxed">{dt.desc}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/60 text-xs mt-1 leading-relaxed">{dt.desc}</p>
                   </div>
                   <div
                     className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 transition-all ${
@@ -1126,10 +1126,10 @@ export default function NewReportPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-foreground font-semibold">{opt.label}</span>
                     </div>
-                    <p className="text-muted-foreground/60 text-sm leading-relaxed mb-3">{opt.desc}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm leading-relaxed mb-3">{opt.desc}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {opt.tags.map((tag) => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground/60 border border-border/60">
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-md bg-muted/30 text-muted-foreground dark:text-muted-foreground/60 border border-border/60">
                           {tag}
                         </span>
                       ))}
@@ -1165,8 +1165,8 @@ export default function NewReportPage() {
                   <User2 className="w-4 h-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-foreground/80 font-medium text-sm">Investigador Responsável</p>
-                  <p className="text-muted-foreground/50 text-xs">Responsável pela elaboração deste documento.</p>
+                  <p className="text-foreground dark:text-foreground/80 font-medium text-sm">Investigador Responsável</p>
+                  <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs">Responsável pela elaboração deste documento.</p>
                 </div>
               </div>
               <select
@@ -1202,8 +1202,8 @@ export default function NewReportPage() {
                     <Tractor className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-foreground/80 font-medium text-sm">Aeronave Aeroagrícola</p>
-                    <p className="text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
+                    <p className="text-foreground dark:text-foreground/80 font-medium text-sm">Aeronave Aeroagrícola</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
                       Adiciona seções específicas para operações agrícolas: sistema de
                       aplicação, calda fitossanitária, RBAC 137, área de tratamento,
                       FISPQ e conformidade normativa.
@@ -1244,10 +1244,10 @@ export default function NewReportPage() {
                     <Database className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-foreground/80 font-medium text-sm">
+                    <p className="text-foreground dark:text-foreground/80 font-medium text-sm">
                       Importar dados do sistema Dédalo
                     </p>
-                    <p className="text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
+                    <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs mt-0.5 leading-relaxed">
                       Pré-preenche os dados da ocorrência automaticamente a partir do número
                       de registro no Dédalo (CENIPA).
                     </p>
@@ -1280,14 +1280,14 @@ export default function NewReportPage() {
                     <Database className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-foreground/80 font-medium text-sm">Sistema Dédalo — CENIPA</p>
-                    <p className="text-muted-foreground/50 text-xs">Informe o número da ocorrência para importação automática dos dados.</p>
+                    <p className="text-foreground dark:text-foreground/80 font-medium text-sm">Sistema Dédalo — CENIPA</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs">Informe o número da ocorrência para importação automática dos dados.</p>
                   </div>
                 </div>
                 <div>
                   <label className={labelCls}>Número da Ocorrência no Dédalo</label>
                   <div className="relative">
-                    <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                    <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground/40" />
                     <input
                       type="text"
                       value={form.number}
@@ -1331,7 +1331,7 @@ export default function NewReportPage() {
                     <div>
                       <label className={labelCls}>Número da Ocorrência</label>
                       <div className="relative">
-                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40" />
+                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/40" />
                         <input
                           type="text"
                           value={form.number}
@@ -1374,7 +1374,7 @@ export default function NewReportPage() {
                     <div>
                       <label className={labelCls}>Data <span className="text-red-400">*</span></label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/40 pointer-events-none" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/40 pointer-events-none" />
                         <input
                           type="date"
                           value={form.date}
@@ -1531,7 +1531,7 @@ export default function NewReportPage() {
 
                   <div>
                     <label className={labelCls}>
-                      <AlertTriangle className="w-3 h-3 inline mr-1 -mt-0.5 text-muted-foreground/50" />
+                      <AlertTriangle className="w-3 h-3 inline mr-1 -mt-0.5 text-muted-foreground dark:text-muted-foreground/50" />
                       Descrição do Obstáculo
                     </label>
                     <input
@@ -1636,10 +1636,10 @@ export default function NewReportPage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border bg-muted/10">
-                        <th className="text-left px-4 py-2.5 text-muted-foreground/60 font-medium">Situação</th>
-                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Tripulação</th>
-                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Passageiros</th>
-                        <th className="text-center px-3 py-2.5 text-muted-foreground/60 font-medium">Terceiros</th>
+                        <th className="text-left px-4 py-2.5 text-muted-foreground dark:text-muted-foreground/60 font-medium">Situação</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground dark:text-muted-foreground/60 font-medium">Tripulação</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground dark:text-muted-foreground/60 font-medium">Passageiros</th>
+                        <th className="text-center px-3 py-2.5 text-muted-foreground dark:text-muted-foreground/60 font-medium">Terceiros</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/40">
@@ -1650,7 +1650,7 @@ export default function NewReportPage() {
                         { label: "Fatais", crewKey: "crewFatal", paxKey: "paxFatal", thirdKey: "thirdFatal" },
                       ].map((row) => (
                         <tr key={row.label} className="hover:bg-muted/10 transition-colors">
-                          <td className="px-4 py-2.5 text-muted-foreground/70">{row.label}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground dark:text-muted-foreground/70">{row.label}</td>
                           <td className="px-3 py-2">
                             <input
                               type="number"
@@ -1682,7 +1682,7 @@ export default function NewReportPage() {
                                 placeholder="0"
                               />
                             ) : (
-                              <span className="block text-center text-muted-foreground/30">—</span>
+                              <span className="block text-center text-muted-foreground dark:text-muted-foreground/30">—</span>
                             )}
                           </td>
                         </tr>
@@ -1707,7 +1707,7 @@ export default function NewReportPage() {
                     className={textareaCls}
                     rows={6}
                   />
-                  <p className="text-muted-foreground/50 text-xs mt-1.5">
+                  <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs mt-1.5">
                     Informação decisiva para a geração assistida por IA das demais seções do relatório.
                   </p>
                 </div>
@@ -1725,29 +1725,29 @@ export default function NewReportPage() {
 
             <div className="rounded-2xl border border-border bg-muted/10 divide-y divide-border/40">
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-muted-foreground/60 text-xs">Tipo de documento</span>
+                <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Tipo de documento</span>
                 <div className="flex items-center gap-2">
                   <selectedDoc.icon className="w-4 h-4" style={{ color: selectedDoc.color }} />
-                  <span className="text-foreground/80 text-sm font-medium">{selectedDoc.label}</span>
+                  <span className="text-foreground dark:text-foreground/80 text-sm font-medium">{selectedDoc.label}</span>
                 </div>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-muted-foreground/60 text-xs">Escopo</span>
-                <span className="text-foreground/80 text-sm font-medium">{selectedScope.label}</span>
+                <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Escopo</span>
+                <span className="text-foreground dark:text-foreground/80 text-sm font-medium">{selectedScope.label}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-muted-foreground/60 text-xs">Investigador responsável</span>
-                <span className="text-foreground/80 text-sm">{investigator}</span>
+                <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Investigador responsável</span>
+                <span className="text-foreground dark:text-foreground/80 text-sm">{investigator}</span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-muted-foreground/60 text-xs">Aviação Aeroagrícola</span>
-                <span className={`text-sm font-medium ${isAgro ? "text-emerald-400" : "text-muted-foreground/40"}`}>
+                <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Aviação Aeroagrícola</span>
+                <span className={`text-sm font-medium ${isAgro ? "text-emerald-400" : "text-muted-foreground dark:text-muted-foreground/40"}`}>
                   {isAgro ? "Sim — seções específicas incluídas" : "Não"}
                 </span>
               </div>
               <div className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-muted-foreground/60 text-xs">Dados da ocorrência</span>
-                <span className="text-foreground/80 text-sm">
+                <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Dados da ocorrência</span>
+                <span className="text-foreground dark:text-foreground/80 text-sm">
                   {useDedalo
                     ? `Dédalo${form.number ? ` — ${form.number}` : " (sem número)"}`
                     : form.number
@@ -1757,46 +1757,46 @@ export default function NewReportPage() {
               </div>
               {!useDedalo && (form.date || form.classification) && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs">Data / Classificação</span>
-                  <span className="text-foreground/75 text-sm">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Data / Classificação</span>
+                  <span className="text-foreground dark:text-foreground/75 text-sm">
                     {[form.date, CLASSIFICATION_OPTIONS.find(c => c.value === form.classification)?.label].filter(Boolean).join(" · ")}
                   </span>
                 </div>
               )}
               {!useDedalo && form.occurrenceType && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs">Tipo da Ocorrência</span>
-                  <span className="text-foreground/75 text-sm font-mono text-xs">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Tipo da Ocorrência</span>
+                  <span className="text-foreground dark:text-foreground/75 text-sm font-mono text-xs">
                     {form.occurrenceType}
                   </span>
                 </div>
               )}
               {!useDedalo && form.acRegistration && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs">Aeronave</span>
-                  <span className="text-foreground/75 text-sm font-mono">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Aeronave</span>
+                  <span className="text-foreground dark:text-foreground/75 text-sm font-mono">
                     {[form.acRegistration, form.acModel].filter(Boolean).join(" · ")}
                   </span>
                 </div>
               )}
               {!useDedalo && (form.flightPhase || form.weatherCondition) && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs">Fase / Meteorologia</span>
-                  <span className="text-foreground/75 text-sm">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Fase / Meteorologia</span>
+                  <span className="text-foreground dark:text-foreground/75 text-sm">
                     {[form.flightPhase, form.weatherCondition].filter(Boolean).join(" · ")}
                   </span>
                 </div>
               )}
               {!useDedalo && form.obstacleType && (
                 <div className="flex items-center justify-between px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs">Obstáculo</span>
-                  <span className="text-foreground/75 text-sm">{form.obstacleType}</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Obstáculo</span>
+                  <span className="text-foreground dark:text-foreground/75 text-sm">{form.obstacleType}</span>
                 </div>
               )}
               {!useDedalo && form.narrative && (
                 <div className="px-5 py-3.5">
-                  <span className="text-muted-foreground/60 text-xs block mb-1.5">Histórico da Ocorrência</span>
-                  <p className="text-foreground/75 text-sm leading-relaxed line-clamp-3">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs block mb-1.5">Histórico da Ocorrência</span>
+                  <p className="text-foreground dark:text-foreground/75 text-sm leading-relaxed line-clamp-3">
                     {form.narrative}
                   </p>
                 </div>
@@ -1820,7 +1820,7 @@ export default function NewReportPage() {
             type="button"
             onClick={() => setStep((s) => s - 1)}
             disabled={step === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 disabled:opacity-0 disabled:pointer-events-none text-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:border-border/80 disabled:opacity-0 disabled:pointer-events-none text-sm transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar

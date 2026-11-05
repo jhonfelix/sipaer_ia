@@ -31,13 +31,13 @@ export function ProjectsSection({ scope, basePath, activeProjectId }: Props) {
   return (
     <div className="px-2 pt-1 pb-1">
       <div className="flex items-center justify-between px-1.5 mb-1.5">
-        <p className="text-muted-foreground/40 text-[9px] uppercase tracking-[0.12em] font-semibold">
+        <p className="text-muted-foreground dark:text-muted-foreground/40 text-[9px] uppercase tracking-[0.12em] font-semibold">
           Projetos
         </p>
         <button
           onClick={() => setDialogOpen(true)}
           title="Novo projeto"
-          className="p-0.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/40 transition-all"
+          className="p-0.5 rounded-md text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground hover:bg-muted/40 transition-all"
         >
           <Plus className="w-3 h-3" />
         </button>
@@ -55,7 +55,7 @@ export function ProjectsSection({ scope, basePath, activeProjectId }: Props) {
               className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
                 active
                   ? "bg-muted/40 text-foreground border border-border/60"
-                  : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/25 border border-transparent"
+                  : "text-muted-foreground dark:text-muted-foreground/70 hover:text-foreground hover:bg-muted/25 border border-transparent"
               }`}
             >
               <span
@@ -72,7 +72,7 @@ export function ProjectsSection({ scope, basePath, activeProjectId }: Props) {
         {projects.length === 0 && (
           <button
             onClick={() => setDialogOpen(true)}
-            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/20 transition-all"
+            className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-muted-foreground dark:text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/20 transition-all"
           >
             Criar primeiro projeto…
           </button>

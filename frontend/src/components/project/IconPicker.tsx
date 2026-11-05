@@ -24,7 +24,7 @@ export function IconPicker({ value, color, onChange }: Props) {
               "aspect-square rounded-lg flex items-center justify-center border transition-all",
               active
                 ? "border-transparent"
-                : "border-border/60 hover:bg-muted/40 text-muted-foreground/70"
+                : "border-border/60 hover:bg-muted/40 text-muted-foreground dark:text-muted-foreground/70"
             )}
             style={active ? { backgroundColor: `${color}22`, color } : undefined}
           >

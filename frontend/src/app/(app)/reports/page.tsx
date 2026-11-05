@@ -101,7 +101,7 @@ function EmptyState() {
       </div>
       <div className="text-center space-y-1">
         <p className="text-muted-foreground font-medium">Nenhum relatório encontrado</p>
-        <p className="text-muted-foreground/60 text-sm">
+        <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm">
           Crie o primeiro relatório de ocorrência aeronáutica.
         </p>
       </div>
@@ -163,13 +163,13 @@ export default function ReportsListPage() {
 
         {/* ── Search ─────────────────────────────────────────── */}
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-muted-foreground/50" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por ID ou status..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/50 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/50 transition-all"
           />
         </div>
 
@@ -215,8 +215,8 @@ export default function ReportsListPage() {
                             Relatório #{report.id}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <Calendar className="w-3 h-3 text-muted-foreground/50" />
-                            <span className="text-muted-foreground/60 text-xs">
+                            <Calendar className="w-3 h-3 text-muted-foreground dark:text-muted-foreground/50" />
+                            <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">
                               Criado em{" "}
                               {report.createdAt.toLocaleDateString("pt-BR")}
                             </span>
@@ -236,7 +236,7 @@ export default function ReportsListPage() {
                     </div>
 
                     {/* Updated at */}
-                    <div className="text-muted-foreground/60 text-xs">
+                    <div className="text-muted-foreground dark:text-muted-foreground/60 text-xs">
                       {report.updatedAt.toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "short",
@@ -261,7 +261,7 @@ export default function ReportsListPage() {
 
             {/* Footer count */}
             <div className="px-5 py-3 border-t border-border bg-muted/10 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground/60">
+              <span className="text-xs text-muted-foreground dark:text-muted-foreground/60">
                 {filtered.length} relatório{filtered.length !== 1 ? "s" : ""}
                 {search && ` encontrado${filtered.length !== 1 ? "s" : ""}`}
               </span>

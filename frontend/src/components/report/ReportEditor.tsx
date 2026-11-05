@@ -607,7 +607,7 @@ export function ReportEditor({
           </Button>
 
           {/* Suggestion hint indicator 
-          <div className="absolute bottom-4 right-16 flex items-center gap-2 text-[10px] text-muted-foreground/60 pointer-events-none select-none">
+          <div className="absolute bottom-4 right-16 flex items-center gap-2 text-[10px] text-muted-foreground dark:text-muted-foreground/60 pointer-events-none select-none">
             <Lightbulb className="w-3 h-3" />
             Sugestões IA ativas
           </div>

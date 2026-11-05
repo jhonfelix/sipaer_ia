@@ -74,8 +74,8 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
         >
           <div className="flex flex-col items-center gap-3">
             <Upload className={`w-8 h-8 transition-colors ${drag ? "text-violet-400" : "text-muted-foreground group-hover:text-violet-400"}`} />
-            <p className="text-foreground/70 font-medium">Arraste o arquivo ou clique para selecionar</p>
-            <p className="text-muted-foreground/60 text-sm">WAV · MP3 · OGG · M4A · FLAC — até 300 MB</p>
+            <p className="text-foreground dark:text-foreground/70 font-medium">Arraste o arquivo ou clique para selecionar</p>
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm">WAV · MP3 · OGG · M4A · FLAC — até 300 MB</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 text-left">
@@ -89,7 +89,7 @@ function UploadZone({ onFile }: { onFile: (f: File) => void }) {
             return (
               <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-border/70">
                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-400/15 flex items-center justify-center shrink-0"><I className="w-4 h-4 text-violet-400" /></div>
-                <div><p className="text-foreground/80 text-sm font-medium" dangerouslySetInnerHTML={{ __html: s.label }} /><p className="text-muted-foreground/70 text-xs">{s.sub}</p></div>
+                <div><p className="text-foreground dark:text-foreground/80 text-sm font-medium" dangerouslySetInnerHTML={{ __html: s.label }} /><p className="text-muted-foreground dark:text-muted-foreground/70 text-xs">{s.sub}</p></div>
               </div>
             );
           })}
@@ -134,7 +134,7 @@ function ProcessingView({ fileName }: { fileName: string }) {
               <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${i < step ? "bg-emerald-500/20" : i === step ? "bg-violet-500/20" : "bg-muted"}`}>
                 {i < step ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : i === step ? <RefreshCw className="w-3 h-3 text-violet-400 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />}
               </div>
-              <div><p className={`text-sm font-medium ${i <= step ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p><p className="text-xs text-muted-foreground/60 font-mono">{s.detail}</p></div>
+              <div><p className={`text-sm font-medium ${i <= step ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p><p className="text-xs text-muted-foreground dark:text-muted-foreground/60 font-mono">{s.detail}</p></div>
             </div>
           ))}
         </div>
@@ -236,7 +236,7 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
                 <div key={i} className="absolute top-0 bottom-0 w-px bg-foreground/20" style={{ left: `${duration ? (t.start / duration) * 100 : 0}%` }} />
               ))}
             </div>
-            <span className="text-muted-foreground/60 text-xs font-mono w-14 text-right">{formatTime(duration)}</span>
+            <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono w-14 text-right">{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -245,9 +245,9 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
           <div className="rounded-xl border border-violet-400/20 bg-violet-500/[0.03] overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-4 border-b border-violet-400/15">
               <div className="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-400/30 flex items-center justify-center"><Sparkles className="w-4 h-4 text-violet-400" /></div>
-              <div><p className="text-foreground font-semibold text-sm">Resumo do diálogo</p><p className="text-muted-foreground/70 text-xs font-mono">Interpretação por IA · gpt-oss-120b</p></div>
+              <div><p className="text-foreground font-semibold text-sm">Resumo do diálogo</p><p className="text-muted-foreground dark:text-muted-foreground/70 text-xs font-mono">Interpretação por IA · gpt-oss-120b</p></div>
             </div>
-            <div className="p-5"><p className="text-foreground/80 text-sm leading-relaxed">{analysis.summary}</p></div>
+            <div className="p-5"><p className="text-foreground dark:text-foreground/80 text-sm leading-relaxed">{analysis.summary}</p></div>
           </div>
         )}
 
@@ -263,8 +263,8 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`w-2 h-2 rounded-full ${st.dot}`} />
                       <span className={`text-sm font-semibold ${st.text}`}>{sp.role}</span>
-                      <span className="text-muted-foreground/60 text-xs font-mono">{sp.id}</span>
-                      <span className="ml-auto text-xs text-muted-foreground/70 font-mono">{sp.confidence}%</span>
+                      <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">{sp.id}</span>
+                      <span className="ml-auto text-xs text-muted-foreground dark:text-muted-foreground/70 font-mono">{sp.confidence}%</span>
                     </div>
                     <div className="h-1 bg-muted rounded-full overflow-hidden mb-2"><div className={`h-full rounded-full ${st.dot}`} style={{ width: `${sp.confidence}%` }} /></div>
                     <p className="text-muted-foreground text-xs leading-relaxed">{sp.reason}</p>
@@ -277,7 +277,7 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
 
         {/* Transcrição / timeline */}
         <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border"><Clock className="w-4 h-4 text-violet-400" /><span className="text-foreground text-sm font-medium">Transcrição — linha do tempo</span><span className="text-muted-foreground/60 text-xs font-mono">{turns.length} trechos</span></div>
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-border"><Clock className="w-4 h-4 text-violet-400" /><span className="text-foreground text-sm font-medium">Transcrição — linha do tempo</span><span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">{turns.length} trechos</span></div>
           <div className="divide-y divide-border/60">
             {turns.length === 0 && (
               <div className="p-6 text-center text-muted-foreground text-sm">{text || "Nenhuma fala detectada no áudio."}</div>
@@ -296,11 +296,11 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${st.bg} ${st.border} border ${st.text}`}>{t.role}</span>
-                      <span className="text-muted-foreground/60 text-xs font-mono">{t.speaker}</span>
-                      <span className="text-muted-foreground/50 text-xs font-mono">{formatTime(t.start)} – {formatTime(t.end)}</span>
+                      <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">{t.speaker}</span>
+                      <span className="text-muted-foreground dark:text-muted-foreground/50 text-xs font-mono">{formatTime(t.start)} – {formatTime(t.end)}</span>
                       {stress && <span className={`ml-auto flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] ${stressStyle(stress.level).bg} ${stressStyle(stress.level).text}`}><Gauge className="w-3 h-3" />Stress {stressStyle(stress.level).label}</span>}
                     </div>
-                    <p className={`text-sm leading-relaxed ${active ? "text-foreground" : "text-foreground/75"}`}>{t.text}</p>
+                    <p className={`text-sm leading-relaxed ${active ? "text-foreground" : "text-foreground dark:text-foreground/75"}`}>{t.text}</p>
                   </div>
                 </button>
               );
@@ -317,7 +317,7 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
                 {analysis.keyFacts.map((k, i) => (
                   <div key={i} className="flex gap-3">
                     <span className="shrink-0 px-2 py-0.5 h-fit rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">{k.time}</span>
-                    <p className="text-foreground/75 text-sm leading-relaxed">{k.fact}</p>
+                    <p className="text-foreground dark:text-foreground/75 text-sm leading-relaxed">{k.fact}</p>
                   </div>
                 ))}
               </div>
@@ -342,7 +342,7 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
         {/* Stress markers (visão consolidada) */}
         {analysis.stress.length > 0 && (
           <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border"><Activity className="w-4 h-4 text-red-400" /><span className="text-foreground text-sm font-medium">Indicadores de stress / urgência</span><span className="text-muted-foreground/50 text-xs">(inferidos do texto)</span></div>
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border"><Activity className="w-4 h-4 text-red-400" /><span className="text-foreground text-sm font-medium">Indicadores de stress / urgência</span><span className="text-muted-foreground dark:text-muted-foreground/50 text-xs">(inferidos do texto)</span></div>
             <div className="divide-y divide-border/60">
               {analysis.stress.map((s, i) => {
                 const isExp = expanded === `st${i}`;
@@ -351,10 +351,10 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
                   <div key={i}>
                     <button onClick={() => setExpanded(isExp ? null : `st${i}`)} className="w-full flex items-center gap-3 p-3 text-left hover:bg-muted/30 transition-colors">
                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${ss.bg} ${ss.text}`}>{ss.label}</span>
-                      <span className="text-muted-foreground/60 text-xs font-mono">{formatTime(s.start)} – {formatTime(s.end)}</span>
-                      {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground/60 ml-auto" /> : <ChevronDown className="w-4 h-4 text-muted-foreground/60 ml-auto" />}
+                      <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">{formatTime(s.start)} – {formatTime(s.end)}</span>
+                      {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/60 ml-auto" /> : <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/60 ml-auto" />}
                     </button>
-                    {isExp && <div className="px-4 pb-3"><p className="text-foreground/65 text-xs leading-relaxed">{s.reason}</p></div>}
+                    {isExp && <div className="px-4 pb-3"><p className="text-foreground dark:text-foreground/65 text-xs leading-relaxed">{s.reason}</p></div>}
                   </div>
                 );
               })}
@@ -362,7 +362,7 @@ function AnalysisView({ result, file, audioUrl, onReset }: {
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-muted-foreground/50 text-xs font-mono">
+        <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/50 text-xs font-mono">
           <Clock className="w-3 h-3" /><span>Transcrição Whisper + análise IA — gerada em {new Date().toLocaleString("pt-BR")} · SIPAER AI LabData</span>
         </div>
       </div>
@@ -403,7 +403,7 @@ export default function AudioAnalysisPage() {
     <div className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-3 border-b border-border">
         <Link href="/labdata" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground/70 text-xs transition-colors"><ArrowLeft className="w-3.5 h-3.5" />LabData</Link>
-        <span className="text-muted-foreground/40">/</span>
+        <span className="text-muted-foreground dark:text-muted-foreground/40">/</span>
         <span className="text-violet-400 text-xs font-medium">Transcrição &amp; Análise de Áudio</span>
       </div>
       {stage === "upload" && <UploadZone onFile={handleFile} />}

@@ -78,7 +78,7 @@ export default function LabDataHubPage() {
             <div className="flex justify-center">
               <div className="relative">
                 <div className="w-16 h-16 rounded-2xl bg-muted border border-border flex items-center justify-center">
-                  <AudioLines className="w-8 h-8 text-foreground/80" />
+                  <AudioLines className="w-8 h-8 text-foreground dark:text-foreground/80" />
                 </div>
                 <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center">
                   <Cpu className="w-3 h-3 text-cyan-400" />
@@ -199,7 +199,7 @@ export default function LabDataHubPage() {
           </div>
 
           {/* Footer note */}
-          <p className="text-center text-muted-foreground/40 text-xs">
+          <p className="text-center text-muted-foreground dark:text-muted-foreground/40 text-xs">
             Todas as análises são realizadas localmente. Os dados não saem do ambiente seguro CENIPA.
           </p>
         </div>

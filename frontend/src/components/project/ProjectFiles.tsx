@@ -33,7 +33,7 @@ function StatusBadge({ doc }: { doc: ProjectDocument }) {
     );
   }
   return (
-    <span className="flex items-center gap-1 text-[11px] text-muted-foreground/60">
+    <span className="flex items-center gap-1 text-[11px] text-muted-foreground dark:text-muted-foreground/60">
       <Loader2 className="w-3 h-3 animate-spin" /> Indexando…
     </span>
   );
@@ -118,10 +118,10 @@ export function ProjectFiles({ projectId }: Props) {
             <Upload className="w-5 h-5 text-blue-400" />
           )}
         </div>
-        <p className="text-sm text-foreground/80 font-medium">
+        <p className="text-sm text-foreground dark:text-foreground/80 font-medium">
           {uploading ? "Enviando…" : "Solte arquivos ou clique para enviar"}
         </p>
-        <p className="text-[11px] text-muted-foreground/50">PDF · DOCX · TXT — disponíveis para todas as conversas</p>
+        <p className="text-[11px] text-muted-foreground dark:text-muted-foreground/50">PDF · DOCX · TXT — disponíveis para todas as conversas</p>
       </div>
 
       <input
@@ -150,21 +150,21 @@ export function ProjectFiles({ projectId }: Props) {
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-muted/20 border border-border/50 group"
           >
             <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center shrink-0">
-              <FileText className="w-4 h-4 text-muted-foreground/60" />
+              <FileText className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/60" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-foreground/85 font-medium truncate">
+              <p className="text-[13px] text-foreground dark:text-foreground/85 font-medium truncate">
                 {doc.originalName ?? doc.title}
               </p>
               <div className="flex items-center gap-3">
-                <span className="text-[11px] text-muted-foreground/50">{formatSize(doc.sizeBytes)}</span>
+                <span className="text-[11px] text-muted-foreground dark:text-muted-foreground/50">{formatSize(doc.sizeBytes)}</span>
                 <StatusBadge doc={doc} />
               </div>
             </div>
             <button
               onClick={() => remove(doc.id)}
               title="Remover arquivo"
-              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground/50 hover:text-destructive transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground dark:text-muted-foreground/50 hover:text-destructive transition-all"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -172,7 +172,7 @@ export function ProjectFiles({ projectId }: Props) {
         ))}
 
         {docs.length === 0 && (
-          <p className="text-center text-xs text-muted-foreground/40 py-6">
+          <p className="text-center text-xs text-muted-foreground dark:text-muted-foreground/40 py-6">
             Nenhum arquivo neste projeto ainda.
           </p>
         )}

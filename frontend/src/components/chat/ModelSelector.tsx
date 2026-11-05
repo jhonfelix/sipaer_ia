@@ -54,7 +54,7 @@ export function ModelSelector({ value, onChange }: Props) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 hover:border-border/80 text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all">
+        <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border hover:bg-muted/50 hover:border-border/80 text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all">
           <span className={`w-1.5 h-1.5 rounded-full ${selected.dot} shrink-0`} />
           <span>{selected.shortName}</span>
           <ChevronDown
@@ -68,7 +68,7 @@ export function ModelSelector({ value, onChange }: Props) {
         sideOffset={8}
         className="w-[280px] p-2 bg-popover border border-border shadow-2xl shadow-black/30 rounded-xl"
       >
-        <p className="text-muted-foreground/40 text-[9px] uppercase tracking-[0.12em] font-semibold px-2 pb-2">
+        <p className="text-muted-foreground dark:text-muted-foreground/40 text-[9px] uppercase tracking-[0.12em] font-semibold px-2 pb-2">
           Modelo de IA
         </p>
         <div className="space-y-0.5">
@@ -96,14 +96,14 @@ export function ModelSelector({ value, onChange }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-foreground/90 text-[13px] font-medium">{model.name}</span>
+                    <span className="text-foreground dark:text-foreground/90 text-[13px] font-medium">{model.name}</span>
                     <span
                       className={`text-[9px] px-1.5 py-0.5 rounded-md ${model.iconBg} ${model.iconText} font-semibold uppercase tracking-wide`}
                     >
                       {model.badge}
                     </span>
                   </div>
-                  <p className="text-muted-foreground/60 text-[11px] mt-0.5">{model.description}</p>
+                  <p className="text-muted-foreground dark:text-muted-foreground/60 text-[11px] mt-0.5">{model.description}</p>
                 </div>
                 {active && <Check className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-1" />}
               </button>
@@ -111,8 +111,8 @@ export function ModelSelector({ value, onChange }: Props) {
           })}
         </div>
         <div className="mt-2 pt-2 border-t border-border/60 px-2">
-          <p className="text-muted-foreground/40 text-[9px] leading-relaxed">
-            Embedding e reranking sempre via <span className="text-muted-foreground/60">text-embedding</span> e <span className="text-muted-foreground/60">reranker-model</span> (RAG pipeline interno).
+          <p className="text-muted-foreground dark:text-muted-foreground/40 text-[9px] leading-relaxed">
+            Embedding e reranking sempre via <span className="text-muted-foreground dark:text-muted-foreground/60">text-embedding</span> e <span className="text-muted-foreground dark:text-muted-foreground/60">reranker-model</span> (RAG pipeline interno).
           </p>
         </div>
       </PopoverContent>

@@ -67,7 +67,7 @@ export function SkillSelector({
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all ${
           selected.length > 0
             ? "bg-violet-600/15 border-violet-500/30 text-violet-700 dark:text-violet-300"
-            : "bg-muted/30 border-border text-muted-foreground/60 hover:text-foreground"
+            : "bg-muted/30 border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground"
         }`}
       >
         <Wand2 className="w-3 h-3" />

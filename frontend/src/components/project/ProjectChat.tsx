@@ -107,8 +107,8 @@ export function ProjectChat({ projectId, scope, sessionId, onSessionCreated }: P
             <div className="w-12 h-12 rounded-2xl bg-blue-600/15 border border-blue-400/18 flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             </div>
-            <p className="text-foreground/80 text-sm font-medium">Nova conversa no projeto</p>
-            <p className="text-muted-foreground/50 text-xs max-w-xs">
+            <p className="text-foreground dark:text-foreground/80 text-sm font-medium">Nova conversa no projeto</p>
+            <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs max-w-xs">
               As instruções e os arquivos deste projeto são usados automaticamente como contexto.
             </p>
           </div>
@@ -120,7 +120,7 @@ export function ProjectChat({ projectId, scope, sessionId, onSessionCreated }: P
               msg.role === "user" ? (
                 <div key={msg.id} className="flex justify-end">
                   <div className="flex items-end gap-2.5 max-w-[80%]">
-                    <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
+                    <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground dark:text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
                       {msg.content}
                     </div>
                     <div className="w-7 h-7 rounded-full bg-blue-600/18 border border-blue-500/22 flex items-center justify-center shrink-0 mb-0.5">
@@ -138,14 +138,14 @@ export function ProjectChat({ projectId, scope, sessionId, onSessionCreated }: P
                       <MarkdownRenderer content={msg.content} />
                       {msg.sources && msg.sources.length > 0 && (
                         <div className="mt-3 pt-3 border-t border-border/50">
-                          <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">
+                          <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">
                             Fontes
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {[...new Map(msg.sources.map((s) => [s.source, s])).values()].map((s, i) => (
                               <span
                                 key={i}
-                                className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60"
+                                className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground dark:text-muted-foreground/60"
                               >
                                 {s.source} · {Math.round(s.score * 100)}%
                               </span>
@@ -198,7 +198,7 @@ export function ProjectChat({ projectId, scope, sessionId, onSessionCreated }: P
                 onKeyDown={onKeyDown}
                 placeholder="Pergunte algo neste projeto… (Enter para enviar · Shift+Enter nova linha)"
                 rows={1}
-                className="flex-1 bg-transparent text-foreground/90 placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
+                className="flex-1 bg-transparent text-foreground dark:text-foreground/90 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
                 style={{ minHeight: "32px", maxHeight: "200px" }}
               />
               <button
@@ -212,7 +212,7 @@ export function ProjectChat({ projectId, scope, sessionId, onSessionCreated }: P
             </div>
             <div className="flex items-center justify-between px-3 pb-2.5">
               <ModelSelector value={model} onChange={setModel} />
-              <p className="text-muted-foreground/40 text-[10px]">
+              <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px]">
                 A IA pode cometer erros — verifique informações críticas.
               </p>
             </div>

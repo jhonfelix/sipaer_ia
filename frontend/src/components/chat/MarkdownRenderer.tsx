@@ -19,12 +19,12 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   return (
     <div className="relative my-3 rounded-xl overflow-hidden border border-border">
       <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-border/60">
-        <span className="text-[10px] text-muted-foreground/50 font-mono uppercase tracking-wider">
+        <span className="text-[10px] text-muted-foreground dark:text-muted-foreground/50 font-mono uppercase tracking-wider">
           {language || "texto"}
         </span>
         <button
           onClick={copy}
-          className="flex items-center gap-1.5 text-[11px] text-muted-foreground/50 hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground transition-colors"
         >
           {copied ? (
             <><Check className="w-3 h-3 inline mr-1" />Copiado!</>
@@ -47,7 +47,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
       components={{
         p({ children }) {
           return (
-            <p className="text-foreground/85 text-sm leading-relaxed mb-2.5 last:mb-0">
+            <p className="text-foreground dark:text-foreground/85 text-sm leading-relaxed mb-2.5 last:mb-0">
               {children}
             </p>
           );
@@ -56,7 +56,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
           return <strong className="font-semibold text-foreground">{children}</strong>;
         },
         em({ children }) {
-          return <em className="italic text-foreground/70">{children}</em>;
+          return <em className="italic text-foreground dark:text-foreground/70">{children}</em>;
         },
         h1({ children }) {
           return (
@@ -67,14 +67,14 @@ export function MarkdownRenderer({ content }: { content: string }) {
         },
         h2({ children }) {
           return (
-            <h2 className="text-sm font-bold text-foreground/90 mt-3.5 mb-1.5 first:mt-0">
+            <h2 className="text-sm font-bold text-foreground dark:text-foreground/90 mt-3.5 mb-1.5 first:mt-0">
               {children}
             </h2>
           );
         },
         h3({ children }) {
           return (
-            <h3 className="text-sm font-semibold text-foreground/80 mt-3 mb-1 first:mt-0">
+            <h3 className="text-sm font-semibold text-foreground dark:text-foreground/80 mt-3 mb-1 first:mt-0">
               {children}
             </h3>
           );
@@ -98,7 +98,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
         li({ children }) {
           const listType = useContext(ListTypeCtx);
           return (
-            <li className="text-foreground/80 text-sm flex gap-2 items-start">
+            <li className="text-foreground dark:text-foreground/80 text-sm flex gap-2 items-start">
               {listType === "ul" && (
                 <span className="mt-[0.42em] w-1.5 h-1.5 rounded-full bg-blue-400/50 flex-none shrink-0" />
               )}
@@ -146,14 +146,14 @@ export function MarkdownRenderer({ content }: { content: string }) {
         },
         th({ children }) {
           return (
-            <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider whitespace-nowrap">
+            <th className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground/70 uppercase tracking-wider whitespace-nowrap">
               {children}
             </th>
           );
         },
         td({ children }) {
           return (
-            <td className="px-4 py-2.5 text-foreground/80 text-sm">{children}</td>
+            <td className="px-4 py-2.5 text-foreground dark:text-foreground/80 text-sm">{children}</td>
           );
         },
         pre({ children }) {

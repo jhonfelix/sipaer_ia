@@ -85,7 +85,7 @@ function formatBytes(bytes: number): string {
 }
 
 const inputCls =
-  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
+  "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all";
 
 const selectCls =
   "w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground text-sm focus:outline-none focus:border-blue-500/50 transition-all";
@@ -222,13 +222,13 @@ function AddDocumentModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
           <div>
             <h2 className="font-semibold text-foreground">Adicionar à Base de Conhecimento</h2>
-            <p className="text-muted-foreground/50 text-xs mt-0.5">
+            <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs mt-0.5">
               O conteúdo será vetorizado e indexado no pipeline RAG
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-all"
+            className="p-1.5 rounded-lg text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -251,7 +251,7 @@ function AddDocumentModal({
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${
                   tab === id
                     ? "bg-background border border-border shadow-sm text-foreground"
-                    : "text-muted-foreground/60 hover:text-muted-foreground"
+                    : "text-muted-foreground dark:text-muted-foreground/60 hover:text-muted-foreground"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -262,7 +262,7 @@ function AddDocumentModal({
 
           {/* Collection selector — always visible */}
           <div>
-            <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+            <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
               Coleção *
             </label>
             <select
@@ -282,7 +282,7 @@ function AddDocumentModal({
           {tab !== "batch" && tab !== "web" && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                   Título *
                 </label>
                 <input
@@ -293,7 +293,7 @@ function AddDocumentModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                   Fonte *
                 </label>
                 <input
@@ -309,7 +309,7 @@ function AddDocumentModal({
           {/* Batch: optional source prefix */}
           {tab === "batch" && (
             <div>
-              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                 Fonte (opcional — aplicada a todos os arquivos)
               </label>
               <input
@@ -324,7 +324,7 @@ function AddDocumentModal({
           {/* Web: optional source prefix */}
           {tab === "web" && (
             <div>
-              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                 Fonte (opcional — aplicada a todas as páginas selecionadas)
               </label>
               <input
@@ -339,7 +339,7 @@ function AddDocumentModal({
           {/* Tab content */}
           {tab === "text" && (
             <div>
-              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                 Conteúdo *
               </label>
               <textarea
@@ -347,10 +347,10 @@ function AddDocumentModal({
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Cole ou digite o texto a ser indexado..."
                 rows={7}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground/90 placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-muted/30 border border-border text-foreground dark:text-foreground/90 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm focus:outline-none focus:border-blue-500/50 focus:bg-muted/40 transition-all resize-none"
               />
               {estimatedChunks > 0 && (
-                <p className="text-muted-foreground/40 text-xs mt-1">
+                <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs mt-1">
                   {wordCount.toLocaleString("pt-BR")} palavras · ~{estimatedChunks} trechos estimados
                 </p>
               )}
@@ -359,19 +359,19 @@ function AddDocumentModal({
 
           {tab === "file" && (
             <div>
-              <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                 Arquivo *
               </label>
               {file ? (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/30 border border-border">
                   <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-foreground/90 text-sm font-medium truncate">{file.name}</p>
-                    <p className="text-muted-foreground/50 text-xs mt-0.5">{formatBytes(file.size)}</p>
+                    <p className="text-foreground dark:text-foreground/90 text-sm font-medium truncate">{file.name}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs mt-0.5">{formatBytes(file.size)}</p>
                   </div>
                   <button
                     onClick={() => setFile(null)}
-                    className="p-1 rounded-lg text-muted-foreground/50 hover:text-foreground hover:bg-muted/40 transition-all"
+                    className="p-1 rounded-lg text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground hover:bg-muted/40 transition-all"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -383,11 +383,11 @@ function AddDocumentModal({
                   className="w-full flex flex-col items-center gap-3 py-8 px-4 rounded-xl border-2 border-dashed border-border hover:border-blue-500/40 hover:bg-blue-500/[0.03] transition-all group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-muted/40 border border-border group-hover:border-blue-500/30 flex items-center justify-center transition-colors">
-                    <Upload className="w-4 h-4 text-muted-foreground/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                    <Upload className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
                   </div>
                   <div className="text-center">
-                    <p className="text-muted-foreground/70 text-sm font-medium">Selecionar arquivo</p>
-                    <p className="text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · MD · máx. 300 MB</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/70 text-sm font-medium">Selecionar arquivo</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs mt-0.5">PDF · DOCX · TXT · MD · máx. 300 MB</p>
                   </div>
                 </button>
               )}
@@ -407,7 +407,7 @@ function AddDocumentModal({
 
           {tab === "batch" && (
             <div className="space-y-3">
-              <label className="block text-xs text-muted-foreground/60 font-medium">
+              <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium">
                 Arquivos * ({batchFiles.length} selecionado{batchFiles.length !== 1 ? "s" : ""})
               </label>
 
@@ -420,13 +420,13 @@ function AddDocumentModal({
                 className="w-full flex flex-col items-center gap-3 py-6 px-4 rounded-xl border-2 border-dashed border-border hover:border-blue-500/40 hover:bg-blue-500/[0.03] transition-all group cursor-pointer"
               >
                 <div className="w-10 h-10 rounded-xl bg-muted/40 border border-border group-hover:border-blue-500/30 flex items-center justify-center transition-colors">
-                  <Layers className="w-4 h-4 text-muted-foreground/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
+                  <Layers className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors" />
                 </div>
                 <div className="text-center">
-                  <p className="text-muted-foreground/70 text-sm font-medium">
+                  <p className="text-muted-foreground dark:text-muted-foreground/70 text-sm font-medium">
                     Arraste arquivos ou clique para selecionar
                   </p>
-                  <p className="text-muted-foreground/40 text-xs mt-0.5">
+                  <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs mt-0.5">
                     PDF · DOCX · TXT · MD · máx. 300 MB por arquivo · até 50 arquivos
                   </p>
                 </div>
@@ -452,14 +452,14 @@ function AddDocumentModal({
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-muted/30 border border-border/60"
                     >
                       <FileText className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-                      <span className="flex-1 text-xs text-foreground/80 truncate">{f.name}</span>
-                      <span className="text-xs text-muted-foreground/50 shrink-0">{formatBytes(f.size)}</span>
+                      <span className="flex-1 text-xs text-foreground dark:text-foreground/80 truncate">{f.name}</span>
+                      <span className="text-xs text-muted-foreground dark:text-muted-foreground/50 shrink-0">{formatBytes(f.size)}</span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setBatchFiles((prev) => prev.filter((_, j) => j !== i));
                         }}
-                        className="p-0.5 rounded text-muted-foreground/40 hover:text-red-500 transition-colors"
+                        className="p-0.5 rounded text-muted-foreground dark:text-muted-foreground/40 hover:text-red-500 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -473,7 +473,7 @@ function AddDocumentModal({
           {tab === "web" && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-muted-foreground/60 font-medium mb-1.5">
+                <label className="block text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium mb-1.5">
                   URL da página *
                 </label>
                 <div className="flex gap-2">
@@ -493,7 +493,7 @@ function AddDocumentModal({
                     type="button"
                     onClick={handleDiscover}
                     disabled={!webUrl.trim() || discovering}
-                    className="flex items-center gap-2 px-4 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border disabled:opacity-40 disabled:cursor-not-allowed text-foreground/80 text-sm font-medium transition-all shrink-0"
+                    className="flex items-center gap-2 px-4 rounded-xl bg-muted/40 hover:bg-muted/60 border border-border disabled:opacity-40 disabled:cursor-not-allowed text-foreground dark:text-foreground/80 text-sm font-medium transition-all shrink-0"
                   >
                     {discovering ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -503,7 +503,7 @@ function AddDocumentModal({
                     Buscar links
                   </button>
                 </div>
-                <p className="text-muted-foreground/40 text-xs mt-1">
+                <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs mt-1">
                   A página informada busca todos os links encontrados nela para você escolher quais indexar.
                 </p>
               </div>
@@ -511,13 +511,13 @@ function AddDocumentModal({
               {discoverResult && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <label className="text-xs text-muted-foreground/60 font-medium">
+                    <label className="text-xs text-muted-foreground dark:text-muted-foreground/60 font-medium">
                       {visibleLinks.length} link{visibleLinks.length !== 1 ? "s" : ""} encontrado{visibleLinks.length !== 1 ? "s" : ""}
                       {" · "}
                       {selectedUrls.size} selecionada{selectedUrls.size !== 1 ? "s" : ""}
                     </label>
                     <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground/60 cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground dark:text-muted-foreground/60 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={onlySameDomain}
@@ -536,7 +536,7 @@ function AddDocumentModal({
                       <button
                         type="button"
                         onClick={() => setSelectedUrls(new Set())}
-                        className="text-xs text-muted-foreground/50 hover:text-foreground transition-colors"
+                        className="text-xs text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground transition-colors"
                       >
                         Limpar
                       </button>
@@ -553,13 +553,13 @@ function AddDocumentModal({
                         className="mt-0.5 accent-blue-600 shrink-0"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-foreground/90 text-xs font-medium truncate">
+                        <p className="text-foreground dark:text-foreground/90 text-xs font-medium truncate">
                           {discoverResult.title || discoverResult.sourceUrl}
                           <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 align-middle">
                             página informada
                           </span>
                         </p>
-                        <p className="text-muted-foreground/50 text-[11px] truncate mt-0.5">
+                        <p className="text-muted-foreground dark:text-muted-foreground/50 text-[11px] truncate mt-0.5">
                           {discoverResult.sourceUrl}
                         </p>
                       </div>
@@ -577,19 +577,19 @@ function AddDocumentModal({
                           className="mt-0.5 accent-blue-600 shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-foreground/80 text-xs font-medium truncate">
+                          <p className="text-foreground dark:text-foreground/80 text-xs font-medium truncate">
                             {link.text}
                             {link.sameDomain && (
-                              <span className="ml-1.5 text-[10px] text-muted-foreground/40">· mesmo domínio</span>
+                              <span className="ml-1.5 text-[10px] text-muted-foreground dark:text-muted-foreground/40">· mesmo domínio</span>
                             )}
                           </p>
-                          <p className="text-muted-foreground/50 text-[11px] truncate mt-0.5">{link.url}</p>
+                          <p className="text-muted-foreground dark:text-muted-foreground/50 text-[11px] truncate mt-0.5">{link.url}</p>
                         </div>
                       </label>
                     ))}
 
                     {visibleLinks.length === 0 && (
-                      <p className="text-muted-foreground/40 text-xs text-center py-4">
+                      <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs text-center py-4">
                         Nenhum link encontrado com esse filtro.
                       </p>
                     )}
@@ -610,7 +610,7 @@ function AddDocumentModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/60">
-          <p className="text-muted-foreground/40 text-xs">
+          <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs">
             {tab === "batch" && batchFiles.length > 0
               ? `${batchFiles.length} arquivo${batchFiles.length !== 1 ? "s" : ""} · todos na coleção "${COLLECTION_LABELS[collection]}"`
               : tab === "web" && selectedUrls.size > 0
@@ -620,7 +620,7 @@ function AddDocumentModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80 text-sm font-medium transition-all"
+              className="px-4 py-2 rounded-xl border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:border-border/80 text-sm font-medium transition-all"
             >
               Cancelar
             </button>
@@ -735,7 +735,7 @@ export default function KnowledgePage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Base de Conhecimento</h1>
-            <p className="text-muted-foreground/60 text-sm mt-0.5">
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm mt-0.5">
               Documentos indexados no pipeline RAG · {COLLECTION_OPTIONS.length} coleções
             </p>
           </div>
@@ -743,7 +743,7 @@ export default function KnowledgePage() {
             <button
               onClick={load}
               title="Atualizar lista"
-              className="p-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
+              className="p-2 rounded-xl border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -794,12 +794,12 @@ export default function KnowledgePage() {
             <div key={s.label} className={`p-5 rounded-2xl border ${s.border} ${s.bg} space-y-3`}>
               <div className={`text-3xl font-bold ${s.color}`}>
                 {loading ? (
-                  <span className="text-xl text-muted-foreground/40">—</span>
+                  <span className="text-xl text-muted-foreground dark:text-muted-foreground/40">—</span>
                 ) : (
                   s.value.toLocaleString("pt-BR")
                 )}
               </div>
-              <div className="text-muted-foreground/60 text-xs leading-snug">{s.label}</div>
+              <div className="text-muted-foreground dark:text-muted-foreground/60 text-xs leading-snug">{s.label}</div>
             </div>
           ))}
         </div>
@@ -811,7 +811,7 @@ export default function KnowledgePage() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
               filterCollection === "all"
                 ? "bg-foreground text-background border-foreground"
-                : "border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80"
+                : "border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:border-border/80"
             }`}
           >
             Todas ({docs.length})
@@ -826,7 +826,7 @@ export default function KnowledgePage() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
                   active
                     ? `${COLLECTION_COLORS[o.value]} font-semibold`
-                    : "border-border text-muted-foreground/60 hover:text-foreground hover:border-border/80"
+                    : "border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:border-border/80"
                 }`}
               >
                 {o.label}
@@ -843,7 +843,7 @@ export default function KnowledgePage() {
             {["Documento", "Fonte", "Coleção", "Trechos", "Status", ""].map((h) => (
               <span
                 key={h}
-                className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-widest"
+                className="text-[10px] font-semibold text-muted-foreground dark:text-muted-foreground/60 uppercase tracking-widest"
               >
                 {h}
               </span>
@@ -857,15 +857,15 @@ export default function KnowledgePage() {
           ) : visibleDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20">
               <div className="w-14 h-14 rounded-2xl bg-muted/40 border border-border flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-muted-foreground/30" />
+                <BookOpen className="w-6 h-6 text-muted-foreground dark:text-muted-foreground/30" />
               </div>
               <div className="text-center">
-                <p className="text-muted-foreground/60 text-sm font-medium">
+                <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm font-medium">
                   {filterCollection === "all"
                     ? "Nenhum documento indexado"
                     : `Nenhum documento em "${COLLECTION_LABELS[filterCollection]}"`}
                 </p>
-                <p className="text-muted-foreground/40 text-xs mt-1">
+                <p className="text-muted-foreground dark:text-muted-foreground/40 text-xs mt-1">
                   {canManage
                     ? "Adicione documentos para enriquecer as respostas da IA."
                     : "Aguarde documentos serem adicionados."}
@@ -885,9 +885,9 @@ export default function KnowledgePage() {
                   >
                     {/* Title */}
                     <div className="min-w-0 w-full">
-                      <p className="text-foreground/90 text-sm font-medium truncate">{doc.title}</p>
+                      <p className="text-foreground dark:text-foreground/90 text-sm font-medium truncate">{doc.title}</p>
                       {doc.originalName && (
-                        <p className="text-muted-foreground/50 text-xs truncate mt-0.5 flex items-center gap-1">
+                        <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs truncate mt-0.5 flex items-center gap-1">
                           <FileText className="w-3 h-3 shrink-0" />
                           {doc.originalName} · {formatBytes(doc.sizeBytes)}
                         </p>
@@ -900,7 +900,7 @@ export default function KnowledgePage() {
                     </div>
 
                     {/* Source */}
-                    <p className="text-muted-foreground/70 text-sm truncate">{doc.source}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground/70 text-sm truncate">{doc.source}</p>
 
                     {/* Collection badge */}
                     <span
@@ -910,7 +910,7 @@ export default function KnowledgePage() {
                     </span>
 
                     {/* Chunks */}
-                    <span className="text-sm font-medium text-foreground/70 tabular-nums">
+                    <span className="text-sm font-medium text-foreground dark:text-foreground/70 tabular-nums">
                       {doc.status === "indexed" ? doc.chunkCount : "—"}
                     </span>
 
@@ -930,7 +930,7 @@ export default function KnowledgePage() {
                         onClick={() => handleDelete(doc.id)}
                         disabled={deletingId === doc.id}
                         title="Remover documento e vetores"
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-40"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground dark:text-muted-foreground/40 hover:text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-40"
                       >
                         {deletingId === doc.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -951,7 +951,7 @@ export default function KnowledgePage() {
         {/* Info banner */}
         <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-muted/20 border border-border/60">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
-          <p className="text-muted-foreground/60 text-xs leading-relaxed">
+          <p className="text-muted-foreground dark:text-muted-foreground/60 text-xs leading-relaxed">
             Documentos indexados são automaticamente recuperados e usados como contexto pelo assistente IA.
             Organize por coleção para facilitar buscas direcionadas. O lote permite indexar até 50 arquivos de uma vez.
           </p>

@@ -54,7 +54,7 @@ const STARTERS = [
 
 function ActionBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} title={title} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border hover:border-border/80 text-muted-foreground/60 hover:text-foreground text-[11px] transition-all">
+    <button onClick={onClick} title={title} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border hover:border-border/80 text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground text-[11px] transition-all">
       {children}
     </button>
   );
@@ -259,13 +259,13 @@ export default function DAPage() {
             </div>
             <div>
               <p className="text-foreground font-semibold text-sm">DA</p>
-              <p className="text-muted-foreground/60 text-[10px]">Divisão Administrativa</p>
+              <p className="text-muted-foreground dark:text-muted-foreground/60 text-[10px]">Divisão Administrativa</p>
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar ação..." className="w-full pl-8 pr-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground/70 placeholder:text-muted-foreground/50 text-xs outline-none focus:border-blue-400/30 focus:bg-muted/60 transition-all" />
-            {search && <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground" /></button>}
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/50" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar ação..." className="w-full pl-8 pr-3 py-2 rounded-lg bg-muted/40 border border-border text-foreground dark:text-foreground/70 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/50 text-xs outline-none focus:border-blue-400/30 focus:bg-muted/60 transition-all" />
+            {search && <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2"><X className="w-3 h-3 text-muted-foreground dark:text-muted-foreground/50 hover:text-muted-foreground" /></button>}
           </div>
         </div>
 
@@ -284,7 +284,7 @@ export default function DAPage() {
         {/* Quick actions */}
         <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
           {filtered.length === 0 ? (
-            <p className="text-muted-foreground/50 text-xs text-center py-6">Nenhuma ação encontrada</p>
+            <p className="text-muted-foreground dark:text-muted-foreground/50 text-xs text-center py-6">Nenhuma ação encontrada</p>
           ) : filtered.map(a => {
             const Icon = a.icon;
             return (
@@ -293,10 +293,10 @@ export default function DAPage() {
                   <Icon className="w-3.5 h-3.5 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-foreground/70 text-xs font-medium group-hover:text-foreground/90 truncate">{a.label}</p>
-                  <p className="text-muted-foreground/50 text-[10px]">{a.category}</p>
+                  <p className="text-foreground dark:text-foreground/70 text-xs font-medium group-hover:text-foreground/90 truncate">{a.label}</p>
+                  <p className="text-muted-foreground dark:text-muted-foreground/50 text-[10px]">{a.category}</p>
                 </div>
-                <ChevronRight className="w-3 h-3 text-muted-foreground/40 group-hover:text-blue-400 shrink-0 transition-colors" />
+                <ChevronRight className="w-3 h-3 text-muted-foreground dark:text-muted-foreground/40 group-hover:text-blue-400 shrink-0 transition-colors" />
               </button>
             );
           })}
@@ -305,15 +305,15 @@ export default function DAPage() {
         {/* Legal refs */}
         <div className="border-t border-border px-3 py-3 space-y-2">
           <div className="flex items-center gap-1.5 mb-2">
-            <BookOpen className="w-3.5 h-3.5 text-muted-foreground/60" />
-            <p className="text-muted-foreground/60 text-[10px] uppercase tracking-wider">Base Normativa</p>
+            <BookOpen className="w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/60" />
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-[10px] uppercase tracking-wider">Base Normativa</p>
           </div>
           {LEGAL_REFS.map(r => (
             <div key={r.label} className="flex items-start gap-2">
               <div className="w-1 h-1 rounded-full bg-blue-400/40 shrink-0 mt-1.5" />
               <div>
                 <p className="text-blue-400/80 text-[11px] font-mono font-medium">{r.label}</p>
-                <p className="text-muted-foreground/50 text-[10px]">{r.sub}</p>
+                <p className="text-muted-foreground dark:text-muted-foreground/50 text-[10px]">{r.sub}</p>
               </div>
             </div>
           ))}
@@ -331,10 +331,10 @@ export default function DAPage() {
             </div>
             <div>
               <h1 className="text-foreground font-semibold text-[13px] leading-none">Assistente Administrativo — DA</h1>
-              <p className="text-muted-foreground/50 text-[10px] mt-0.5 leading-none">Licitações · Contratos · Conformidade · Lei 14.133/2021</p>
+              <p className="text-muted-foreground dark:text-muted-foreground/50 text-[10px] mt-0.5 leading-none">Licitações · Contratos · Conformidade · Lei 14.133/2021</p>
             </div>
           </div>
-          <button onClick={newConversation} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all">
+          <button onClick={newConversation} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all">
             <Plus className="w-3.5 h-3.5" />Nova conversa
           </button>
         </div>
@@ -356,7 +356,7 @@ export default function DAPage() {
                 </div>
                 <div>
                   <h2 className="text-foreground font-semibold text-base tracking-tight">Assistente de Licitações e Contratos</h2>
-                  <p className="text-muted-foreground/50 text-sm mt-1">Como posso ajudar hoje?</p>
+                  <p className="text-muted-foreground dark:text-muted-foreground/50 text-sm mt-1">Como posso ajudar hoje?</p>
                 </div>
               </div>
 
@@ -370,8 +370,8 @@ export default function DAPage() {
                         <Icon className={`w-4 h-4 ${s.color}`} />
                       </div>
                       <div>
-                        <p className="text-foreground/80 text-[13px] font-semibold leading-tight">{s.title}</p>
-                        <p className="text-muted-foreground/50 text-[11px] mt-0.5 leading-snug">{s.description}</p>
+                        <p className="text-foreground dark:text-foreground/80 text-[13px] font-semibold leading-tight">{s.title}</p>
+                        <p className="text-muted-foreground dark:text-muted-foreground/50 text-[11px] mt-0.5 leading-snug">{s.description}</p>
                       </div>
                     </button>
                   );
@@ -387,7 +387,7 @@ export default function DAPage() {
                 msg.role === "user" ? (
                   <div key={msg.id} className="flex justify-end">
                     <div className="flex items-end gap-2.5 max-w-[80%]">
-                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground dark:text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-2 pb-2 border-b border-blue-400/20">
                             {msg.attachments.map((name) => (
@@ -415,10 +415,10 @@ export default function DAPage() {
                         <MarkdownRenderer content={msg.content} />
                         {msg.sources && msg.sources.length > 0 && (
                           <div className="mt-3 pt-3 border-t border-border/50">
-                            <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">Fontes</p>
+                            <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">Fontes</p>
                             <div className="flex flex-wrap gap-1.5">
                               {[...new Map(msg.sources.map((s) => [s.source, s])).values()].map((s, i) => (
-                                <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60">{s.source} · {Math.round(s.score * 100)}%</span>
+                                <span key={i} className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground dark:text-muted-foreground/60">{s.source} · {Math.round(s.score * 100)}%</span>
                               ))}
                             </div>
                           </div>
@@ -437,7 +437,7 @@ export default function DAPage() {
                     <Paperclip className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 animate-pulse" />
                   </div>
                   <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
-                    <span className="text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
+                    <span className="text-muted-foreground dark:text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
                   </div>
                 </div>
               )}
@@ -480,7 +480,7 @@ export default function DAPage() {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   title="Anexar arquivo (PDF, DOCX, XLSX, CSV, imagem)"
-                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
                 </button>
@@ -491,7 +491,7 @@ export default function DAPage() {
                   onKeyDown={onKeyDown}
                   placeholder="Descreva o documento ou dúvida administrativa… (Enter para enviar · Shift+Enter nova linha)"
                   rows={1}
-                  className="flex-1 bg-transparent text-foreground/90 placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
+                  className="flex-1 bg-transparent text-foreground dark:text-foreground/90 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
                   style={{ minHeight: "32px", maxHeight: "200px" }}
                 />
                 <button
@@ -505,8 +505,8 @@ export default function DAPage() {
               <div className="flex items-center justify-between px-3 pb-2.5">
                 <ModelSelector value={model} onChange={setModel} />
                 <div className="flex items-center gap-1.5">
-                  <AlertCircle className="w-3 h-3 text-muted-foreground/40" />
-                  <p className="text-muted-foreground/40 text-[10px]">Consulte sempre o setor jurídico para decisões formais.</p>
+                  <AlertCircle className="w-3 h-3 text-muted-foreground dark:text-muted-foreground/40" />
+                  <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px]">Consulte sempre o setor jurídico para decisões formais.</p>
                 </div>
               </div>
             </div>

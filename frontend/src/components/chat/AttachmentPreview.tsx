@@ -23,7 +23,7 @@ function fileStyle(mime: string) {
     return { Icon: Table2, color: "text-emerald-400", bg: "bg-emerald-400/10" };
   if (mime.includes("word") || mime.includes("document"))
     return { Icon: FileText, color: "text-blue-400", bg: "bg-blue-400/10" };
-  return { Icon: FileText, color: "text-muted-foreground/60", bg: "bg-muted/30" };
+  return { Icon: FileText, color: "text-muted-foreground dark:text-muted-foreground/60", bg: "bg-muted/30" };
 }
 
 interface Props {
@@ -57,14 +57,14 @@ export function AttachmentPreview({ files, onRemove }: Props) {
               </div>
             )}
             <div className="min-w-0 max-w-[110px]">
-              <p className="text-foreground/85 text-[11px] font-medium truncate leading-tight">
+              <p className="text-foreground dark:text-foreground/85 text-[11px] font-medium truncate leading-tight">
                 {attached.file.name}
               </p>
-              <p className="text-muted-foreground/50 text-[10px] mt-0.5">{formatSize(attached.file.size)}</p>
+              <p className="text-muted-foreground dark:text-muted-foreground/50 text-[10px] mt-0.5">{formatSize(attached.file.size)}</p>
             </div>
             <button
               onClick={() => onRemove(attached.id)}
-              className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all"
+              className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all"
             >
               <X className="w-2.5 h-2.5" />
             </button>

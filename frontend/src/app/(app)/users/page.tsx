@@ -97,7 +97,7 @@ function CheckList<T extends { id: number }>({
   empty: string;
 }) {
   if (items.length === 0) {
-    return <p className="text-xs text-muted-foreground/70 py-2">{empty}</p>;
+    return <p className="text-xs text-muted-foreground dark:text-muted-foreground/70 py-2">{empty}</p>;
   }
   return (
     <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border">
@@ -544,7 +544,7 @@ export default function UsersPage() {
               <ArrowLeft className="w-3.5 h-3.5" /> Início
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Usuários e Grupos</h1>
-            <p className="text-muted-foreground/60 text-sm mt-0.5">
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm mt-0.5">
               Cadastro de usuários, perfis de acesso e grupos de trabalho
             </p>
           </div>
@@ -552,7 +552,7 @@ export default function UsersPage() {
             <button
               onClick={load}
               title="Atualizar"
-              className="p-2 rounded-xl border border-border text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
+              className="p-2 rounded-xl border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground hover:bg-muted/30 transition-all"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -632,7 +632,7 @@ export default function UsersPage() {
             })}
           </div>
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-muted-foreground/60" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -727,7 +727,7 @@ export default function UsersPage() {
           </div>
         ) : visibleGroups.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-12 text-center">
-            <UsersRound className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+            <UsersRound className="w-8 h-8 mx-auto text-muted-foreground dark:text-muted-foreground/40 mb-2" />
             <p className="text-sm text-muted-foreground">
               {groups.length === 0 ? "Nenhum grupo cadastrado. Crie o primeiro grupo." : "Nenhum grupo encontrado."}
             </p>

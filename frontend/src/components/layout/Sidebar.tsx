@@ -95,7 +95,7 @@ export function Sidebar() {
               } ${
                 active
                   ? "bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-500/25"
-                  : "text-muted-foreground/70 hover:text-foreground hover:bg-muted/30 border border-transparent"
+                  : "text-muted-foreground dark:text-muted-foreground/70 hover:text-foreground hover:bg-muted/30 border border-transparent"
               }`}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -112,7 +112,7 @@ export function Sidebar() {
         <button
           onClick={() => setCollapsed((v) => !v)}
           title={collapsed ? "Expandir" : "Recolher"}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/20 text-sm transition-all ${
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-muted-foreground dark:text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/20 text-sm transition-all ${
             collapsed ? "justify-center" : ""
           }`}
         >

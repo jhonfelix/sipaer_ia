@@ -63,8 +63,8 @@ function UploadZone({ onUpload }: { onUpload: () => void }) {
           className={`rounded-2xl border-2 border-dashed p-10 cursor-pointer transition-all group ${drag ? "border-cyan-400/60 bg-cyan-500/10" : "border-border hover:border-cyan-400/40 hover:bg-muted/20"}`}>
           <div className="flex flex-col items-center gap-3">
             <Upload className={`w-8 h-8 transition-colors ${drag ? "text-cyan-400" : "text-muted-foreground group-hover:text-cyan-400"}`} />
-            <p className="text-foreground/70 font-medium">Arraste o arquivo CVR ou gravação de motor</p>
-            <p className="text-muted-foreground/60 text-sm">WAV · MP3 · OGG — até 500 MB</p>
+            <p className="text-foreground dark:text-foreground/70 font-medium">Arraste o arquivo CVR ou gravação de motor</p>
+            <p className="text-muted-foreground dark:text-muted-foreground/60 text-sm">WAV · MP3 · OGG — até 500 MB</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 text-left">
@@ -73,7 +73,7 @@ function UploadZone({ onUpload }: { onUpload: () => void }) {
             return (
               <div key={s.label} className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-border/70">
                 <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-400/15 flex items-center justify-center shrink-0"><I className="w-4 h-4 text-cyan-400" /></div>
-                <div><p className="text-foreground/80 text-sm font-medium">{s.label}</p><p className="text-muted-foreground/70 text-xs">{s.sub}</p></div>
+                <div><p className="text-foreground dark:text-foreground/80 text-sm font-medium">{s.label}</p><p className="text-muted-foreground dark:text-muted-foreground/70 text-xs">{s.sub}</p></div>
               </div>
             );
           })}
@@ -106,7 +106,7 @@ function ProcessingView({ step }: { step: number }) {
               <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${i < step ? "bg-emerald-500/20" : i === step ? "bg-cyan-500/20 animate-pulse" : "bg-muted"}`}>
                 {i < step ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : i === step ? <RefreshCw className="w-3 h-3 text-cyan-400 animate-spin" /> : <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />}
               </div>
-              <div><p className={`text-sm font-medium ${i <= step ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p><p className="text-xs text-muted-foreground/60 font-mono">{s.detail}</p></div>
+              <div><p className={`text-sm font-medium ${i <= step ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</p><p className="text-xs text-muted-foreground dark:text-muted-foreground/60 font-mono">{s.detail}</p></div>
             </div>
           ))}
         </div>
@@ -152,15 +152,15 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
         {/* Spectrogram */}
         <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <div className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-cyan-400" /><span className="text-foreground text-sm font-medium">Espectrograma de Motor — STFT</span><span className="text-muted-foreground/60 text-xs font-mono">harmônicos F0 em amarelo</span></div>
-            <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground/60"><span>N=8192</span><span>Hop=256</span><span>Hann</span></div>
+            <div className="flex items-center gap-2"><BarChart3 className="w-4 h-4 text-cyan-400" /><span className="text-foreground text-sm font-medium">Espectrograma de Motor — STFT</span><span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">harmônicos F0 em amarelo</span></div>
+            <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground dark:text-muted-foreground/60"><span>N=8192</span><span>Hop=256</span><span>Hann</span></div>
           </div>
           <div className="p-3 space-y-1">
             <EngineSpectrogramCanvas data={spectroData} cols={900} rows={220} events={events} duration={DURATION} />
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-muted-foreground/50 text-[10px]">−∞ dB</span>
+              <span className="text-muted-foreground dark:text-muted-foreground/50 text-[10px]">−∞ dB</span>
               <div className="flex-1 h-2 rounded" style={{ background: "linear-gradient(to right,#440154,#482878,#3e4989,#31688e,#35b779,#6dcd59,#b4de2c,#fde725)" }} />
-              <span className="text-muted-foreground/50 text-[10px]">0 dB</span>
+              <span className="text-muted-foreground dark:text-muted-foreground/50 text-[10px]">0 dB</span>
             </div>
           </div>
         </div>
@@ -196,17 +196,17 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
                     <button className="w-full flex items-center gap-3 p-3.5 text-left" onClick={() => setExpanded(isExp ? null : ev.id)}>
                       <div className={`w-2 h-2 rounded-full ${sc.dot} shrink-0`} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap"><span className={`text-sm font-semibold ${sc.text}`}>{ev.label}</span><span className="text-muted-foreground/70 text-xs font-mono">{formatTime(ev.timestamp)}</span>
+                        <div className="flex items-center gap-2 flex-wrap"><span className={`text-sm font-semibold ${sc.text}`}>{ev.label}</span><span className="text-muted-foreground dark:text-muted-foreground/70 text-xs font-mono">{formatTime(ev.timestamp)}</span>
                           {ev.deltaRPM && <span className="ml-auto flex items-center gap-0.5 text-red-400 text-xs font-mono"><TrendingDown className="w-3 h-3" />{ev.deltaRPM} RPM</span>}
-                          {ev.freqPeak && !ev.deltaRPM && <span className="ml-auto text-muted-foreground/60 text-xs font-mono">{ev.freqPeak >= 1000 ? (ev.freqPeak / 1000).toFixed(1) + " kHz" : ev.freqPeak + " Hz"}</span>}
+                          {ev.freqPeak && !ev.deltaRPM && <span className="ml-auto text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono">{ev.freqPeak >= 1000 ? (ev.freqPeak / 1000).toFixed(1) + " kHz" : ev.freqPeak + " Hz"}</span>}
                         </div>
                         <p className="text-muted-foreground text-xs mt-0.5">{ev.description}</p>
                       </div>
-                      {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground/60 shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground/60 shrink-0" />}
+                      {isExp ? <ChevronUp className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/60 shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-muted-foreground/60 shrink-0" />}
                     </button>
                     {isExp && (
                       <div className="px-4 pb-4 border-t border-border">
-                        <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/70"><p className="text-muted-foreground/60 text-[10px] font-mono uppercase mb-1.5">Análise técnica espectral</p><p className="text-foreground/65 text-xs leading-relaxed font-mono">{ev.technical}</p></div>
+                        <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/70"><p className="text-muted-foreground dark:text-muted-foreground/60 text-[10px] font-mono uppercase mb-1.5">Análise técnica espectral</p><p className="text-foreground dark:text-foreground/65 text-xs leading-relaxed font-mono">{ev.technical}</p></div>
                       </div>
                     )}
                   </div>
@@ -220,9 +220,9 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
             <div className="p-4 space-y-2">
               {CORRELATIONS.map((c, i) => (
                 <div key={i} className="flex gap-3 p-3 rounded-xl bg-muted/30 border border-border/70 hover:bg-muted/50 transition-colors">
-                  <div className="text-muted-foreground/60 text-xs font-mono w-14 shrink-0 pt-0.5">{c.time}</div>
+                  <div className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono w-14 shrink-0 pt-0.5">{c.time}</div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-foreground/70 text-xs"><span className="text-cyan-400 font-medium">CVR </span>{c.cvr}</p>
+                    <p className="text-foreground dark:text-foreground/70 text-xs"><span className="text-cyan-400 font-medium">CVR </span>{c.cvr}</p>
                     <p className="text-muted-foreground text-xs"><span className="text-emerald-400 font-medium">FDR </span>{c.fdr}</p>
                   </div>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
@@ -237,7 +237,7 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
           <div className="flex items-center justify-between px-4 py-4 border-b border-cyan-400/15">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center"><Sparkles className="w-4 h-4 text-cyan-400" /></div>
-              <div><p className="text-foreground font-semibold text-sm">Interpretação Espectral por IA</p><p className="text-muted-foreground/70 text-xs font-mono">Modelo CENIPA — Análise acústica aeronáutica v2.1</p></div>
+              <div><p className="text-foreground font-semibold text-sm">Interpretação Espectral por IA</p><p className="text-muted-foreground dark:text-muted-foreground/70 text-xs font-mono">Modelo CENIPA — Análise acústica aeronáutica v2.1</p></div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">Confiança: 91%</span>
@@ -250,7 +250,7 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
               <div className="space-y-2">
                 {sequence.map(s => (
                   <div key={s.t} className="flex gap-3">
-                    <span className="text-muted-foreground/60 text-xs font-mono w-24 shrink-0 pt-0.5">{s.t}</span>
+                    <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs font-mono w-24 shrink-0 pt-0.5">{s.t}</span>
                     <p className={`text-xs leading-relaxed ${s.color}`}>{s.text}</p>
                   </div>
                 ))}
@@ -258,14 +258,14 @@ function AnalysisView({ spectroData, rpmData, bandData, events, onReset }: {
             </div>
             <div className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
               <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Conclusão</p>
-              <p className="text-foreground/70 text-sm leading-relaxed">A análise espectral indica <span className="text-red-400 font-semibold">falha de motor como evento iniciador</span>, seguida de perda de controle e colisão com o terreno. A correlação com FDR confirma a reconstrução. Fator dominante: <span className="text-amber-400 font-medium">Falha de sistema propulsivo (SCF-PP)</span>.</p>
+              <p className="text-foreground dark:text-foreground/70 text-sm leading-relaxed">A análise espectral indica <span className="text-red-400 font-semibold">falha de motor como evento iniciador</span>, seguida de perda de controle e colisão com o terreno. A correlação com FDR confirma a reconstrução. Fator dominante: <span className="text-amber-400 font-medium">Falha de sistema propulsivo (SCF-PP)</span>.</p>
               <div className="grid grid-cols-3 gap-2">
                 {[{ label: "Evento iniciador", value: "Falha de motor", color: "text-red-400" }, { label: "Fator SIPAER", value: "SCF-PP", color: "text-amber-400" }, { label: "Confiança", value: "91%", color: "text-emerald-400" }].map(c => (
-                  <div key={c.label} className="p-3 rounded-lg bg-muted/30 border border-border/70 text-center"><p className={`font-semibold text-sm ${c.color}`}>{c.value}</p><p className="text-muted-foreground/60 text-[10px] mt-0.5">{c.label}</p></div>
+                  <div key={c.label} className="p-3 rounded-lg bg-muted/30 border border-border/70 text-center"><p className={`font-semibold text-sm ${c.color}`}>{c.value}</p><p className="text-muted-foreground dark:text-muted-foreground/60 text-[10px] mt-0.5">{c.label}</p></div>
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground/50 text-xs font-mono"><Clock className="w-3 h-3" /><span>Análise gerada em {new Date().toLocaleString("pt-BR")} — SIPAER AI LabData Espectral v1.0</span></div>
+            <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/50 text-xs font-mono"><Clock className="w-3 h-3" /><span>Análise gerada em {new Date().toLocaleString("pt-BR")} — SIPAER AI LabData Espectral v1.0</span></div>
           </div>
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function SpectralAnalysisPage() {
     <div className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-3 border-b border-border">
         <Link href="/labdata" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground/70 text-xs transition-colors"><ArrowLeft className="w-3.5 h-3.5" />LabData</Link>
-        <span className="text-muted-foreground/40">/</span>
+        <span className="text-muted-foreground dark:text-muted-foreground/40">/</span>
         <span className="text-cyan-400 text-xs font-medium">Análise Espectral Aeronáutica</span>
       </div>
       {stage === "upload" && <UploadZone onUpload={handleUpload} />}

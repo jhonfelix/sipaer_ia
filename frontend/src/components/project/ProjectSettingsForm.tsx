@@ -87,7 +87,7 @@ export function ProjectSettingsForm({ initial, submitLabel, onSubmit, submitting
           placeholder={INSTRUCTIONS_PLACEHOLDER}
           className="min-h-[120px]"
         />
-        <p className="text-[11px] text-muted-foreground/60">
+        <p className="text-[11px] text-muted-foreground dark:text-muted-foreground/60">
           Enviado automaticamente como contexto em todas as conversas do projeto.
         </p>
       </Field>

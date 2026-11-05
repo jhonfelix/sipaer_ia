@@ -217,7 +217,7 @@ function ActionBtn({
     <button
       onClick={onClick}
       title={title}
-      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border hover:border-border/80 text-muted-foreground/60 hover:text-foreground text-[11px] transition-all"
+      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border hover:border-border/80 text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground text-[11px] transition-all"
     >
       {children}
     </button>
@@ -687,14 +687,14 @@ export default function ChatPage() {
               <h1 className="text-foreground font-semibold text-[13px] leading-none">
                 Workspace IA — SIPAER
               </h1>
-              <p className="text-muted-foreground/50 text-[10px] mt-0.5 leading-none">
+              <p className="text-muted-foreground dark:text-muted-foreground/50 text-[10px] mt-0.5 leading-none">
                 Inteligência aeronáutica especializada · CENIPA / FAB
               </p>
             </div>
           </div>
           <button
             onClick={newConversation}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground text-xs font-medium transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
             Nova conversa
@@ -719,7 +719,7 @@ export default function ChatPage() {
                   <h2 className="text-foreground font-semibold text-base tracking-tight">
                     {(CATEGORY_META[activeCategory] ?? CATEGORY_META.general).title}
                   </h2>
-                  <p className="text-muted-foreground/50 text-sm mt-1">
+                  <p className="text-muted-foreground dark:text-muted-foreground/50 text-sm mt-1">
                     {(CATEGORY_META[activeCategory] ?? CATEGORY_META.general).subtitle}
                   </p>
                 </div>
@@ -742,10 +742,10 @@ export default function ChatPage() {
                         <Icon className={`w-4 h-4 ${s.color}`} />
                       </div>
                       <div>
-                        <p className="text-foreground/80 text-[13px] font-semibold leading-tight">
+                        <p className="text-foreground dark:text-foreground/80 text-[13px] font-semibold leading-tight">
                           {s.title}
                         </p>
-                        <p className="text-muted-foreground/50 text-[11px] mt-0.5 leading-snug">
+                        <p className="text-muted-foreground dark:text-muted-foreground/50 text-[11px] mt-0.5 leading-snug">
                           {s.description}
                         </p>
                       </div>
@@ -764,7 +764,7 @@ export default function ChatPage() {
                   /* User message */
                   <div key={msg.id} className="flex justify-end">
                     <div className="flex items-end gap-2.5 max-w-[80%]">
-                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="px-4 py-3 rounded-2xl rounded-br-sm bg-blue-600/20 border border-blue-500/20 text-foreground dark:text-foreground/90 text-sm leading-relaxed whitespace-pre-wrap">
                         {msg.attachments && msg.attachments.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mb-2 pb-2 border-b border-blue-400/20">
                             {msg.attachments.map((name) => (
@@ -796,14 +796,14 @@ export default function ChatPage() {
                         <MarkdownRenderer content={msg.content} />
                         {msg.sources && msg.sources.length > 0 && (
                           <div className="mt-3 pt-3 border-t border-border/50">
-                            <p className="text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">
+                            <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px] uppercase tracking-widest font-medium mb-1.5">
                               Fontes
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {[...new Map(msg.sources.map((s) => [s.source, s])).values()].map((s, i) => (
                                 <span
                                   key={i}
-                                  className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground/60"
+                                  className="text-[11px] px-2 py-0.5 rounded-md bg-muted/30 border border-border/60 text-muted-foreground dark:text-muted-foreground/60"
                                 >
                                   {s.source} · {Math.round(s.score * 100)}%
                                 </span>
@@ -829,7 +829,7 @@ export default function ChatPage() {
                     <Paperclip className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 animate-pulse" />
                   </div>
                   <div className="px-4 py-3.5 rounded-2xl rounded-tl-sm bg-muted/25 border border-border/60">
-                    <span className="text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
+                    <span className="text-muted-foreground dark:text-muted-foreground/50 text-sm">Lendo arquivos anexados…</span>
                   </div>
                 </div>
               )}
@@ -889,7 +889,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => fileRef.current?.click()}
                   title="Anexar arquivo (PDF, DOCX, XLSX, CSV, imagem, áudio, vídeo)"
-                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
+                  className="flex items-center justify-center w-8 h-8 rounded-xl bg-muted/30 hover:bg-muted/50 border border-border text-muted-foreground dark:text-muted-foreground/50 hover:text-foreground transition-all shrink-0 mb-0.5"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
                 </button>
@@ -901,7 +901,7 @@ export default function ChatPage() {
                   onKeyDown={onKeyDown}
                   placeholder="Descreva o que precisa… (Enter para enviar · Shift+Enter nova linha)"
                   rows={1}
-                  className="flex-1 bg-transparent text-foreground/90 placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
+                  className="flex-1 bg-transparent text-foreground dark:text-foreground/90 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
                   style={{ minHeight: "32px", maxHeight: "200px" }}
                 />
 
@@ -930,7 +930,7 @@ export default function ChatPage() {
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-medium transition-all ${
                       agentMode
                         ? "bg-blue-600/20 border-blue-500/30 text-blue-600 dark:text-blue-300"
-                        : "bg-muted/30 border-border text-muted-foreground/60 hover:text-foreground"
+                        : "bg-muted/30 border-border text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground"
                     }`}
                   >
                     <Sparkles className="w-3 h-3" />
@@ -942,7 +942,7 @@ export default function ChatPage() {
                     onToggle={toggleSkill}
                   />
                 </div>
-                <p className="text-muted-foreground/40 text-[10px]">
+                <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px]">
                   A IA pode cometer erros — verifique informações críticas nas fontes oficiais.
                 </p>
               </div>
