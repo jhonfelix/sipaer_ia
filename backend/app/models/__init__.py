@@ -5,6 +5,7 @@ from app.models.media_file import MediaFile
 from app.models.knowledge import KnowledgeDocument
 from app.models.project import Project, ProjectDocument
 from app.models.group import Group, user_groups
+from app.models.skill import Skill, SkillScript, skill_groups
 
 __all__ = [
     "User",
@@ -18,4 +19,7 @@ __all__ = [
     "ProjectDocument",
     "Group",
     "user_groups",
+    "Skill",
+    "SkillScript",
+    "skill_groups",
 ]

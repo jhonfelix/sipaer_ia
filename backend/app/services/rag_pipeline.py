@@ -1,6 +1,8 @@
+import hashlib
 import json
 import logging
 
+from app.services.attachment_context import attachment_block
 from app.services.cache_service import CacheService, cache_service
 from app.services.llm_service import LLMService, llm_service
 from app.services.vector_service import VectorService, vector_service
@@ -480,10 +482,15 @@ class RAGPipeline:
         project_id: int | None = None,
         project_instructions: str | None = None,
         images: list[str] | None = None,
+        skill_instructions: str = "",
+        attachments: str = "",
     ) -> tuple[str, list[dict]]:
+        """`extra_context`: contexto livre (ex.: seção ativa do relatório).
+        `attachments`: texto extraído de arquivos anexados na sessão."""
         if images:
             return await self._process_with_images(
-                query, extra_context, chat_type, project_instructions, images
+                query, extra_context, chat_type, project_instructions, images,
+                skill_instructions, attachments,
             )
 
         # Coleções efetivas: explícitas > roteadas por chat_type > todas.
@@ -492,6 +499,14 @@ class RAGPipeline:
         # Step 1: Check Redis cache
         col_key = ",".join(sorted(effective_collections)) if effective_collections else "all"
         scope_key = f"proj{project_id}" if project_id is not None else col_key
+        if skill_instructions:
+            # Skills mudam a resposta — entram na chave do cache.
+            scope_key += ":sk" + hashlib.sha256(skill_instructions.encode()).hexdigest()[:16]
+        if extra_context or attachments:
+            # Contexto/anexos mudam a resposta — sem isto, a mesma pergunta com outro
+            # arquivo (ou sem arquivo) devolvia a resposta antiga do cache.
+            digest = hashlib.sha256((extra_context + "\x00" + attachments).encode()).hexdigest()[:16]
+            scope_key += ":ax" + digest
         cache_key = self.cache.rag_key(query, f"{chat_type}:{model}:{scope_key}")
         cached = await self.cache.get(cache_key)
         if cached:
@@ -575,8 +590,11 @@ class RAGPipeline:
         system = SYSTEM_PROMPTS.get(chat_type, SYSTEM_PROMPT_GENERAL)
         if project_instructions and project_instructions.strip():
             system += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
+        system += skill_instructions
         if context_text:
             system += f"\n\nContexto relevante:\n{context_text}"
+        # Anexos por último, com instrução explícita de que o documento já foi lido.
+        system += attachment_block(attachments)
 
         messages = [
             {"role": "system", "content": system},
@@ -602,6 +620,8 @@ class RAGPipeline:
         chat_type: str,
         project_instructions: str | None,
         images: list[str],
+        skill_instructions: str = "",
+        attachments: str = "",
     ) -> tuple[str, list[dict]]:
         """Análise visual — sem busca vetorial/cache, sempre via VISION_MODEL.
 
@@ -612,8 +632,10 @@ class RAGPipeline:
         system = SYSTEM_PROMPTS.get(chat_type, SYSTEM_PROMPT_GENERAL) + _IMAGE_ANALYSIS_INSTRUCTION
         if project_instructions and project_instructions.strip():
             system += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
+        system += skill_instructions
         if extra_context:
             system += f"\n\nContexto relevante:\n{extra_context}"
+        system += attachment_block(attachments)
 
         user_content: list[dict] = [{"type": "text", "text": query}]
         for image in images:

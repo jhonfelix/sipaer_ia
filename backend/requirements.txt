@@ -16,5 +16,5 @@ pdfplumber>=0.11.0
 python-docx>=1.1.0
 beautifulsoup4>=4.12.3
 openpyxl>=3.1.0
-agno>=2.7.2,<3
+agno==2.9.0
 openai>=2.40.0

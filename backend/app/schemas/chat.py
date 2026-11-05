@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ALLOWED_MODELS = Literal["gpt-oss-120b", "gemma-4-26B-A4B-it"]
 ALLOWED_CHAT_TYPES = Literal["general", "report", "da", "translation", "images", "juridical", "fab-docs"]
@@ -12,10 +12,15 @@ class ChatRequest(BaseModel):
     report_id: int | None = None
     project_id: int | None = None
     context: str = ""
+    # Texto extraído (via /chat/extract) dos arquivos anexados nesta mensagem.
+    # Fica salvo na sessão e é reenviado ao modelo nas mensagens seguintes.
+    attachments: str = Field(default="", max_length=1_000_000)
     session_id: str | None = None
     model: ALLOWED_MODELS = "gpt-oss-120b"
     chat_type: ALLOWED_CHAT_TYPES = "general"
     images: list[str] = []
+    # Skills ativadas explicitamente (seletor ou /atalho no chat)
+    skill_ids: list[int] = []
 
     @field_validator("images")
     @classmethod
@@ -25,6 +30,13 @@ class ChatRequest(BaseModel):
         for img in v:
             if not img.startswith("data:image/"):
                 raise ValueError("Formato de imagem inválido — esperado data URL (data:image/...)")
+        return v
+
+    @field_validator("skill_ids")
+    @classmethod
+    def _validate_skill_ids(cls, v: list[int]) -> list[int]:
+        if len(v) > 3:
+            raise ValueError("Máximo de 3 skills por mensagem")
         return v
 
 

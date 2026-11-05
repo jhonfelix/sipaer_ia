@@ -22,6 +22,7 @@ import {
   AudioLines,
   BookOpen,
   Users,
+  Wand2,
 } from "lucide-react";
 import { ProjectsSection } from "@/components/project";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -32,6 +33,7 @@ const MODULES = [
   { id: "labdata", label: "Análise Áudio & Espectro", icon: AudioLines, href: "/labdata" },
   { id: "da", label: "Gestão Administrativa", icon: Building2, href: "/da" },
   { id: "knowledge", label: "Base de Conhecimento", icon: BookOpen, href: "/knowledge" },
+  { id: "skills", label: "Skills", icon: Wand2, href: "/skills" },
   { id: "users", label: "Usuários e Grupos", icon: Users, href: "/users", adminOnly: true },
 ];
 

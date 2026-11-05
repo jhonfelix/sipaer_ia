@@ -19,8 +19,8 @@ import {
   Check,
   Upload,
 } from "lucide-react";
-import { chat as chatApi } from "@/lib/api";
-import type { ChatSession } from "@/lib/api";
+import { chat as chatApi, skills as skillsApi } from "@/lib/api";
+import type { ChatSession, Skill } from "@/lib/api";
 import type { AIMessage } from "@/types/report";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -28,6 +28,10 @@ import {
   ModelSelector,
   AttachmentPreview,
   ConversationSidebar,
+  SkillSelector,
+  SelectedSkillChips,
+  SlashSkillMenu,
+  MAX_SELECTED_SKILLS,
 } from "@/components/chat";
 import type { AttachedFile, Conversation } from "@/components/chat";
 
@@ -314,6 +318,11 @@ export default function ChatPage() {
   const [model, setModel] = useState("gpt-oss-120b");
   const [agentMode, setAgentMode] = useState(false);
 
+  // Skills: as ativas (selecionadas) vão em skill_ids; "/" no início abre o atalho.
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
+  const [slashIndex, setSlashIndex] = useState(0);
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -341,6 +350,52 @@ export default function ChatPage() {
       })
       .catch(() => {});
   }, []);
+
+  // Skills disponíveis + pré-seleção via /chat?skill=<identificador>
+  useEffect(() => {
+    skillsApi
+      .list()
+      .then((list) => {
+        const usable = list.filter((s) => s.isActive && s.canUse);
+        setAvailableSkills(usable);
+        const pre = new URLSearchParams(window.location.search).get("skill");
+        const found = pre ? usable.find((s) => s.name === pre) : undefined;
+        if (found) setSelectedSkills([found]);
+      })
+      .catch(() => {});
+  }, []);
+
+  function addSkill(skill: Skill) {
+    setSelectedSkills((prev) =>
+      prev.some((s) => s.id === skill.id) || prev.length >= MAX_SELECTED_SKILLS ? prev : [...prev, skill]
+    );
+  }
+
+  function toggleSkill(skill: Skill) {
+    setSelectedSkills((prev) =>
+      prev.some((s) => s.id === skill.id)
+        ? prev.filter((s) => s.id !== skill.id)
+        : prev.length >= MAX_SELECTED_SKILLS
+          ? prev
+          : [...prev, skill]
+    );
+  }
+
+  // Atalho "/": ativo enquanto o campo contém só "/<prefixo>".
+  const slashQuery = /^\/([a-z0-9-]*)$/.exec(input)?.[1];
+  const slashMatches =
+    slashQuery === undefined
+      ? []
+      : availableSkills
+          .filter((s) => s.name.startsWith(slashQuery) || s.title.toLowerCase().includes(slashQuery))
+          .slice(0, 6);
+
+  function pickSlash(skill: Skill) {
+    addSkill(skill);
+    setInput("");
+    setSlashIndex(0);
+    textareaRef.current?.focus();
+  }
 
   // Auto-scroll
   useEffect(() => {
@@ -389,8 +444,19 @@ export default function ChatPage() {
 
   // Send
   async function handleSend() {
-    const text = input.trim();
+    let text = input.trim();
     if (!text || sending || extracting) return;
+
+    // "/identificador mensagem" ativa a skill só para esta mensagem.
+    const skillIds = selectedSkills.map((s) => s.id);
+    const inline = /^\/([a-z0-9-]+)\s+([\s\S]+)$/.exec(text);
+    if (inline) {
+      const found = availableSkills.find((s) => s.name === inline[1]);
+      if (found) {
+        if (!skillIds.includes(found.id) && skillIds.length < MAX_SELECTED_SKILLS) skillIds.push(found.id);
+        text = inline[2].trim();
+      }
+    }
 
     // Imagens vão como image_url multimodal (visão); os demais tipos têm o
     // texto extraído via /chat/extract e viram contexto textual.
@@ -406,25 +472,24 @@ export default function ChatPage() {
       try {
         if (otherFiles.length > 0) {
           const contextParts: string[] = [];
-          const failedNames: string[] = [];
+          const failures: string[] = [];
           await Promise.all(
             otherFiles.map(async (a) => {
               try {
                 const e = await chatApi.extract(a.file);
                 contextParts.push(
-                  `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 50.000 caracteres" : ""}]\n${e.text}`
+                  `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 200.000 caracteres" : ""}]\n${e.text}`
                 );
-              } catch {
-                failedNames.push(a.file.name);
+              } catch (err) {
+                failures.push(err instanceof Error ? err.message : `Não foi possível ler ${a.file.name}.`);
               }
             })
           );
           context = contextParts.join("\n\n---\n\n");
-          if (failedNames.length > 0) {
-            toast({
-              description: `Não foi possível ler: ${failedNames.join(", ")}. Tipo de arquivo não suportado para leitura de texto.`,
-              variant: "destructive",
-            });
+          if (failures.length > 0) {
+            // Não envia sem o anexo: o modelo responderia pedindo o arquivo.
+            toast({ description: failures.join(" "), variant: "destructive" });
+            return;
           }
         }
 
@@ -470,8 +535,9 @@ export default function ChatPage() {
           session_id: activeSessionId ?? undefined,
           model,
           chat_type: chatType,
-          context,
+          attachments: context,
           images,
+          skill_ids: skillIds,
         },
         { agent: agentMode }
       );
@@ -524,6 +590,24 @@ export default function ChatPage() {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (slashMatches.length > 0) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const delta = e.key === "ArrowDown" ? 1 : -1;
+        setSlashIndex((i) => (i + delta + slashMatches.length) % slashMatches.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        pickSlash(slashMatches[Math.min(slashIndex, slashMatches.length - 1)]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setInput("");
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -536,6 +620,7 @@ export default function ChatPage() {
     setAttached([]);
     setActiveConvId(null);
     setActiveSessionId(null);
+    setSelectedSkills([]);
     setTimeout(() => textareaRef.current?.focus(), 50);
   }
 
@@ -779,6 +864,18 @@ export default function ChatPage() {
           <div className="max-w-3xl mx-auto">
             <div className="rounded-2xl bg-muted/30 border border-border focus-within:border-blue-500/30 focus-within:bg-muted/40 transition-all overflow-hidden">
 
+              {/* Skills ativas e atalho "/" */}
+              <SelectedSkillChips
+                selected={selectedSkills}
+                agentMode={agentMode}
+                onRemove={(s) => setSelectedSkills((prev) => prev.filter((x) => x.id !== s.id))}
+              />
+              <SlashSkillMenu
+                matches={slashMatches}
+                activeIndex={Math.min(slashIndex, Math.max(slashMatches.length - 1, 0))}
+                onPick={pickSlash}
+              />
+
               {/* Attachment previews */}
               {attached.length > 0 && (
                 <div className="px-3 pt-3">
@@ -839,6 +936,11 @@ export default function ChatPage() {
                     <Sparkles className="w-3 h-3" />
                     Modo Agente
                   </button>
+                  <SkillSelector
+                    available={availableSkills}
+                    selected={selectedSkills}
+                    onToggle={toggleSkill}
+                  />
                 </div>
                 <p className="text-muted-foreground/40 text-[10px]">
                   A IA pode cometer erros — verifique informações críticas nas fontes oficiais.

@@ -272,6 +272,163 @@ export const users = {
   },
 };
 
+// ── Skills (/skills) ──────────────────────────────────────────────────────────
+
+export type SkillScope = "personal" | "group" | "global";
+
+export const SKILL_SCOPE_LABELS: Record<SkillScope, string> = {
+  personal: "Pessoal",
+  group: "Grupo",
+  global: "Global",
+};
+
+export interface SkillScript {
+  id: number;
+  filename: string;
+  content: string;
+  approved: boolean;
+  approvedAt: Date | null;
+  updatedAt: Date;
+}
+
+export interface Skill {
+  id: number;
+  name: string;
+  title: string;
+  description: string;
+  instructions: string;
+  scope: SkillScope;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  owner: { id: number; name: string; postoGraduacao: string | null };
+  groups: { id: number; name: string }[];
+  scripts: SkillScript[];
+  canEdit: boolean;
+  canUse: boolean;
+}
+
+export interface SkillPayload {
+  name?: string;
+  title?: string;
+  description?: string;
+  instructions?: string;
+  scope?: SkillScope;
+  group_ids?: number[];
+  is_active?: boolean;
+  scripts?: { filename: string; content: string }[];
+}
+
+export interface ScriptRunResult {
+  stdout: string;
+  stderr: string;
+  returncode: number | null;
+  error: string | null;
+}
+
+interface RawSkill {
+  id: number;
+  name: string;
+  title: string;
+  description: string;
+  instructions: string;
+  scope: SkillScope;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  owner: { id: number; name: string; posto_graduacao: string | null };
+  groups: { id: number; name: string }[];
+  scripts: {
+    id: number;
+    filename: string;
+    content: string;
+    approved: boolean;
+    approved_at: string | null;
+    updated_at: string;
+  }[];
+  can_edit: boolean;
+  can_use: boolean;
+}
+
+function mapSkill(raw: RawSkill): Skill {
+  return {
+    id: raw.id,
+    name: raw.name,
+    title: raw.title,
+    description: raw.description,
+    instructions: raw.instructions,
+    scope: raw.scope,
+    isActive: raw.is_active,
+    createdAt: new Date(raw.created_at),
+    updatedAt: new Date(raw.updated_at),
+    owner: { id: raw.owner.id, name: raw.owner.name, postoGraduacao: raw.owner.posto_graduacao },
+    groups: raw.groups ?? [],
+    scripts: (raw.scripts ?? []).map((s) => ({
+      id: s.id,
+      filename: s.filename,
+      content: s.content,
+      approved: s.approved,
+      approvedAt: s.approved_at ? new Date(s.approved_at) : null,
+      updatedAt: new Date(s.updated_at),
+    })),
+    canEdit: raw.can_edit,
+    canUse: raw.can_use ?? true,
+  };
+}
+
+/** Gera o identificador (padrão Agent Skills) a partir do título. */
+export function skillSlug(title: string): string {
+  return title
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64)
+    .replace(/-+$/g, "");
+}
+
+export const skills = {
+  async list(opts?: { all?: boolean }): Promise<Skill[]> {
+    const qs = opts?.all ? "?all=true" : "";
+    return (await request<RawSkill[]>(`/skills${qs}`)).map(mapSkill);
+  },
+
+  async shareGroups(): Promise<{ id: number; name: string }[]> {
+    return request<{ id: number; name: string }[]>("/skills/share-groups");
+  },
+
+  async create(payload: SkillPayload): Promise<Skill> {
+    return mapSkill(await request<RawSkill>("/skills", { method: "POST", body: JSON.stringify(payload) }));
+  },
+
+  async update(id: number, payload: SkillPayload): Promise<Skill> {
+    return mapSkill(
+      await request<RawSkill>(`/skills/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
+    );
+  },
+
+  async remove(id: number): Promise<void> {
+    await request<void>(`/skills/${id}`, { method: "DELETE" });
+  },
+
+  async setScriptApproval(skillId: number, scriptId: number, approved: boolean): Promise<Skill> {
+    return mapSkill(
+      await request<RawSkill>(`/skills/${skillId}/scripts/${scriptId}/approval`, {
+        method: "POST",
+        body: JSON.stringify({ approved }),
+      })
+    );
+  },
+
+  async runScript(skillId: number, scriptId: number, args: string[]): Promise<ScriptRunResult> {
+    return request<ScriptRunResult>(`/skills/${skillId}/scripts/${scriptId}/run`, {
+      method: "POST",
+      body: JSON.stringify({ args }),
+    });
+  },
+};
+
 // ── Admin: gestão de usuários e grupos (/admin/*, somente role admin) ─────────
 
 export type UserRole = User["role"];
@@ -701,10 +858,12 @@ export const chat = {
       report_id?: number;
       project_id?: number;
       context?: string;
+      attachments?: string;
       images?: string[];
       session_id?: string;
       model?: string;
       chat_type?: "general" | "report" | "da" | "translation" | "images" | "juridical" | "fab-docs";
+      skill_ids?: number[];
     },
     opts?: { agent?: boolean }
   ): Promise<AIMessage> {

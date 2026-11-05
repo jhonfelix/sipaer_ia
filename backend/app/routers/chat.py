@@ -23,7 +23,17 @@ from app.schemas.chat import (
     ConversationResponse,
     ConversationSessionResponse,
 )
-from app.agents.chat_agent import build_agent
+from app.agents.chat_agent import MAX_TOOL_STEPS, build_agent
+from agno.run.base import RunStatus
+
+from app.agents.skills import SipaerSkills
+from app.services.attachment_context import attachment_block, session_attachments
+from app.services.skill_service import (
+    LoadedSkill,
+    explicit_instructions_block,
+    load_catalog,
+    load_selected,
+)
 from app.agents.tools.knowledge_tools import (
     collected_sources,
     get_tools,
@@ -48,6 +58,20 @@ _AGENT_TOOL_GUIDANCE = (
     "Se a base não retornar nada relevante, responda com seu conhecimento e "
     "sinalize que não havia fonte na base."
 )
+
+class ModelRunError(RuntimeError):
+    """Erro devolvido pelo provedor do modelo durante o run do agente."""
+
+
+def _friendly_error(exc: Exception, model: str) -> str:
+    text = str(exc).lower()
+    if "blocked" in text or "permissiondenied" in text or "403" in text:
+        return (
+            f"O modelo selecionado ({model}) está bloqueado ou indisponível no servidor de IA "
+            "(CCABR). Selecione outro modelo e tente novamente."
+        )
+    return "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
+
 
 _EXTRACTABLE = {
     "application/pdf",
@@ -108,6 +132,16 @@ async def extract_text(
     else:  # text/plain
         text = content.decode("utf-8", errors="replace")
 
+    if not text.strip():
+        # Antes passava em silêncio: o modelo recebia o anexo vazio e pedia o arquivo.
+        detail = (
+            f"Não foi possível extrair texto de \"{file.filename}\". O PDF parece ser digitalizado "
+            "(imagem) — o sistema ainda não faz OCR. Envie uma versão com texto selecionável."
+            if mime == "application/pdf"
+            else f"O arquivo \"{file.filename}\" não contém texto legível."
+        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+
     truncated = len(text) > _EXTRACT_MAX_CHARS
     return {
         "text": text[:_EXTRACT_MAX_CHARS],
@@ -148,9 +182,16 @@ async def chat(
         role="user",
         content=body.message,
         sources=[],
+        attachment_context=body.attachments.strip() or None,
     )
     db.add(user_msg)
     await db.flush()
+
+    # Anexos desta mensagem + os enviados antes na mesma sessão.
+    attachments = await session_attachments(db, current_user.id, body.session_id, body.attachments)
+
+    # Skills ativadas explicitamente: instruções vão direto no prompt.
+    selected = await load_selected(current_user, body.skill_ids, db)
 
     try:
         content, sources = await rag_pipeline.process(
@@ -161,10 +202,12 @@ async def chat(
             project_id=body.project_id,
             project_instructions=project_instructions,
             images=body.images,
+            skill_instructions=explicit_instructions_block(selected, agent_mode=False),
+            attachments=attachments,
         )
-    except Exception:
+    except Exception as exc:
         logger.exception("RAG pipeline falhou")
-        content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
+        content = _friendly_error(exc, body.model)
         sources = []
 
     ai_msg = Conversation(
@@ -195,14 +238,34 @@ async def _run_chat_agent(
     session_id: str,
     user: User,
     project_instructions: str | None,
+    selected: list[LoadedSkill],
+    catalog: list[LoadedSkill],
+    attachments: str = "",
 ) -> tuple[str, list[dict]]:
-    """Executa o agente Agno (tool calling + memória) e devolve (conteúdo, fontes)."""
+    """Executa o agente Agno (tool calling + memória) e devolve (conteúdo, fontes).
+
+    Skills: as escolhidas pelo usuário entram direto no prompt; o catálogo
+    (skills visíveis e ativas) fica disponível para o modelo carregar sob demanda.
+    """
     instructions = SYSTEM_PROMPTS.get(body.chat_type, SYSTEM_PROMPT_GENERAL)
     instructions += _AGENT_TOOL_GUIDANCE
     if project_instructions and project_instructions.strip():
         instructions += f"\n\nInstruções do projeto:\n{project_instructions.strip()}"
+    instructions += explicit_instructions_block(selected, agent_mode=True)
+
+    # Selecionadas entram no catálogo mesmo se inativas (para os scripts funcionarem).
+    by_name = {s.name: s for s in catalog}
+    for s in selected:
+        by_name.setdefault(s.name, s)
+    skills = (
+        SipaerSkills(list(by_name.values()), preloaded={s.name for s in selected})
+        if by_name
+        else None
+    )
     if body.context:
-        instructions += f"\n\nContexto anexado pelo usuário:\n{body.context[:_AGENT_CTX_LIMIT]}"
+        instructions += f"\n\nContexto informado pelo usuário:\n{body.context[:_AGENT_CTX_LIMIT]}"
+    # Anexos da sessão por último, com instrução explícita de que já foram lidos.
+    instructions += attachment_block(attachments)
 
     # Coletor de fontes por-requisição (as tools fazem append via contextvars).
     new_source_collector()
@@ -213,9 +276,17 @@ async def _run_chat_agent(
         session_id=session_id,
         user_id=str(user.id),
         enable_memory=True,
+        skills=skills,
+        # Carregar instruções/rodar script consome chamadas de tool.
+        tool_call_limit=MAX_TOOL_STEPS + 2 if skills else MAX_TOOL_STEPS,
     )
     result = await agent.arun(body.message)
     content = getattr(result, "content", None) or ""
+    # O Agno não levanta exceção em erro do provedor: devolve status=error e a
+    # mensagem do erro em `content` (ex.: "litellm.PermissionDeniedError: Model is
+    # blocked"), que acabava salva e exibida como resposta.
+    if getattr(result, "status", None) == RunStatus.error:
+        raise ModelRunError(content)
     return content, collected_sources()
 
 
@@ -255,19 +326,27 @@ async def chat_agent(
         role="user",
         content=body.message,
         sources=[],
+        attachment_context=body.attachments.strip() or None,
     )
     db.add(user_msg)
     await db.flush()
+
+    # Anexos desta mensagem + os enviados antes na mesma sessão.
+    attachments = await session_attachments(db, current_user.id, body.session_id, body.attachments)
 
     # O agente cobre os chats de base de conhecimento. Imagens anexadas (visão,
     # qualquer categoria) e chats de projeto (busca escopada por project_id)
     # permanecem no pipeline clássico — o Agno ainda não tem tool multimodal.
     use_agent = body.chat_type != "images" and body.project_id is None and not body.images
 
+    selected = await load_selected(current_user, body.skill_ids, db)
+
     try:
         if use_agent:
+            catalog = await load_catalog(current_user, db)
             content, sources = await _run_chat_agent(
-                body, session_id, current_user, project_instructions
+                body, session_id, current_user, project_instructions, selected, catalog,
+                attachments,
             )
         else:
             content, sources = await rag_pipeline.process(
@@ -278,10 +357,12 @@ async def chat_agent(
                 project_id=body.project_id,
                 project_instructions=project_instructions,
                 images=body.images,
+                skill_instructions=explicit_instructions_block(selected, agent_mode=False),
+                attachments=attachments,
             )
-    except Exception:
+    except Exception as exc:
         logger.exception("Chat agent falhou")
-        content = "Serviço de IA temporariamente indisponível. Tente novamente em instantes."
+        content = _friendly_error(exc, body.model)
         sources = []
 
     ai_msg = Conversation(

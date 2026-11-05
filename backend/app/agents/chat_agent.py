@@ -99,6 +99,7 @@ def build_agent(
     user_id: str | None = None,
     enable_memory: bool = True,
     enable_user_memories: bool = False,
+    skills=None,
 ) -> Agent:
     """Monta o agente de chat.
 
@@ -126,5 +127,6 @@ def build_agent(
         add_history_to_context=enable_memory,
         num_history_runs=NUM_HISTORY_RUNS,
         enable_user_memories=enable_user_memories,
+        skills=skills,
         markdown=True,
     )

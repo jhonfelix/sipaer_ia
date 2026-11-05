@@ -175,8 +175,10 @@ export default function DAPage() {
         context = extractions
           .map((e) => `[Arquivo: ${e.filename}${e.truncated ? " — truncado em 200.000 caracteres" : ""}]\n${e.text}`)
           .join("\n\n---\n\n");
-      } catch {
-        // segue sem contexto de arquivo se a extração falhar
+      } catch (err) {
+        // Não envia sem o anexo: o modelo responderia pedindo o arquivo.
+        alert(err instanceof Error ? err.message : "Não foi possível ler o arquivo anexado.");
+        return;
       } finally {
         setExtracting(false);
       }
@@ -196,7 +198,7 @@ export default function DAPage() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da", context });
+      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da", attachments: context });
       setMessages(prev => [...prev.filter(m => m.id !== userMsg.id), userMsg, reply]);
     } catch {
       setMessages(prev => prev.map(m =>
