@@ -19,7 +19,7 @@ import {
   Check,
   Upload,
 } from "lucide-react";
-import { chat as chatApi, skills as skillsApi } from "@/lib/api";
+import { chat as chatApi } from "@/lib/api";
 import type { ChatSession, Skill } from "@/lib/api";
 import type { AIMessage } from "@/types/report";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +31,7 @@ import {
   SkillSelector,
   SelectedSkillChips,
   SlashSkillMenu,
-  MAX_SELECTED_SKILLS,
+  useChatSkills,
 } from "@/components/chat";
 import type { AttachedFile, Conversation } from "@/components/chat";
 
@@ -319,9 +319,8 @@ export default function ChatPage() {
   const [agentMode, setAgentMode] = useState(false);
 
   // Skills: as ativas (selecionadas) vão em skill_ids; "/" no início abre o atalho.
-  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
-  const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
-  const [slashIndex, setSlashIndex] = useState(0);
+  // Pré-seleção via /chat?skill=<identificador>.
+  const skills = useChatSkills({ preselectFromUrl: true });
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -351,49 +350,12 @@ export default function ChatPage() {
       .catch(() => {});
   }, []);
 
-  // Skills disponíveis + pré-seleção via /chat?skill=<identificador>
-  useEffect(() => {
-    skillsApi
-      .list()
-      .then((list) => {
-        const usable = list.filter((s) => s.isActive && s.canUse);
-        setAvailableSkills(usable);
-        const pre = new URLSearchParams(window.location.search).get("skill");
-        const found = pre ? usable.find((s) => s.name === pre) : undefined;
-        if (found) setSelectedSkills([found]);
-      })
-      .catch(() => {});
-  }, []);
-
-  function addSkill(skill: Skill) {
-    setSelectedSkills((prev) =>
-      prev.some((s) => s.id === skill.id) || prev.length >= MAX_SELECTED_SKILLS ? prev : [...prev, skill]
-    );
-  }
-
-  function toggleSkill(skill: Skill) {
-    setSelectedSkills((prev) =>
-      prev.some((s) => s.id === skill.id)
-        ? prev.filter((s) => s.id !== skill.id)
-        : prev.length >= MAX_SELECTED_SKILLS
-          ? prev
-          : [...prev, skill]
-    );
-  }
-
-  // Atalho "/": ativo enquanto o campo contém só "/<prefixo>".
-  const slashQuery = /^\/([a-z0-9-]*)$/.exec(input)?.[1];
-  const slashMatches =
-    slashQuery === undefined
-      ? []
-      : availableSkills
-          .filter((s) => s.name.startsWith(slashQuery) || s.title.toLowerCase().includes(slashQuery))
-          .slice(0, 6);
+  const slashMatches = skills.slashMatches(input);
 
   function pickSlash(skill: Skill) {
-    addSkill(skill);
+    skills.add(skill);
     setInput("");
-    setSlashIndex(0);
+    skills.setSlashIndex(0);
     textareaRef.current?.focus();
   }
 
@@ -444,19 +406,10 @@ export default function ChatPage() {
 
   // Send
   async function handleSend() {
-    let text = input.trim();
-    if (!text || sending || extracting) return;
+    if (!input.trim() || sending || extracting) return;
 
     // "/identificador mensagem" ativa a skill só para esta mensagem.
-    const skillIds = selectedSkills.map((s) => s.id);
-    const inline = /^\/([a-z0-9-]+)\s+([\s\S]+)$/.exec(text);
-    if (inline) {
-      const found = availableSkills.find((s) => s.name === inline[1]);
-      if (found) {
-        if (!skillIds.includes(found.id) && skillIds.length < MAX_SELECTED_SKILLS) skillIds.push(found.id);
-        text = inline[2].trim();
-      }
-    }
+    const { text, skillIds } = skills.resolveMessage(input.trim());
 
     // Imagens vão como image_url multimodal (visão); os demais tipos têm o
     // texto extraído via /chat/extract e viram contexto textual.
@@ -590,24 +543,7 @@ export default function ChatPage() {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (slashMatches.length > 0) {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        const delta = e.key === "ArrowDown" ? 1 : -1;
-        setSlashIndex((i) => (i + delta + slashMatches.length) % slashMatches.length);
-        return;
-      }
-      if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
-        pickSlash(slashMatches[Math.min(slashIndex, slashMatches.length - 1)]);
-        return;
-      }
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setInput("");
-        return;
-      }
-    }
+    if (skills.handleSlashKey(e, input, () => setInput(""))) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -620,7 +556,7 @@ export default function ChatPage() {
     setAttached([]);
     setActiveConvId(null);
     setActiveSessionId(null);
-    setSelectedSkills([]);
+    skills.setSelected([]);
     setTimeout(() => textareaRef.current?.focus(), 50);
   }
 
@@ -866,13 +802,13 @@ export default function ChatPage() {
 
               {/* Skills ativas e atalho "/" */}
               <SelectedSkillChips
-                selected={selectedSkills}
+                selected={skills.selected}
                 agentMode={agentMode}
-                onRemove={(s) => setSelectedSkills((prev) => prev.filter((x) => x.id !== s.id))}
+                onRemove={skills.remove}
               />
               <SlashSkillMenu
                 matches={slashMatches}
-                activeIndex={Math.min(slashIndex, Math.max(slashMatches.length - 1, 0))}
+                activeIndex={Math.min(skills.slashIndex, Math.max(slashMatches.length - 1, 0))}
                 onPick={pickSlash}
               />
 
@@ -937,9 +873,9 @@ export default function ChatPage() {
                     Modo Agente
                   </button>
                   <SkillSelector
-                    available={availableSkills}
-                    selected={selectedSkills}
-                    onToggle={toggleSkill}
+                    available={skills.available}
+                    selected={skills.selected}
+                    onToggle={skills.toggle}
                   />
                 </div>
                 <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px]">

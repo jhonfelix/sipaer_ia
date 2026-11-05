@@ -7,8 +7,17 @@ import {
   BookOpen, AlertCircle, Search, X, User2, Check, Plus, Paperclip, Upload,
 } from "lucide-react";
 import { chat as chatApi } from "@/lib/api";
-import { MarkdownRenderer, ModelSelector, AttachmentPreview } from "@/components/chat";
+import {
+  MarkdownRenderer,
+  ModelSelector,
+  AttachmentPreview,
+  SkillSelector,
+  SelectedSkillChips,
+  SlashSkillMenu,
+  useChatSkills,
+} from "@/components/chat";
 import type { AttachedFile } from "@/components/chat";
+import type { Skill } from "@/lib/api";
 import { ProjectsSection } from "@/components/project";
 import type { AIMessage } from "@/types/report";
 
@@ -125,6 +134,17 @@ export default function DAPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Skills (mesmo comportamento do /chat): seletor, chips e atalho "/".
+  const skills = useChatSkills();
+  const slashMatches = skills.slashMatches(input);
+
+  function pickSlash(skill: Skill) {
+    skills.add(skill);
+    setInput("");
+    skills.setSlashIndex(0);
+    textareaRef.current?.focus();
+  }
+
   function addFiles(files: FileList | File[]) {
     const next: AttachedFile[] = Array.from(files).map((file) => ({
       id: uid(),
@@ -162,8 +182,10 @@ export default function DAPage() {
   }
 
   async function handleSend(text?: string) {
-    const msg = (text ?? input).trim();
-    if (!msg || sending || extracting) return;
+    const raw = (text ?? input).trim();
+    if (!raw || sending || extracting) return;
+    // "/identificador mensagem" ativa a skill só para esta mensagem.
+    const { text: msg, skillIds } = skills.resolveMessage(raw);
 
     // Extrai o texto dos arquivos anexados antes de enviar (igual ao /chat).
     let context = "";
@@ -198,7 +220,7 @@ export default function DAPage() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da", attachments: context });
+      const reply = await chatApi.send({ message: msg, session_id: sessionId, model, chat_type: "da", attachments: context, skill_ids: skillIds });
       setMessages(prev => [...prev.filter(m => m.id !== userMsg.id), userMsg, reply]);
     } catch {
       setMessages(prev => prev.map(m =>
@@ -210,6 +232,7 @@ export default function DAPage() {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (skills.handleSlashKey(e, input, () => setInput(""))) return;
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }
 
@@ -468,6 +491,14 @@ export default function DAPage() {
           <div className="max-w-3xl mx-auto">
             <div className="rounded-2xl bg-muted/30 border border-border focus-within:border-blue-500/30 focus-within:bg-muted/40 transition-all overflow-hidden">
 
+              {/* Skills ativas e atalho "/" */}
+              <SelectedSkillChips selected={skills.selected} agentMode={false} onRemove={skills.remove} />
+              <SlashSkillMenu
+                matches={slashMatches}
+                activeIndex={Math.min(skills.slashIndex, Math.max(slashMatches.length - 1, 0))}
+                onPick={pickSlash}
+              />
+
               {/* Attachment previews */}
               {attached.length > 0 && (
                 <div className="px-3 pt-3">
@@ -489,7 +520,7 @@ export default function DAPage() {
                   value={input}
                   onChange={e => { setInput(e.target.value); resize(); }}
                   onKeyDown={onKeyDown}
-                  placeholder="Descreva o documento ou dúvida administrativa… (Enter para enviar · Shift+Enter nova linha)"
+                  placeholder="Descreva o documento ou dúvida administrativa… (/ para skills · Enter para enviar · Shift+Enter nova linha)"
                   rows={1}
                   className="flex-1 bg-transparent text-foreground dark:text-foreground/90 placeholder:text-muted-foreground/80 dark:placeholder:text-muted-foreground/40 text-sm leading-relaxed resize-none focus:outline-none py-1"
                   style={{ minHeight: "32px", maxHeight: "200px" }}
@@ -503,7 +534,10 @@ export default function DAPage() {
                 </button>
               </div>
               <div className="flex items-center justify-between px-3 pb-2.5">
-                <ModelSelector value={model} onChange={setModel} />
+                <div className="flex items-center gap-2">
+                  <ModelSelector value={model} onChange={setModel} />
+                  <SkillSelector available={skills.available} selected={skills.selected} onToggle={skills.toggle} />
+                </div>
                 <div className="flex items-center gap-1.5">
                   <AlertCircle className="w-3 h-3 text-muted-foreground dark:text-muted-foreground/40" />
                   <p className="text-muted-foreground dark:text-muted-foreground/40 text-[10px]">Consulte sempre o setor jurídico para decisões formais.</p>
