@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -28,7 +28,19 @@ import {
   ScrollText,
   Wand2,
 } from "lucide-react";
-import { reports as reportsApi, users as usersApi, ApiError } from "@/lib/api";
+import { reports as reportsApi, users as usersApi, reportIntake, ApiError } from "@/lib/api";
+import type {
+  FieldProvenance,
+  IntakeDocument,
+  RaiAnalysisResult,
+  RaiListItem,
+  RaiSchema,
+  RaiValue,
+} from "@/lib/api";
+import { AiMark } from "@/components/report/intake/AiMark";
+import { AnalysisReview } from "@/components/report/intake/AnalysisReview";
+import { DocumentsStep } from "@/components/report/intake/DocumentsStep";
+import { RaiForm } from "@/components/report/intake/RaiForm";
 import type { User } from "@/types/report";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -836,7 +848,7 @@ const UF_LIST = [
   "SP","SE","TO",
 ];
 
-const STEPS = ["Documento", "Escopo", "Configuração", "Dados", "Confirmar"];
+const STEPS = ["Documento", "Escopo", "Configuração", "Documentos", "Dados", "Confirmar"];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
@@ -963,6 +975,72 @@ export default function NewReportPage() {
   const [error, setError] = useState("");
   const [investigatorList, setInvestigatorList] = useState<User[]>([]);
 
+  // Etapa "Documentos" + campos do RAI
+  const [raiSchema, setRaiSchema] = useState<RaiSchema | null>(null);
+  const [intakeDocs, setIntakeDocs] = useState<IntakeDocument[]>([]);
+  const [analysis, setAnalysis] = useState<RaiAnalysisResult | null>(null);
+  const [raiValues, setRaiValues] = useState<Record<string, RaiValue>>({});
+  const [raiLists, setRaiLists] = useState<Record<string, RaiListItem[]>>({});
+  const [provenance, setProvenance] = useState<Record<string, FieldProvenance>>({});
+  // Último valor aplicado pela IA em cada campo: uma nova análise só sobrescreve
+  // campos vazios ou que o usuário não alterou.
+  const [aiApplied, setAiApplied] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    reportIntake.schema().then(setRaiSchema).catch(() => {});
+  }, []);
+
+  const applyAnalysis = useCallback((result: RaiAnalysisResult) => {
+    const key = (v: unknown) => JSON.stringify(v ?? "");
+    const canOverwrite = (id: string, current: unknown) =>
+      current === undefined || current === "" || (Array.isArray(current) && current.length === 0) ||
+      aiApplied[id] === key(current);
+    const applied: Record<string, string> = {};
+
+    // Calculado a partir do estado atual (não dentro de updaters, que rodam depois).
+    const nextForm = { ...form } as unknown as Record<string, string>;
+    const nextValues = { ...raiValues };
+    const nextLists = { ...raiLists };
+    for (const [id, value] of Object.entries(result.values)) {
+      if (id.startsWith("core.")) {
+        const field = id.slice(5);
+        if (!(field in nextForm) || Array.isArray(value)) continue;
+        if (canOverwrite(id, nextForm[field])) {
+          nextForm[field] = String(value);
+          applied[id] = key(String(value));
+        }
+      } else if (canOverwrite(id, nextValues[id])) {
+        nextValues[id] = value;
+        applied[id] = key(value);
+      }
+    }
+    for (const [id, items] of Object.entries(result.lists)) {
+      if (canOverwrite(id, nextLists[id])) {
+        nextLists[id] = items;
+        applied[id] = key(items);
+      }
+    }
+    setForm(nextForm as unknown as OccFormData);
+    setRaiValues(nextValues);
+    setRaiLists(nextLists);
+    setAiApplied((prev) => ({ ...prev, ...applied }));
+    setProvenance(result.provenance);
+    setAnalysis(result);
+  }, [aiApplied, form, raiValues, raiLists]);
+
+  function currentFieldValue(id: string): RaiValue | undefined {
+    if (id.startsWith("core.")) return (form as unknown as Record<string, string>)[id.slice(5)];
+    return raiValues[id];
+  }
+
+  function pickConflictValue(id: string, value: RaiValue) {
+    if (id.startsWith("core.")) {
+      setForm((prev) => ({ ...prev, [id.slice(5)]: Array.isArray(value) ? value.join(", ") : value }));
+    } else {
+      setRaiValues((prev) => ({ ...prev, [id]: value }));
+    }
+  }
+
   useEffect(() => {
     usersApi.list().then(setInvestigatorList).catch(() => {});
   }, []);
@@ -1022,7 +1100,23 @@ export default function NewReportPage() {
             }
         ),
       };
-      const report = await reportsApi.create({ occurrence, sections });
+      const raiFilled = Object.fromEntries(
+        Object.entries(raiValues).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== ""))
+      );
+      const raiListsFilled = Object.fromEntries(
+        Object.entries(raiLists)
+          .map(([k, items]) => [k, items.filter((it) => Object.values(it).some((v) => (Array.isArray(v) ? v.length : String(v).trim())))])
+          .filter(([, items]) => (items as RaiListItem[]).length > 0)
+      );
+      if (Object.keys(raiFilled).length || Object.keys(raiListsFilled).length) {
+        occurrence.rai = { values: raiFilled, lists: raiListsFilled };
+      }
+      if (Object.keys(provenance).length) occurrence.raiProvenance = provenance;
+      const report = await reportsApi.create({
+        occurrence,
+        sections,
+        document_ids: intakeDocs.map((d) => d.id),
+      });
       router.push(`/reports/${report.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Erro ao criar relatório. Tente novamente.");
@@ -1035,7 +1129,8 @@ export default function NewReportPage() {
     (step === 1 && scope !== null) ||
     (step === 2 && investigator.trim() !== "") ||
     step === 3 ||
-    step === 4;
+    step === 4 ||
+    step === 5;
 
   const sections = docType && scope ? TEMPLATES[docType][scope] : [];
   const selectedDoc = DOC_TYPES.find((d) => d.id === docType);
@@ -1270,8 +1365,26 @@ export default function NewReportPage() {
         )}
 
         {/* ── Step 3: Dados ────────────────────────────────────────────────── */}
+        {/* ── Step 3: Documentos de apoio ──────────────────────────────────── */}
         {step === 3 && (
+          <DocumentsStep
+            documents={intakeDocs}
+            onDocumentsChange={setIntakeDocs}
+            lastResult={analysis}
+            onAnalyzed={applyAnalysis}
+          />
+        )}
+
+        {step === 4 && (
           <div>
+            {!!analysis && (
+              <AnalysisReview
+                result={analysis}
+                schema={raiSchema}
+                currentValue={currentFieldValue}
+                onPick={pickConflictValue}
+              />
+            )}
             {useDedalo ? (
               /* ── Dédalo: só o número ── */
               <div className="p-5 rounded-2xl border border-blue-500/30 bg-blue-500/[0.06] space-y-4">
@@ -1329,7 +1442,7 @@ export default function NewReportPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Número da Ocorrência</label>
+                      <label className={labelCls}>Número da Ocorrência<AiMark p={provenance["core.number"]} /></label>
                       <div className="relative">
                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/40" />
                         <input
@@ -1342,7 +1455,7 @@ export default function NewReportPage() {
                       </div>
                     </div>
                     <div>
-                      <label className={labelCls}>Classificação <span className="text-red-400">*</span></label>
+                      <label className={labelCls}>Classificação <span className="text-red-400">*</span><AiMark p={provenance["core.classification"]} /></label>
                       <select
                         value={form.classification}
                         onChange={(e) => setField("classification", e.target.value)}
@@ -1357,7 +1470,7 @@ export default function NewReportPage() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Tipo da Ocorrência (ICAO)</label>
+                    <label className={labelCls}>Tipo da Ocorrência (ICAO)<AiMark p={provenance["core.occurrenceType"]} /></label>
                     <select
                       value={form.occurrenceType}
                       onChange={(e) => setField("occurrenceType", e.target.value)}
@@ -1372,7 +1485,7 @@ export default function NewReportPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Data <span className="text-red-400">*</span></label>
+                      <label className={labelCls}>Data <span className="text-red-400">*</span><AiMark p={provenance["core.date"]} /></label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground/40 pointer-events-none" />
                         <input
@@ -1384,7 +1497,7 @@ export default function NewReportPage() {
                       </div>
                     </div>
                     <div>
-                      <label className={labelCls}>Hora (UTC)</label>
+                      <label className={labelCls}>Hora (UTC)<AiMark p={provenance["core.time"]} /></label>
                       <input
                         type="time"
                         value={form.time}
@@ -1395,7 +1508,7 @@ export default function NewReportPage() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Aeródromo / Local de Operação</label>
+                    <label className={labelCls}>Aeródromo / Local de Operação<AiMark p={provenance["core.aerodrome"]} /></label>
                     <input
                       type="text"
                       value={form.aerodrome}
@@ -1407,7 +1520,7 @@ export default function NewReportPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Município</label>
+                      <label className={labelCls}>Município<AiMark p={provenance["core.municipality"]} /></label>
                       <input
                         type="text"
                         value={form.municipality}
@@ -1417,7 +1530,7 @@ export default function NewReportPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>UF</label>
+                      <label className={labelCls}>UF<AiMark p={provenance["core.uf"]} /></label>
                       <select
                         value={form.uf}
                         onChange={(e) => setField("uf", e.target.value)}
@@ -1433,7 +1546,7 @@ export default function NewReportPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Coordenada Lat.</label>
+                      <label className={labelCls}>Coordenada Lat.<AiMark p={provenance["core.coordLat"]} /></label>
                       <input
                         type="text"
                         value={form.coordLat}
@@ -1443,7 +1556,7 @@ export default function NewReportPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Coordenada Long.</label>
+                      <label className={labelCls}>Coordenada Long.<AiMark p={provenance["core.coordLon"]} /></label>
                       <input
                         type="text"
                         value={form.coordLon}
@@ -1455,7 +1568,7 @@ export default function NewReportPage() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Unidade de Investigação</label>
+                    <label className={labelCls}>Unidade de Investigação<AiMark p={provenance["core.invUnit"]} /></label>
                     <select
                       value={form.invUnit}
                       onChange={(e) => setField("invUnit", e.target.value)}
@@ -1469,7 +1582,7 @@ export default function NewReportPage() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Fase do Voo</label>
+                    <label className={labelCls}>Fase do Voo<AiMark p={provenance["core.flightPhase"]} /></label>
                     <select
                       value={form.flightPhase}
                       onChange={(e) => setField("flightPhase", e.target.value)}
@@ -1491,7 +1604,7 @@ export default function NewReportPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Condição Meteorológica</label>
+                      <label className={labelCls}>Condição Meteorológica<AiMark p={provenance["core.weatherCondition"]} /></label>
                       <select
                         value={form.weatherCondition}
                         onChange={(e) => setField("weatherCondition", e.target.value)}
@@ -1504,7 +1617,7 @@ export default function NewReportPage() {
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Tipo de Obstáculo</label>
+                      <label className={labelCls}>Tipo de Obstáculo<AiMark p={provenance["core.obstacleType"]} /></label>
                       <select
                         value={form.obstacleType}
                         onChange={(e) => setField("obstacleType", e.target.value)}
@@ -1519,7 +1632,7 @@ export default function NewReportPage() {
                   </div>
 
                   <div>
-                    <label className={labelCls}>Descrição das Condições Meteorológicas</label>
+                    <label className={labelCls}>Descrição das Condições Meteorológicas<AiMark p={provenance["core.weatherDescription"]} /></label>
                     <textarea
                       value={form.weatherDescription}
                       onChange={(e) => setField("weatherDescription", e.target.value)}
@@ -1533,7 +1646,7 @@ export default function NewReportPage() {
                     <label className={labelCls}>
                       <AlertTriangle className="w-3 h-3 inline mr-1 -mt-0.5 text-muted-foreground dark:text-muted-foreground/50" />
                       Descrição do Obstáculo
-                    </label>
+                    <AiMark p={provenance["core.obstacleDescription"]} /></label>
                     <input
                       type="text"
                       value={form.obstacleDescription}
@@ -1552,7 +1665,7 @@ export default function NewReportPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Matrícula</label>
+                      <label className={labelCls}>Matrícula<AiMark p={provenance["core.acRegistration"]} /></label>
                       <input
                         type="text"
                         value={form.acRegistration}
@@ -1563,7 +1676,7 @@ export default function NewReportPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Fabricante</label>
+                      <label className={labelCls}>Fabricante<AiMark p={provenance["core.acManufacturer"]} /></label>
                       <input
                         type="text"
                         value={form.acManufacturer}
@@ -1576,7 +1689,7 @@ export default function NewReportPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Modelo</label>
+                      <label className={labelCls}>Modelo<AiMark p={provenance["core.acModel"]} /></label>
                       <input
                         type="text"
                         value={form.acModel}
@@ -1586,7 +1699,7 @@ export default function NewReportPage() {
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Operador</label>
+                      <label className={labelCls}>Operador<AiMark p={provenance["core.acOperator"]} /></label>
                       <input
                         type="text"
                         value={form.acOperator}
@@ -1599,7 +1712,7 @@ export default function NewReportPage() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={labelCls}>Tipo de Operação</label>
+                      <label className={labelCls}>Tipo de Operação<AiMark p={provenance["core.acOperation"]} /></label>
                       <select
                         value={form.acOperation}
                         onChange={(e) => setField("acOperation", e.target.value)}
@@ -1612,7 +1725,7 @@ export default function NewReportPage() {
                       </select>
                     </div>
                     <div>
-                      <label className={labelCls}>Danos à Aeronave</label>
+                      <label className={labelCls}>Danos à Aeronave<AiMark p={provenance["core.acDamage"]} /></label>
                       <select
                         value={form.acDamage}
                         onChange={(e) => setField("acDamage", e.target.value)}
@@ -1699,7 +1812,7 @@ export default function NewReportPage() {
                 <div>
                   <label className={labelCls}>
                     Narrativa Livre <span className="text-red-400">*</span>
-                  </label>
+                  <AiMark p={provenance["core.narrative"]} /></label>
                   <textarea
                     value={form.narrative}
                     onChange={(e) => setField("narrative", e.target.value)}
@@ -1713,11 +1826,31 @@ export default function NewReportPage() {
                 </div>
               </div>
             )}
+
+            {!!raiSchema && (
+              <div className="mt-8">
+                <div className={sectionHeadCls}>
+                  <FileText className="w-3.5 h-3.5" />
+                  Registro de Ação Inicial (RAI) — demais seções
+                </div>
+                <p className="text-muted-foreground text-xs mb-3">
+                  Campos opcionais do modelo RAI. Tudo o que for preenchido aqui é enviado à geração do relatório.
+                </p>
+                <RaiForm
+                  sections={raiSchema.sections}
+                  values={raiValues}
+                  lists={raiLists}
+                  provenance={provenance}
+                  onValueChange={(id, v) => setRaiValues((prev) => ({ ...prev, [id]: v }))}
+                  onListChange={(id, items) => setRaiLists((prev) => ({ ...prev, [id]: items }))}
+                />
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Step 4: Confirmar ────────────────────────────────────────────── */}
-        {step === 4 && selectedDoc && selectedScope && docType && scope && (
+        {/* ── Step 5: Confirmar ────────────────────────────────────────────── */}
+        {step === 5 && selectedDoc && selectedScope && docType && scope && (
           <div className="space-y-4">
             <p className="text-muted-foreground text-sm font-medium mb-4">
               Revise as configurações antes de criar o relatório.
@@ -1755,6 +1888,17 @@ export default function NewReportPage() {
                     : "Preenchimento manual"}
                 </span>
               </div>
+              {(intakeDocs.length > 0 || Object.keys(raiValues).length > 0) && (
+                <div className="flex items-center justify-between px-5 py-3.5">
+                  <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Documentos de apoio / RAI</span>
+                  <span className="text-foreground dark:text-foreground/80 text-sm">
+                    {intakeDocs.length} documento(s) · {
+                      Object.values(raiValues).filter((v) => (Array.isArray(v) ? v.length : String(v).trim())).length +
+                      Object.values(raiLists).reduce((n, items) => n + items.length, 0)
+                    } campo(s) do RAI
+                  </span>
+                </div>
+              )}
               {!useDedalo && (form.date || form.classification) && (
                 <div className="flex items-center justify-between px-5 py-3.5">
                   <span className="text-muted-foreground dark:text-muted-foreground/60 text-xs">Data / Classificação</span>
@@ -1826,7 +1970,7 @@ export default function NewReportPage() {
             Voltar
           </button>
 
-          {step < 4 ? (
+          {step < 5 ? (
             <button
               type="button"
               onClick={() => setStep((s) => s + 1)}

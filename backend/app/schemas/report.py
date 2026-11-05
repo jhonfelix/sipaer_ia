@@ -38,6 +38,8 @@ class SectionUpdate(BaseModel):
 class ReportCreate(BaseModel):
     occurrence: dict
     sections: list[dict] = []
+    # Documentos de apoio enviados na etapa "Documentos" do assistente
+    document_ids: list[int] = []
 
 
 class ReportUpdate(BaseModel):

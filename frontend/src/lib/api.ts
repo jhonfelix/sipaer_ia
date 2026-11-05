@@ -573,6 +573,133 @@ export const admin = {
   },
 };
 
+// ── Etapa "Documentos" do assistente de relatórios (/report-intake) ──────────
+
+export type RaiFieldType =
+  | "text" | "textarea" | "number" | "date" | "time" | "select" | "multi" | "yesno" | "list";
+
+export interface RaiField {
+  id: string;
+  label: string;
+  type: RaiFieldType;
+  options?: string[];
+  hint?: string;
+  fields?: RaiField[]; // subcampos de "list"
+}
+
+export interface RaiSection {
+  id: string;
+  number: number;
+  title: string;
+  note?: string;
+  fields: RaiField[];
+}
+
+export interface RaiSchema {
+  core: RaiField[];
+  sections: RaiSection[];
+}
+
+export type RaiValue = string | string[];
+export type RaiListItem = Record<string, RaiValue>;
+
+export interface FieldSource {
+  filename: string;
+  quote: string;
+  confidence: number | null;
+}
+
+export interface FieldProvenance {
+  sources: FieldSource[];
+  conflicts: { value: RaiValue; filename: string; quote: string }[];
+  generated?: boolean;
+}
+
+export interface RaiAnalysisResult {
+  values: Record<string, RaiValue>;
+  lists: Record<string, RaiListItem[]>;
+  provenance: Record<string, FieldProvenance>;
+  stats: {
+    filled: number;
+    conflicts: number;
+    discarded: number;
+    errors: string[];
+    perDocument: Record<string, number>;
+  };
+}
+
+export interface RaiAnalysisJob {
+  status: "running" | "done" | "error";
+  done: number;
+  total: number;
+  current: string;
+  result: RaiAnalysisResult | null;
+  error: string | null;
+}
+
+export interface IntakeDocument {
+  id: number;
+  filename: string;
+  sizeBytes: number;
+  chars: number;
+  pages: number | null;
+}
+
+interface RawIntakeDocument {
+  id: number;
+  filename: string;
+  size_bytes: number;
+  chars: number;
+  pages: number | null;
+}
+
+function mapIntakeDocument(raw: RawIntakeDocument): IntakeDocument {
+  return { id: raw.id, filename: raw.filename, sizeBytes: raw.size_bytes, chars: raw.chars, pages: raw.pages };
+}
+
+export const reportIntake = {
+  async schema(): Promise<RaiSchema> {
+    return request<RaiSchema>("/report-intake/schema");
+  },
+
+  async upload(file: File): Promise<IntakeDocument> {
+    const token = getToken();
+    const body = new FormData();
+    body.append("file", file);
+    const res = await fetch(`${BASE}/report-intake/documents`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) clearToken();
+      throw new ApiError(res.status, data.detail ?? `Falha ao enviar ${file.name}`);
+    }
+    return mapIntakeDocument(data as RawIntakeDocument);
+  },
+
+  async remove(id: number): Promise<void> {
+    await request<void>(`/report-intake/documents/${id}`, { method: "DELETE" });
+  },
+
+  async reportDocuments(reportId: string): Promise<IntakeDocument[]> {
+    return (await request<RawIntakeDocument[]>(`/report-intake/reports/${reportId}/documents`)).map(mapIntakeDocument);
+  },
+
+  async analyze(documentIds: number[]): Promise<string> {
+    const data = await request<{ job_id: string }>("/report-intake/analyze", {
+      method: "POST",
+      body: JSON.stringify({ document_ids: documentIds }),
+    });
+    return data.job_id;
+  },
+
+  async job(jobId: string): Promise<RaiAnalysisJob> {
+    return request<RaiAnalysisJob>(`/report-intake/jobs/${jobId}`);
+  },
+};
+
 // ── Reports ───────────────────────────────────────────────────────────────────
 
 export const reports = {
@@ -587,6 +714,7 @@ export const reports = {
   async create(payload: {
     occurrence: Record<string, unknown>;
     sections?: Record<string, unknown>[];
+    document_ids?: number[];
   }): Promise<Report> {
     return mapReport(
       await request<RawReport>("/reports", {

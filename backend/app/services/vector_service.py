@@ -4,7 +4,7 @@ import logging
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-from app.config import KNOWLEDGE_COLLECTIONS, PROJECT_VECTOR_COLLECTION, settings
+from app.config import KNOWLEDGE_COLLECTIONS, PROJECT_VECTOR_COLLECTION, REPORT_DOCS_COLLECTION, settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,44 @@ class VectorService:
             )
 
     async def ensure_all_collections(self) -> None:
-        names = list(KNOWLEDGE_COLLECTIONS.values()) + [PROJECT_VECTOR_COLLECTION]
+        names = list(KNOWLEDGE_COLLECTIONS.values()) + [PROJECT_VECTOR_COLLECTION, REPORT_DOCS_COLLECTION]
         await asyncio.gather(*[self.ensure_collection(name) for name in names])
         # Índice de payload para permitir/otimizar o filtro por project_id na busca.
         await self.ensure_project_payload_index()
+        await self.ensure_payload_index(REPORT_DOCS_COLLECTION, "report_id")
+
+    async def ensure_payload_index(self, collection_name: str, field_name: str) -> None:
+        from qdrant_client.models import PayloadSchemaType
+
+        try:
+            await self.client.create_payload_index(
+                collection_name=collection_name,
+                field_name=field_name,
+                field_schema=PayloadSchemaType.INTEGER,
+            )
+        except Exception:
+            logger.debug("índice de payload %s.%s já existe ou indisponível", collection_name, field_name)
+
+    async def search_report_docs(self, vector: list[float], report_id: int, limit: int = 4) -> list:
+        """Trechos dos documentos de apoio de um relatório (mesma estratégia de search_project)."""
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+        flt = Filter(must=[FieldCondition(key="report_id", match=MatchValue(value=report_id))])
+        hits = await self.search(vector, collection_names=[REPORT_DOCS_COLLECTION], limit=limit, query_filter=flt)
+        if hits:
+            return hits
+        raw = await self.search(vector, collection_names=[REPORT_DOCS_COLLECTION], limit=max(limit * 10, 50))
+        return [p for p in raw if p.payload and p.payload.get("report_id") == report_id][:limit]
+
+    async def delete_by_report_id(self, report_id: int) -> None:
+        from qdrant_client.models import FieldCondition, Filter, FilterSelector, MatchValue
+
+        await self.client.delete(
+            collection_name=REPORT_DOCS_COLLECTION,
+            points_selector=FilterSelector(
+                filter=Filter(must=[FieldCondition(key="report_id", match=MatchValue(value=report_id))])
+            ),
+        )
 
     async def ensure_project_payload_index(self) -> None:
         from qdrant_client.models import PayloadSchemaType

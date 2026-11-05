@@ -6,6 +6,7 @@ from app.models.knowledge import KnowledgeDocument
 from app.models.project import Project, ProjectDocument
 from app.models.group import Group, user_groups
 from app.models.skill import Skill, SkillScript, skill_groups
+from app.models.report_document import ReportDocument
 
 __all__ = [
     "User",
@@ -22,4 +23,5 @@ __all__ = [
     "Skill",
     "SkillScript",
     "skill_groups",
+    "ReportDocument",
 ]

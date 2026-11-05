@@ -16,6 +16,9 @@ KNOWLEDGE_COLLECTIONS: dict[str, str] = {
 # Coleção Qdrant única para arquivos de projetos (scoping por payload project_id)
 PROJECT_VECTOR_COLLECTION: str = "sipaer_projetos"
 
+# Documentos de apoio anexados a relatórios (scoping por payload report_id)
+REPORT_DOCS_COLLECTION: str = "sipaer_relatorio_docs"
+
 KNOWLEDGE_COLLECTION_LABELS: dict[str, str] = {
     "relatorios_finais":  "Relatórios Finais",
     "normas_legislacoes": "Normas e Legislações",

@@ -8,6 +8,8 @@ from app.config import KNOWLEDGE_COLLECTIONS
 from app.database import AsyncSessionLocal
 from app.models.report import Report, ReportSection, ReportSubsection
 from app.services.llm_service import llm_service
+from app.services.rai_schema import rai_summary
+from app.services.report_docs_service import document_excerpts, has_documents, index_report_documents
 from app.services.vector_service import vector_service
 
 logger = logging.getLogger(__name__)
@@ -175,6 +177,11 @@ def build_occurrence_summary(occurrence: dict) -> str:
         lines.append("")
         lines.append("HISTÓRICO DA OCORRÊNCIA (relato do investigador):")
         lines.append(v)
+
+    if rai := rai_summary(occurrence.get("rai")):
+        lines.append("")
+        lines.append("DADOS DO REGISTRO DE AÇÃO INICIAL (RAI):")
+        lines.append(rai)
 
     return "\n".join(lines)
 
@@ -404,6 +411,16 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
     # ── 2. Build occurrence summary ────────────────────────────────────────────
     occurrence_summary = build_occurrence_summary(occurrence)
 
+    # ── 2b. Documentos de apoio anexados no assistente → Qdrant (por report_id) ─
+    use_documents = False
+    try:
+        if await has_documents(report_id):
+            indexed = await index_report_documents(report_id)
+            use_documents = True
+            logger.info("Report %s: %d trecho(s) de documentos de apoio indexados", report_id, indexed)
+    except Exception:
+        logger.warning("Falha ao indexar documentos do report %s — gerando sem eles", report_id)
+
     # ── 3. Vector search: sipaer_relatorios_finais ─────────────────────────────
     rag_context = ""
     sources: list[dict] = []
@@ -472,8 +489,25 @@ async def _run_generation(report_id: int, occurrence: dict) -> None:
             for subsection in section.subsections:
                 instruction = _get_instruction(section.title, subsection.title)
 
+                documents_block = ""
+                if use_documents:
+                    try:
+                        excerpts = await document_excerpts(
+                            report_id,
+                            f"{section.title} — {subsection.title}\n{occurrence_summary[:500]}",
+                        )
+                    except Exception:
+                        excerpts = []
+                    if excerpts:
+                        documents_block = (
+                            "\n\nTRECHOS DOS DOCUMENTOS DA INVESTIGAÇÃO (fonte primária desta ocorrência — "
+                            "use estes fatos; eles prevalecem sobre os relatórios similares de referência, "
+                            "que servem só de modelo de redação):\n"
+                            + "\n\n".join(f"[{e['filename']}]\n{e['text']}" for e in excerpts)
+                        )
+
                 user_prompt = (
-                    f"{occurrence_summary}\n\n"
+                    f"{occurrence_summary}{documents_block}\n\n"
                     f"SEÇÃO A PREENCHER: {section.title} > {subsection.title}\n\n"
                     f"INSTRUÇÃO: {instruction}"
                 )
